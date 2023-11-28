@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Hearth and Kin</title>
+            <style>
+                body {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 20px;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background-color: #404f5a;
+                }
+                #logo {
+                    width: 400px;
+                    height: auto;
+                }
+                
+                #auth, #game {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                }
+                button {
+                    padding: 10px 20px;
+                    font-size: 20px;
+                    color: #3b372a;
+                    background-color: #ffcf86;
+                    border: none;
+                    border-radius: 5px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+                    cursor: pointer;
+                    transition: background-color 0.3s ease;
+                }
+
+                button:hover {
+                    background-color: #d79736;
+                }
+
+                button:active {
+                    background-color: #7f571d;
+                }
+                input[type="text"], input[type="password"] {
+                    padding: 10px;
+                    font-size: 18px;
+                    color: #f4e8c1;
+                    background-color: #3b372a;
+                    border: none;
+                    border-radius: 5px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+                }
+
+                input[type="text"]:focus, input[type="password"]:focus {
+                    outline: none;
+                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+                }
+
+                hr {
+                    border: none;
+                    border-top: 1px solid #f4e8c1;
+                    width: 50%;
+                    margin: 20px auto;
+                }
+            </style>
+        </head>
+        <body>
+            <img id="logo" src="{{ url_for('static', filename='DALL.png') }}" alt="Logo">
+        
+            <div id="auth">
+                <input type="text" id="username" placeholder="Username">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="register()">Register</button>
+                <button onclick="login()">Login</button>
+            </div>
+
+            <hr>  <!-- Line separator -->
+            
+            <div id="game">
+                <input type="text" id="room_id" placeholder="Room ID">
+                <button onclick="createGame()">Create Game</button>
+                <button onclick="joinGame()">Join Game</button>
+            </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function register() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            var data = {'username': username, 'password': password};
+            console.log("Sending data: ", data);  // Log the data you're sending
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received data: ", data);  // Log the response data
+                alert(data.message);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert(error.error)
+            });
+        }
+
+        function login() {
+            var username = $('#username').val();
+            var password = $('#password').val();
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === 'Login successful') {
+                    // Redirect to a different page
+                    window.location.href = '/dashboard';
+                } else {
+                    // Handle login failure
+                    alert(data.error);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function createGame() {
+            var room_id = $('#room_id').val();
+            $.post('/create_game', {room_id: room_id}, function(data) {
+                alert(data.message);
+            });
+        }
+
+        function joinGame() {
+            var room_id = $('#room_id').val();
+            // Socket.IO logic for joining a game can go here
+        }
+    </script>
+</body>
+</html>
