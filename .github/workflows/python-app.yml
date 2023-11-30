@@ -28,7 +28,7 @@ jobs:
     # number in the cache key, and the "-0" suffix: this allows you to invalidate the cache
     # manually if/when you want to upgrade Poetry, or if something goes wrong. This could be
     # mildly cleaner by using an environment variable, but I don't really care.
-    - name: cache poetry install
+    - name: Cache poetry
       uses: actions/cache@v2
       with:
         path: ~/.local
@@ -51,7 +51,7 @@ jobs:
     # Cache your dependencies (i.e. all the stuff in your `pyproject.toml`). Note the cache
     # key: if you're using multiple Python versions, or multiple OSes, you'd need to include
     # them in the cache key. I'm not, so it can be simple and just depend on the poetry.lock.
-    - name: cache deps
+    - name: Cache dependencies
       id: cache-deps
       uses: actions/cache@v2
       with:
@@ -63,7 +63,8 @@ jobs:
     # ensures this only runs on a cache miss.
     - name: Install dependencies
       run: poetry install --no-interaction --no-root
-        if: steps.cache-deps.outputs.cache-hit != 'true'
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+    
     - name: Test with pytest
       run: |
         pytest
