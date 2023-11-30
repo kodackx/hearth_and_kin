@@ -21,6 +21,7 @@ from narrator import send_audio
 from imagery import generate_image
 from imagery import obtain_image_from_url
 import random
+import bcrypt
 
 #read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
@@ -69,13 +70,14 @@ def register():
     print('[REGISTER] Received data:' + str(data))
     username = data.get('username')
     password = data.get('password')
-    
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
     if User.query.filter_by(username=username).first() is not None:
         print('[REGISTER] user already exists')
         return jsonify({'error': 'Username already exists. Please try a different one.'}), 400
         # return jsonify({'message': 'Username already exists'}), 400
     
-    user = User(username=username, password=password)
+    user = User(username=username, password=hashed_password)
     db.session.add(user)
     db.session.commit()
     
@@ -87,11 +89,10 @@ def login():
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    user = User.query.filter_by(username=username, password=password).first()
-    if user is not None:
+    user = User.query.filter_by(username=username).first()
+    if user is not None and bcrypt.checkpw(password.encode('utf-8'), user.password):
         session['username'] = username
         return jsonify({'message': 'Login successful'}), 200
-    
     return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/dashboard')
