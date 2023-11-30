@@ -32,3 +32,29 @@ The application uses the following environment variables:
 - OPENAI_API_KEY: The API key for OpenAI.
 - ELEVENLABS_API_KEY: The API key for ElevenLabs.
 - ELEVENLABS_VOICE_ID: The voice ID for ElevenLabs.
+
+## Development
+
+Install [pyenv](https://github.com/pyenv/pyenv). When you enter the directory, it will recognize which python version should be used (`.python-version file`) and use it automatically.
+
+```bash
+cd hearth_and_kin
+```
+
+Connect poetry to the proper version of python
+
+```bash
+poetry env use $(which python)
+```
+
+Install dependencies locally
+
+```bash
+poetry install
+```
+
+Run tests (pytest)
+
+```bash
+make test
+```
