@@ -1,2 +1,5 @@
 .env
 static/ambiance.m4a
+.pyc
+.pytest_cache
+__pycache__

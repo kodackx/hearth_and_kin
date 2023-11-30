@@ -1,4 +1,5 @@
-# Flask Application
+# Hearth and Kin
+[![Hearth and Kin](https://github.com/kodackx/hearth_and_kin/actions/workflows/build.yml/badge.svg)](https://github.com/kodackx/hearth_and_kin/actions/workflows/build.yml)
 
 This is a Flask application that uses several libraries and APIs to provide a chat interface with various features.
 
@@ -56,5 +57,11 @@ poetry install
 Run tests (pytest)
 
 ```bash
-make test
+poetry run pytest
+```
+
+Run app
+
+```bash
+poetry run python flaskapp.py
 ```
