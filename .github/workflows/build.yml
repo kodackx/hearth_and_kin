@@ -2,7 +2,8 @@ name: Hearth and Kin
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - '*'
   pull_request:
     branches: [ "master" ]
 
@@ -30,6 +31,7 @@ jobs:
       with:
         path: ~/.local
         key: poetry-1.2.2-0
+
     - uses: snok/install-poetry@v1
       with:
         version: 1.2.2
