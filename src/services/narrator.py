@@ -1,10 +1,8 @@
 import os
 import base64
-import json
-import time
+
 # import simpleaudio as sa
-import errno
-from elevenlabs import generate, play, set_api_key, voices
+from elevenlabs import generate, set_api_key
 import base64
 
 # client = OpenAI()
@@ -12,9 +10,10 @@ import base64
 # Obtain your API key from elevenlabs.ai
 # Using .env file to store API key
 from dotenv import load_dotenv
+
 load_dotenv('.env')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-set_api_key(os.environ.get("ELEVENLABS_API_KEY"))
+set_api_key(os.environ.get('ELEVENLABS_API_KEY'))
 # also read elevenlabs voice id from .env file
 ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 
@@ -32,26 +31,27 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 
 
 def obtain_audio(text):
-    audio = generate(text, voice=os.environ.get("ELEVENLABS_VOICE_ID"))
+    audio = generate(text, voice=os.environ.get('ELEVENLABS_VOICE_ID'))
 
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8").rstrip("=")
-    dir_path = os.path.join("data", "narration", unique_id)
+    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+    dir_path = os.path.join('data', 'narration', unique_id)
     os.makedirs(dir_path, exist_ok=True)
-    file_path = os.path.join(dir_path, "audio.wav")
+    file_path = os.path.join(dir_path, 'audio.wav')
 
-    with open(file_path, "wb") as f:
+    with open(file_path, 'wb') as f:
         f.write(audio)
 
     return file_path
     # play(audio)
-    
+
+
 def send_audio(audio_path):
-    with open(audio_path, "rb") as audio_file:
+    with open(audio_path, 'rb') as audio_file:
         encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
         # save to local file for debugging
         with open('./data/audio.txt', 'w') as f:
             f.write(encoded_string)
-        
+
     return encoded_string
 
 
@@ -94,25 +94,25 @@ def send_audio(audio_path):
 #     script = []
 
 #     while True:
-        # path to your image
-        # image_path = os.path.join(os.getcwd(), "./frames/frame.jpg")
+# path to your image
+# image_path = os.path.join(os.getcwd(), "./frames/frame.jpg")
 
-        # # getting the base64 encoding
-        # base64_image = encode_image(image_path)
+# # getting the base64 encoding
+# base64_image = encode_image(image_path)
 
-        # # analyze posture
-        # print("👀 David is watching...")
-        # analysis = analyze_image(base64_image, script=script)
+# # analyze posture
+# print("👀 David is watching...")
+# analysis = analyze_image(base64_image, script=script)
 
-        # print("🎙️ David says:")
-        # print(analysis)
+# print("🎙️ David says:")
+# print(analysis)
 
-        # play_audio(analysis)
+# play_audio(analysis)
 
-        # script = script + [{"role": "assistant", "content": analysis}]
+# script = script + [{"role": "assistant", "content": analysis}]
 
-        # wait for 5 seconds
-        # time.sleep(5)
+# wait for 5 seconds
+# time.sleep(5)
 
 
 # if __name__ == "__main__":

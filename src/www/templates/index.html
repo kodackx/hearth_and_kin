@@ -92,7 +92,7 @@
             var password = document.getElementById('password').value;
             var data = {'username': username, 'password': password};
             console.log("Sending data: ", data);  // Log the data you're sending
-            fetch('/register', {
+            fetch('/user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

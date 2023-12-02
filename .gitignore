@@ -3,3 +3,5 @@ static/ambiance.m4a
 .pyc
 .pytest_cache
 __pycache__
+.ruff_cache
+.vscode
