@@ -19,6 +19,9 @@ python-dotenv = "^1.0.0"
 pillow = "^10.1.0"
 pytest = "^7.4.3"
 langchain = "^0.0.343"
+fastapi = "^0.104.1"
+uvicorn = "^0.24.0.post1"
+python-socketio = "^5.10.0"
 
 
 [build-system]
