@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request, Response, status
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from pydantic import BaseModel
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.utilities.dalle_image_generator import DallEAPIWrapper
@@ -14,14 +13,19 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
-from narrator import obtain_audio
-from narrator import send_audio
-from imagery import generate_image
-from imagery import obtain_image_from_url
+from .services import narrator, imagery
+from .core.database import create_db_and_tables, engine
+from .models.main import (
+    User,
+    CreateGameRequest,
+    NewStoryRequest,
+    MessageRequest
+)
 import random
 import bcrypt
 import requests
 import os
+from .core.config import logger
 
 #read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
@@ -31,21 +35,8 @@ ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory=Path("static")), name="static")
+app.mount("/static", StaticFiles(directory=Path("src/www/static")), name="static")
 # Define your database models here
-
-class User(BaseModel):
-    username: str
-    password: str
-
-class CreateGameRequest(BaseModel):
-    room_id: str
-
-class NewStoryRequest(BaseModel):
-    keywords: str
-
-class MessageRequest(BaseModel):
-    message: str
 
 # Define your database connection and setup here
 
@@ -53,12 +44,17 @@ class MessageRequest(BaseModel):
 users = {}  # {username: password}
 game_rooms = {}  # {room_id: {players: [], ...}}
 
+@app.router.on_startup.append
+async def on_startup():
+    create_db_and_tables()
+
 @app.get("/")
 async def home(request: Request):
-    return Response(content=open("templates/index.html", "r").read(), media_type="text/html")
+    return Response(content=open("src/www/templates/index.html", "r").read(), media_type="text/html")
 
 @app.post('/register')
 async def register(user: User, response: Response):
+    logger.debug('REGISTER: {user = }')
     if user.username in users:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {'error': 'Username already exists. Please try a different one.'}
@@ -70,6 +66,7 @@ async def register(user: User, response: Response):
 
 @app.post('/login')
 async def login(user: User, response: Response):
+    logger.debug('LOGIN: {user = }')
     # TODO: refactor
     try:
         if bcrypt.checkpw(user.password.encode('utf-8'), users[user.username]):
@@ -113,6 +110,7 @@ def handle_join_game(data):
 @app.post('/new_story')
 def new_story(request_data: NewStoryRequest, response: Response):
     keywords = request_data.keywords
+    logger.debug('NEW_STORY: {keywords = }')
     # Randomize user stats for the beginning
     stats = {
         'STR': random.randint(1, 5),
@@ -200,25 +198,25 @@ chat_llm_chain = LLMChain(
 
 def gpt_narrator(input: str, chain):
     message_and_character_data = input + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
-    print('[GPT Narrator] Input is: ' + message_and_character_data)
+    logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)
-    print('[GPT Narrator] Output is: ' + output)
+    logger.debug('[GPT Narrator] {output = }')
     return output
 
 @app.post('/message')
 def message_received(request_data: MessageRequest, response: Response):
     message = request_data.message
-    print('[MESSAGE] Received user message:', message)
+    logger.debug('[MESSAGE] {message = }')
     # Will send to openai and obtain reply
     narrator_reply = requests.post('http://openai-api-url', json={'input': message}).json()
     # Will send to narrator and obtain audio
-    audio_path = obtain_audio(narrator_reply)
-    narrator_audio = send_audio(audio_path)
+    audio_path = narrator.obtain_audio(narrator_reply)
+    narrator_audio = narrator.send_audio(audio_path)
     # Will send to dalle3 and obtain image
-    background_path = generate_image(narrator_reply)
-    print('[MESSAGE] Background path is:', background_path)
-    background_image = obtain_image_from_url(background_path)
-    print('[MESSAGE] Background image is:', background_image)
+    background_path = imagery.generate_image(narrator_reply)
+    logger.debug('[MESSAGE] {background_path = }')
+    background_image = imagery.obtain_image_from_url(background_path)
+    logger.debug('[MESSAGE] {background_image = }')
     # Will send to user
     # TODO: Replace socketio.emit with the appropriate method to send data to the client
     # socketio.emit('new_message', {'message': 'Openai reply: '})

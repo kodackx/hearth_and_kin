@@ -35,7 +35,7 @@ def obtain_audio(text):
     audio = generate(text, voice=os.environ.get("ELEVENLABS_VOICE_ID"))
 
     unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8").rstrip("=")
-    dir_path = os.path.join("narration", unique_id)
+    dir_path = os.path.join("data", "narration", unique_id)
     os.makedirs(dir_path, exist_ok=True)
     file_path = os.path.join(dir_path, "audio.wav")
 
@@ -49,7 +49,7 @@ def send_audio(audio_path):
     with open(audio_path, "rb") as audio_file:
         encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
         # save to local file for debugging
-        with open('audio.txt', 'w') as f:
+        with open('./data/audio.txt', 'w') as f:
             f.write(encoded_string)
         
     return encoded_string

@@ -16,10 +16,10 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
-from narrator import obtain_audio
-from narrator import send_audio
-from imagery import generate_image
-from imagery import obtain_image_from_url
+from src.services.narrator import obtain_audio
+from src.services.narrator import send_audio
+from src.services.imagery import generate_image
+from src.services.imagery import obtain_image_from_url
 import random
 import bcrypt
 

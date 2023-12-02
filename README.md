@@ -64,5 +64,5 @@ poetry run pytest
 Run app
 
 ```bash
-poetry run python flaskapp.py
+poetry run uvicorn src.main:app --reload
 ```

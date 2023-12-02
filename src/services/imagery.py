@@ -46,7 +46,7 @@ def obtain_image_from_url(image_url):
     img = Image.open(BytesIO(response.content))
     # define path to save image
     unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode("utf-8").rstrip("=")
-    dir_path = os.path.join("static")
+    dir_path = os.path.join("www", "static")
     os.makedirs(dir_path, exist_ok=True)
     filename = unique_id + ".jpg"
     file_path = os.path.join(dir_path, filename)
