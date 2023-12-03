@@ -1,119 +1,87 @@
-import os
-import base64
+from langchain.chains import LLMChain
+from langchain.memory import ConversationBufferMemory
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    MessagesPlaceholder,
+)
+from langchain.schema import SystemMessage
+from ..core.config import logger
+################
+# OpenAI stuff #
+################
+# """Generates a story based on the input string.
+#     Args:
+#         input (str): The input string to use as the story seed.
+#         max_length (int, optional): The maximum number of tokens to generate. Defaults to 50.
+#         temperature (float, optional): The temperature to use for generation. Defaults to 0.7.
+#     Returns:
+#         str: The generated story.
+#     """
 
-# import simpleaudio as sa
-from elevenlabs import generate, set_api_key
-import base64
+prompt_narrator = """
+You are the Narrator for Hearth and Kin, a game inspired from Dungeons and Dragons.
+You must guide the adventurers (users) through a story in the style of a tabletop roleplaying game. 
+The adventurers will be able to make choices that affect the story, and you must react to their choices 
+in a way that makes sense for the story. 
+    
+Please describe in detail the locations, characters, and events that the adventurers encounter. 
 
-# client = OpenAI()
+Always take into account the following variables:
+- The adventurers' current location
+- The adventurers' current goal
+- The adventurers' current state, stats and skills as well as equipment
+- The adventurers' current relationships with other characters
+- The adventurers' current character sheet data
 
-# Obtain your API key from elevenlabs.ai
-# Using .env file to store API key
-from dotenv import load_dotenv
+Story so far:
+{chat_history}
+User input: {input}
 
-load_dotenv('.env')
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-set_api_key(os.environ.get('ELEVENLABS_API_KEY'))
-# also read elevenlabs voice id from .env file
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
+"""
+# parsed_system_prompt = prompt_narrator.format(character_data=character_data, location=location, goal=goal)
+parsed_system_prompt = prompt_narrator
 
-# def encode_image(image_path):
-#     while True:
-#         try:
-#             with open(image_path, "rb") as image_file:
-#                 return base64.b64encode(image_file.read()).decode("utf-8")
-#         except IOError as e:
-#             if e.errno != errno.EACCES:
-#                 # Not a "file in use" error, re-raise
-#                 raise
-#             # File is being written to, wait a bit and retry
-#             time.sleep(0.1)
+prompt = ChatPromptTemplate.from_messages(
+    [
+        SystemMessage(content=parsed_system_prompt),  # The persistent system prompt
+        MessagesPlaceholder(variable_name='chat_history'),  # Where the memory will be stored.
+        HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
+    ]
+)
+# print('Prompt is: ' + str(prompt))
 
+memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-def obtain_audio(text):
-    audio = generate(text, voice=os.environ.get('ELEVENLABS_VOICE_ID'))
-
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    dir_path = os.path.join('data', 'narration', unique_id)
-    os.makedirs(dir_path, exist_ok=True)
-    file_path = os.path.join(dir_path, 'audio.wav')
-
-    with open(file_path, 'wb') as f:
-        f.write(audio)
-
-    return file_path
-    # play(audio)
-
-
-def send_audio(audio_path):
-    with open(audio_path, 'rb') as audio_file:
-        encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
-        # save to local file for debugging
-        with open('./data/audio.txt', 'w') as f:
-            f.write(encoded_string)
-
-    return encoded_string
-
-
-# def generate_new_line(base64_image):
-#     return [
-#         {
-#             "role": "user",
-#             "content": [
-#                 {"type": "text", "text": "Describe this image"},
-#                 {
-#                     "type": "image_url",
-#                     "image_url": f"data:image/jpeg;base64,{base64_image}",
-#                 },
-#             ],
-#         },
-#     ]
+llm = ChatOpenAI(
+    model_name='gpt-4',
+    # max_tokens=max_length,
+    temperature=0.5,
+)
+chat_llm_chain = LLMChain(
+    llm=llm,
+    prompt=prompt,
+    verbose=True,
+    memory=memory,
+)
 
 
-# def analyze_image(base64_image, script):
-#     response = client.chat.completions.create(
-#         model="gpt-4-vision-preview",
-#         messages=[
-#             {
-#                 "role": "system",
-#                 "content": """
-#                 You are Sir David Attenborough. Narrate the picture of the human as if it is a nature documentary.
-#                 Make it snarky and funny. Don't repeat yourself. Make it short. If I do anything remotely interesting, make a big deal about it!
-#                 """,
-#             },
-#         ]
-#         + script
-#         + generate_new_line(base64_image),
-#         max_tokens=500,
-#     )
-#     response_text = response.choices[0].message.content
-#     return response_text
-
-
-# def obtain_voice():
-#     script = []
-
-#     while True:
-# path to your image
-# image_path = os.path.join(os.getcwd(), "./frames/frame.jpg")
-
-# # getting the base64 encoding
-# base64_image = encode_image(image_path)
-
-# # analyze posture
-# print("👀 David is watching...")
-# analysis = analyze_image(base64_image, script=script)
-
-# print("🎙️ David says:")
-# print(analysis)
-
-# play_audio(analysis)
-
-# script = script + [{"role": "assistant", "content": analysis}]
-
-# wait for 5 seconds
-# time.sleep(5)
-
-
-# if __name__ == "__main__":
-#     main()
+def gpt_narrator(input: str, chain):
+    # TODO: get the session stuff from the db
+    message_and_character_data = (
+        input
+        + '(Character Data: '
+        # + session.get('character_data')
+        + ')'
+        + '(Location: '
+        # + session.get('location')
+        + ')'
+        + '(Current Goal: '
+        # + session.get('goal')
+        + ')'
+    )
+    logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
+    output = chain.predict(input=message_and_character_data)
+    logger.debug(f'[GPT Narrator] {output = }')
+    return output

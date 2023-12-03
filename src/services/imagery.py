@@ -3,7 +3,6 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from langchain.utilities.dalle_image_generator import DallEAPIWrapper
 import requests
 from PIL import Image
 from io import BytesIO
