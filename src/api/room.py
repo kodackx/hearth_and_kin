@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, status
-from ..core.database import Session, engine
+from sqlmodel import Session
+from ..core.database import engine
 from ..models.room import Room, RoomCreate, RoomRead
 
 router = APIRouter()

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, status
-from ..core.database import Session, engine
+from ..core.database import engine
+from sqlmodel import Session
 from ..models.character import Character, CharacterCreate, CharacterRead
 
 router = APIRouter()

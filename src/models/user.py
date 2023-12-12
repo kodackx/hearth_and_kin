@@ -4,7 +4,7 @@ from typing import Optional
 
 class UserCreate(Model):
     username: str = Field(min_length=1, max_length=50, primary_key=True)
-    password: str = Field()
+    password: str = Field(min_length=1)
 
     # @validator('password')
     # def hash_password(cls, v):
@@ -16,7 +16,7 @@ class UserCreate(Model):
 
 class UserLogin(UserCreate):
     username: str = Field(min_length=1, max_length=50)
-    password: str = Field()
+    password: str = Field(min_length=1)
 
 
 class User(UserCreate, table=True):

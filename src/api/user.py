@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Response, status
-from ..core.database import Session, engine
-from ..models.user import UserCreate, User, UserLogin
-from ..core.config import logger
+from sqlmodel import Session
+from src.core.database import engine
+from src.models.user import UserCreate, User, UserLogin
+from src.core.config import logger
 
 router = APIRouter()
 
@@ -28,7 +29,8 @@ async def create_user(user: UserCreate, response: Response):
 async def login(user: UserLogin, response: Response):
     with Session(engine) as session:
         db_user = session.get(User, user.username)
-        print(user.password.encode()[8:], db_user.password.encode()[8:])
+        if db_user is not None:
+            logger.debug('%s, %s', user.password.encode()[8:], db_user.password.encode()[8:])
         if (
             db_user is not None and user.password == db_user.password
         ):  # checkpw(user.password.encode()[8:], db_user.password.encode()[8:]):

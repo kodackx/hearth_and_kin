@@ -2,7 +2,8 @@ from fastapi import APIRouter, Response, status
 from ..models.message import MessageRead, Message, MessageBase
 from ..core.config import logger
 from ..services import audio, imagery
-from ..core.database import Session, engine
+from ..core.database import engine
+from sqlmodel import Session
 import requests
 
 router = APIRouter()
