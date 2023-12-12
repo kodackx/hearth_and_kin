@@ -1,7 +1,7 @@
 import pytest
 from src.main import app
 from fastapi.testclient import TestClient
-from src.models.user import User, UserLogin
+from src.models.user import User, UserBase
 from unittest.mock import patch
 from src.api.user import login
 from fastapi import Response
@@ -21,7 +21,7 @@ client = TestClient(app)
 )
 def test_login_model(user_input):
     with pytest.raises(ValidationError):
-        UserLogin(**user_input)
+        UserBase(**user_input)
 
 
 @pytest.mark.parametrize(
@@ -33,7 +33,7 @@ def test_login_model(user_input):
 )
 @pytest.mark.asyncio
 async def test_login_logic(user_input, expected_status):
-    test_input = UserLogin(**user_input)
+    test_input = UserBase(**user_input)
     mock_db_response = User(username='user', password='pass')
     response = Response()
 
