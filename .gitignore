@@ -5,4 +5,4 @@ static/ambiance.m4a
 __pycache__
 .ruff_cache
 .vscode
-.*db
+*.db
