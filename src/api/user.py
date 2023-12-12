@@ -1,3 +1,4 @@
+from bcrypt import checkpw, gensalt, hashpw
 from fastapi import APIRouter, Response, status
 from sqlmodel import Session
 from src.core.database import engine
@@ -16,7 +17,9 @@ async def create_user(user: UserCreate, response: Response):
             response.status_code = status.HTTP_400_BAD_REQUEST
             return {'error': 'Username already exists. Please try a different one.'}
 
-        new_user = User.from_orm(user)
+        new_user = User(
+            username=user.username, password=hashpw(user.password.encode('utf-8'), gensalt()).decode('utf-8')
+        )
         logger.debug(new_user)
         session.add(new_user)
         session.commit()
@@ -29,11 +32,7 @@ async def create_user(user: UserCreate, response: Response):
 async def login(user: UserLogin, response: Response):
     with Session(engine) as session:
         db_user = session.get(User, user.username)
-        if db_user is not None:
-            logger.debug('%s, %s', user.password.encode()[8:], db_user.password.encode()[8:])
-        if (
-            db_user is not None and user.password == db_user.password
-        ):  # checkpw(user.password.encode()[8:], db_user.password.encode()[8:]):
+        if db_user is not None and checkpw(user.password.encode(), db_user.password.encode()):
             response.status_code = status.HTTP_200_OK
             return {'message': 'Login successful'}
 
