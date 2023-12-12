@@ -1,18 +1,19 @@
+from bcrypt import gensalt, hashpw
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
+from pydantic import validator
 
 
-class UserCreate(Model):
+class UserBase(Model):
     username: str = Field(min_length=1, max_length=50, primary_key=True)
     password: str = Field(min_length=1)
 
 
-class UserLogin(Model):
-    username: str = Field(min_length=1, max_length=50, primary_key=True)
-    password: str = Field(min_length=1)
+class User(UserBase, table=True):
+    @validator('password')
+    def hash_password(cls, v: str):
+        return hashpw(v.encode(), gensalt()).decode()
 
-
-class User(UserCreate, table=True):
     is_in_room: bool = Field(default=False, nullable=False)
     is_in_game: bool = Field(default=False, nullable=False)
     game_id: Optional[int] = Field(nullable=True, default=None, foreign_key='game.game_id')

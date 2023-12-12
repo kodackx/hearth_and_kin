@@ -1,7 +1,7 @@
 import pytest
 from src.main import app
 from fastapi.testclient import TestClient
-from src.models.user import User, UserCreate
+from src.models.user import User, UserBase
 from unittest.mock import patch
 from src.api.user import create_user
 from fastapi import Response
@@ -21,12 +21,12 @@ client = TestClient(app)
 )
 def test_create_user_model(user_input):
     with pytest.raises(ValidationError):
-        UserCreate(**user_input)
+        UserBase(**user_input)
 
 
 @pytest.mark.asyncio
 async def test_create_user_logic_success():
-    test_input = UserCreate(username='user', password='password')
+    test_input = UserBase(username='user', password='password')
     response = Response()
 
     with patch('src.api.user.Session') as mock_session:
@@ -42,7 +42,7 @@ async def test_create_user_logic_success():
 
 @pytest.mark.asyncio
 async def test_create_user_logic_fail():
-    test_input = UserCreate(username='user', password='password')
+    test_input = UserBase(username='user', password='password')
     response = Response()
 
     with patch('src.api.user.Session') as mock_session:
