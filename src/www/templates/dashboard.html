@@ -97,22 +97,22 @@
         for (let i = 1; i <= 3; i++) {
             console.log('box' + i)
             document.getElementById('box' + i).addEventListener('click', function() {
-                var keywords = prompt('Describe your character in a few words. Mention race, class, and any other important details.');
-                if (keywords) {
-                    fetch('/new_story', {
+                var description = prompt('Describe your character in a few words. Mention race, class, and any other important details.');
+                if (description) {
+                    fetch('/game', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            keywords: keywords,
+                            description: description,
                         }),
                     })
                     .then(response => response.json())
                     .then(data => {
                         // Handle the response
                         // alert(data.message)
-                        if (confirm(data.message)) {
+                        if (confirm(data.description)) {
                             window.location.href = '/story';
                         }
                     })

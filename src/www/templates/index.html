@@ -79,10 +79,10 @@
 
             <hr>  <!-- Line separator -->
             
-            <div id="game">
+            <div id="room">
                 <input type="text" id="room_id" placeholder="Room ID">
-                <button onclick="createGame()">Create Game</button>
-                <button onclick="joinGame()">Join Game</button>
+                <button onclick="createRoom()">Create Room</button>
+                <button onclick="joinRoom()">Join Room</button>
             </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -92,7 +92,7 @@
             var password = document.getElementById('password').value;
             var data = {'username': username, 'password': password};
             console.log("Sending data: ", data);  // Log the data you're sending
-            fetch('/register', {
+            fetch('/user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -143,14 +143,14 @@
             });
         }
 
-        function createGame() {
+        function createRoom() {
             var room_id = $('#room_id').val();
-            $.post('/create_game', {room_id: room_id}, function(data) {
+            $.post('/room', {room_id: room_id}, function(data) {
                 alert(data.message);
             });
         }
 
-        function joinGame() {
+        function joinRoom() {
             var room_id = $('#room_id').val();
             // Socket.IO logic for joining a game can go here
         }
