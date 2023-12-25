@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Response, status
-from ..models.message import MessageRead, Message, MessageBase
-from ..core.config import logger
-from ..services import audio, imagery
-from ..core.database import engine
-from sqlmodel import Session
 import requests
+from fastapi import APIRouter, Response, status
+from sqlmodel import Session
+
+from ..core.config import logger
+from ..core.database import engine
+from ..models.message import Message, MessageBase, MessageRead
+from ..services import audio, imagery
 
 router = APIRouter()
 
 
 @router.post('/message', response_model=MessageRead)
-def generate_message(message: MessageBase, response: Response):
+async def generate_message(message: MessageBase, response: Response):
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     logger.debug(f'[MESSAGE] {message.message = }')
     # Will send to openai and obtain reply

@@ -1,13 +1,14 @@
-from fastapi import FastAPI, Request, Response
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-
-from .core.database import create_db_and_tables
 import os
-from .api import user, room, game, character, message
+from pathlib import Path
 
 # read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
+from fastapi import FastAPI, Request, Response
+from fastapi.staticfiles import StaticFiles
+
+from .api import character, game, message, room, user
+from .core.database import create_db_and_tables
+from .core.mongodb import setup_mongodb
 
 load_dotenv('.env')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -16,11 +17,12 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 
 app = FastAPI()
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
-
+mongo_db = setup_mongodb()
 
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
+    
 
 
 @app.get('/')
@@ -58,3 +60,7 @@ def handle_join_game(data):
     game_rooms[room_id]['players'].append(username)
     socketio.emit('player_joined', {'username': username}, room=room_id)
 """
+if __name__ == '__main__':
+    import httpx
+    
+    httpx.post('/message', 'test')

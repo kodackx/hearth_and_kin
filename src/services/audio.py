@@ -1,21 +1,23 @@
-import os
 import base64
+import os
 
-# import simpleaudio as sa
-from elevenlabs import generate, set_api_key
+import motor.motor_asyncio
 
 # client = OpenAI()
-
 # Obtain your API key from elevenlabs.ai
 # Using .env file to store API key
 from dotenv import load_dotenv
+
+# import simpleaudio as sa
+from elevenlabs import generate, set_api_key
 
 load_dotenv('.env')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
 set_api_key(os.environ.get('ELEVENLABS_API_KEY'))
 # also read elevenlabs voice id from .env file
 ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-
+client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
+db = client["test"]
 # def encode_image(image_path):
 #     while True:
 #         try:
@@ -43,15 +45,18 @@ def obtain_audio(text):
     return file_path
     # play(audio)
 
-
-def send_audio(audio_path):
+async def store_audio(audio_path: str) -> str:
     with open(audio_path, 'rb') as audio_file:
         encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
         # save to local file for debugging
         with open('./data/audio.txt', 'w') as f:
             f.write(encoded_string)
-
+        collection = db.get_collection("audio")
+        await collection.insert_one(
+            encoded_string
+        )
     return encoded_string
+
 
 
 # def generate_new_line(base64_image):
