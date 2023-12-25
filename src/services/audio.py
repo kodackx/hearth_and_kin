@@ -58,6 +58,7 @@ async def store_audio(audio_id: str, audio_path: str):
         await collection.insert_one({'audio_id': audio_id, 'audio_data': encoded_string})
 
 
+
 # def generate_new_line(base64_image):
 #     return [
 #         {

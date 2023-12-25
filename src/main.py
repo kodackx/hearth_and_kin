@@ -23,6 +23,7 @@ mongo_db = setup_mongodb()
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
+    
 
 
 @app.get('/')
