@@ -57,7 +57,7 @@ body {
 }
 
 #story-image {
-    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    /* background-image: url("static/login1.png"); */
     flex: 80%;
     animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
     transition: background 5s ease-in-out;
@@ -120,7 +120,7 @@ body {
 }
 
 #chat-container {
-    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    /* background-image: url("static/login1.png");*/
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -186,10 +186,10 @@ body {
             You can also press the Enter key to send a message.
             Suggestion: You can type 'I open my eyes' or 'Describe the world, its lore and my character'.
         `);
-        var imageUrl = "{{ url_for('static', filename='login1.png') }}";
-        changeBackgroundImage(imageUrl);
-        var ambiance = "{{ url_for('static', filename='ambiance.m4a') }}";
-        let audio = new Audio(ambiance);
+        var imagePath = "static/login1.png";
+        changeBackgroundImage(imagePath);
+        var ambianceAudioPath = "static/ambiance.m4a";
+        let audio = new Audio(ambianceAudioPath);
         audio.volume = 0.5; // 50% volume
         audio.play();
     });
@@ -211,7 +211,7 @@ body {
         document.getElementById('message-input').value = '';
         // Show the spinner
         document.getElementById('spinner').style.display = 'block';
-        // changeBackgroundImage(imageUrl);
+        // changeBackgroundImage(imagePath);
 
         // const loadingMessageId = appendMessage('Narrator is thinking...');
 

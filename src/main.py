@@ -19,10 +19,10 @@ app = FastAPI()
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
 mongo_db = setup_mongodb()
 
+
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
-    
 
 
 @app.get('/')
@@ -61,6 +61,4 @@ def handle_join_game(data):
     socketio.emit('player_joined', {'username': username}, room=room_id)
 """
 if __name__ == '__main__':
-    import httpx
-    
-    httpx.post('/message', 'test')
+    pass
