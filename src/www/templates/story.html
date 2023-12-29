@@ -224,7 +224,12 @@ body {
                 message: message,
             }),
         })
-        .then(response => response.json())
+        .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
         .then(data => {
             // Remove the loading message
             // removeMessage(loadingMessageId);
@@ -282,6 +287,7 @@ body {
         .catch((error) => {
             console.error('Error:', error);
             document.getElementById('spinner').style.display = 'none';
+            alert(error.error);
         });
     });
 
