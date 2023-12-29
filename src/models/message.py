@@ -12,8 +12,8 @@ class MessageCreate(MessageBase):
 
 class MessageRead(MessageBase):
     message_id: int
-    audio: str
-    image: str
+    audio_path: Optional[str]
+    image_path: Optional[str]
     narrator_reply: str
 
 

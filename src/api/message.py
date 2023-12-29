@@ -10,7 +10,7 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from sqlmodel import Session
 
-from ..core.config import logger
+from ..core.config import logger, GENERATE_IMAGE, GENERATE_AUDIO
 from ..core.database import engine
 from ..models.message import Message, MessageBase
 from ..services import audio, imagery
@@ -29,7 +29,7 @@ router = APIRouter()
 #         str: The generated story.
 #     """
 
-prompt_narrator = '''
+prompt_narrator = """
 You are the Narrator for Hearth and Kin, a game inspired from Dungeons and Dragons.
 You must guide the adventurers (users) through a story in the style of a tabletop roleplaying game. 
 The adventurers will be able to make choices that affect the story, and you must react to their choices 
@@ -48,38 +48,36 @@ Story so far:
 {chat_history}
 User input: {input}
 
-'''
+"""
 # parsed_system_prompt = prompt_narrator.format(character_data=character_data, location=location, goal=goal)
 parsed_system_prompt = prompt_narrator
 
 prompt = ChatPromptTemplate.from_messages(
     [
-        SystemMessage(
-            content=parsed_system_prompt
-        ),  # The persistent system prompt
-        MessagesPlaceholder(
-            variable_name="chat_history"
-        ),  # Where the memory will be stored.
-        HumanMessagePromptTemplate.from_template(
-            "{input}"
-        ),  # Where the human input will injected
+        SystemMessage(content=parsed_system_prompt),  # The persistent system prompt
+        MessagesPlaceholder(variable_name='chat_history'),  # Where the memory will be stored.
+        HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
 # print('Prompt is: ' + str(prompt))
 
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-llm = ChatOpenAI(model_name="gpt-4", 
-                # max_tokens=max_length, 
-                    temperature=0.5)
+llm = ChatOpenAI(
+    model_name='gpt-4',
+    # max_tokens=max_length,
+    temperature=0.5,
+)
 chat_llm_chain = LLMChain(
     llm=llm,
     prompt=prompt,
     verbose=True,
     memory=memory,
 )
+
+
 def gpt_narrator(input: str, chain: LLMChain) -> str:
-    message_and_character_data = input #TODO: get this from db + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
+    message_and_character_data = input  # TODO: get this from db + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
     print('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)
     print('[GPT Narrator] Output is: ' + output)
@@ -89,18 +87,20 @@ def gpt_narrator(input: str, chain: LLMChain) -> str:
 @router.post('/message')
 async def generate_message(message: MessageBase, response: Response):
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
+    audio_id = audio_path = background_path = background_image = None
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
         # Will send to openai and obtain reply
         narrator_reply = gpt_narrator(input=message.message, chain=chat_llm_chain)
-        # Will send to narrator and obtain audio
-        audio_path = audio.obtain_audio(narrator_reply)
-        narrator_audio = audio.send_audio(audio_path)
-        # Will send to dalle3 and obtain image
-        background_path = imagery.generate_image(narrator_reply)
-        logger.debug(f'[MESSAGE] {background_path = }')
-        background_image = imagery.obtain_image_from_url(background_path)
-        logger.debug(f'[MESSAGE] {background_image = }')
+
+        if GENERATE_AUDIO:  # Will send to narrator and obtain audio
+            audio_id, audio_path = audio.obtain_audio(narrator_reply)
+            _ = await audio.store_audio(audio_id, audio_path)
+            if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
+                background_path = imagery.generate_image(narrator_reply)
+                logger.debug(f'[MESSAGE] {background_path = }')
+                background_image = imagery.obtain_image_from_url(background_path)
+                logger.debug(f'[MESSAGE] {background_image = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -110,8 +110,9 @@ async def generate_message(message: MessageBase, response: Response):
     # socketio.emit('new_message', {'message': 'Openai reply: '})
     with Session(engine) as session:
         new_message = Message(
-            message=message.message, narrator_reply=narrator_reply, audio=narrator_audio, image=background_path
+            message=message.message, narrator_reply=narrator_reply, audio_path=audio_path, image_path=background_path
         )
+        logger.debug(f'{new_message = }')
         session.add(new_message)
         session.commit()
         session.refresh(new_message)

@@ -233,16 +233,16 @@ body {
         .then(data => {
             // Remove the loading message
             // removeMessage(loadingMessageId);
-            if (data.message.includes('Narrator:')) {
-                var formattedMessage = data.message.replace(/\n/g, '<br>');
-                console.log('Received successful reply :' + formattedMessage)
+            if (data.narrator_reply) {
+                var formattedMessage = data.narrator_reply.replace(/\n/g, '<br>');
+                console.log('Received successful reply: ' + formattedMessage)
                 document.getElementById('spinner').style.display = 'none';
                 // Split the formattedMessage into lines
                 var lines = formattedMessage.split('<br>');
                 var lineIndex = 0;
 
                 // Calculate the interval time
-                var intervalTime = 10000 / lines.length;
+                var intervalTime = 1 / lines.length;
 
                 // Set up the interval
                 var intervalId = setInterval(function() {
@@ -267,8 +267,8 @@ body {
             }
 
             // Handle the audio data
-            if (data.audio) {
-                base64ToBlob(data.audio, 'audio/wav')
+            if (data.audio_path) {
+                base64ToBlob(data.audio_path, 'audio/wav')
                     .then(audioBlob => {
                         let audioUrl = URL.createObjectURL(audioBlob);
                         let narration = new Audio(audioUrl);
@@ -278,8 +278,8 @@ body {
                     .catch(error => console.error('Error:', error));
             }
             // Assuming `data` is the response from the server
-            if (data.message && data.image) {
-                let imagePath = data.image; // The server path for the image
+            if (data.message && data.image_path) {
+                let imagePath = data.image_path; // The server path for the image
 
                 changeBackgroundImage(imagePath);
             }
