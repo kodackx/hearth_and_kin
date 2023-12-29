@@ -7,14 +7,14 @@ router = APIRouter()
 
 
 @router.post('/game')
-async def create_game(game: GameCreate, response: Response):
+async def create_game(game: GameCreate, response: Response) -> Game:
     with Session(engine) as session:
         new_game = Game.from_orm(game)
         session.add(new_game)
         session.commit()
         session.refresh(new_game)
         response.status_code = status.HTTP_201_CREATED
-        return {'message': 'Game created successfully'}
+        return new_game
 
 
 @router.get('/game/{game_id}', response_model=GameRead)

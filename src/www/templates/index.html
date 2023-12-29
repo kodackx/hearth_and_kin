@@ -68,7 +68,7 @@
             </style>
         </head>
         <body>
-            <img id="logo" src="static/DALL.png" alt="Logo">
+            <img id="logo" src="static/img/DALL.png" alt="Logo">
         
             <div id="auth">
                 <input type="text" id="username" placeholder="Username">
@@ -91,7 +91,6 @@
             var username = document.getElementById('username').value;
             var password = document.getElementById('password').value;
             var data = {'username': username, 'password': password};
-            console.log("Sending data: ", data);  // Log the data you're sending
             fetch('/user', {
                 method: 'POST',
                 headers: {
@@ -131,7 +130,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message === 'Login successful') {
-                    // Redirect to a different page
+                    localStorage.setItem('username', username);
                     window.location.href = '/dashboard';
                 } else {
                     // Handle login failure

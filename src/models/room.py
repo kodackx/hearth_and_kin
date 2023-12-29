@@ -5,11 +5,15 @@ class RoomBase(Model):
     room_id: int = Field(nullable=False, primary_key=True)
 
 
-class RoomCreate(RoomBase):
+class RoomUser(RoomBase):
+    username: str
+
+
+class RoomCreate(RoomUser):
     pass
 
 
-class RoomRead(RoomBase):
+class RoomRead(RoomCreate):
     users: list['User'] = Relationship(back_populates='room')  # noqa: F821
 
 

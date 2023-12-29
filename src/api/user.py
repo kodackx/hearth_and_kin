@@ -1,6 +1,6 @@
 from bcrypt import checkpw
 from fastapi import APIRouter, Response, status
-from sqlmodel import Session
+from sqlmodel import Session, select
 from src.core.database import engine
 from src.models.user import User, UserBase
 from src.core.config import logger
@@ -23,6 +23,16 @@ async def create_user(user: UserBase, response: Response):
         session.refresh(new_user)
         response.status_code = status.HTTP_201_CREATED
         return {'message': 'User registered successfully! Please log in now.'}
+
+
+@router.get('/user/{username}/room')
+async def get_user_room(username: str, response: Response):
+    with Session(engine) as session:
+        statement = select(User).where(User.username == username).where(User.is_in_room)
+        user = session.exec(statement).first()
+        if not user:
+            return
+        return user.room_id
 
 
 @router.post('/login')

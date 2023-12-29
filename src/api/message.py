@@ -12,10 +12,12 @@ from sqlmodel import Session
 
 from ..core.config import logger, GENERATE_IMAGE, GENERATE_AUDIO
 from ..core.database import engine
+from ..core.mongodb import setup_mongodb
 from ..models.message import Message, MessageBase
 from ..services import audio, imagery
 
 router = APIRouter()
+mongodb = setup_mongodb()
 
 ################
 # OpenAI stuff #
@@ -110,7 +112,12 @@ async def generate_message(message: MessageBase, response: Response):
     # socketio.emit('new_message', {'message': 'Openai reply: '})
     with Session(engine) as session:
         new_message = Message(
-            message=message.message, narrator_reply=narrator_reply, audio_path=audio_path, image_path=background_path
+            game_id=message.game_id,
+            username=message.username,
+            message=message.message,
+            narrator_reply=narrator_reply,
+            audio_path=audio_path,
+            image_path=background_path,
         )
         logger.debug(f'{new_message = }')
         session.add(new_message)

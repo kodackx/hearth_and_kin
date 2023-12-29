@@ -6,11 +6,11 @@ class GameBase(Model):
     room_id: int = Field(foreign_key='room.room_id')
 
 
-class GameCreate(Model):
+class GameCreate(GameBase):
     description: Optional[str]
 
 
-class GameRead(GameBase):
+class GameRead(GameCreate):
     game_id: int
 
 

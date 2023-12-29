@@ -120,7 +120,7 @@ body {
 }
 
 #chat-container {
-    /* background-image: url("static/login1.png");*/
+    /* background-image: url("static/img/login1.png");*/
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -175,6 +175,8 @@ body {
 </style>
 <script>
     // Start flow
+    const game_id = localStorage.getItem('game_id');
+    const username = localStorage.getItem('username');
     document.getElementById('main-content').style.display = 'none';
     document.getElementById('start-button').style.display = 'block';
 
@@ -186,7 +188,7 @@ body {
             You can also press the Enter key to send a message.
             Suggestion: You can type 'I open my eyes' or 'Describe the world, its lore and my character'.
         `);
-        var imagePath = "static/login1.png";
+        var imagePath = "static/img/login1.png";
         changeBackgroundImage(imagePath);
         var ambianceAudioPath = "static/ambiance.m4a";
         let audio = new Audio(ambianceAudioPath);
@@ -221,6 +223,8 @@ body {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                username: username,
+                game_id: game_id,
                 message: message,
             }),
         })

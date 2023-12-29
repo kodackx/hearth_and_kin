@@ -1,6 +1,6 @@
 import base64
 import os
-import motor.motor_asyncio
+from ..core.mongodb import setup_mongodb
 
 # client = OpenAI()
 # Obtain your API key from elevenlabs.ai
@@ -18,8 +18,7 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 assert ELEVENLABS_VOICE_ID is not None
 set_api_key(ELEVENLABS_API_KEY)
 
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ['MONGODB_URL'])
-db = client['test']
+mongodb = setup_mongodb()
 # def encode_image(image_path):
 #     while True:
 #         try:
@@ -55,7 +54,7 @@ async def store_audio(audio_id: str, audio_path: str):
         # save to local file for debugging
         with open('./data/audio.txt', 'w') as f:
             f.write(encoded_string)
-        collection = db.get_collection('audio')
+        collection = mongodb.get_collection('audio')
         await collection.insert_one({'audio_id': audio_id, 'audio_data': encoded_string})
 
 
