@@ -40,6 +40,7 @@ Install [pyenv](https://github.com/pyenv/pyenv). When you enter the directory, i
 
 ```bash
 cd hearth_and_kin
+pyenv install $(cat .python-version)
 ```
 
 Connect poetry to the proper version of python
@@ -51,7 +52,7 @@ poetry env use $(which python)
 Install dependencies locally
 
 ```bash
-poetry install
+poetry install --no-root
 ```
 
 Run tests (pytest)
@@ -63,5 +64,5 @@ poetry run pytest
 Run app
 
 ```bash
-poetry run python flaskapp.py
+poetry run uvicorn src.main:app --reload
 ```

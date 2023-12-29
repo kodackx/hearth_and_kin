@@ -2,7 +2,8 @@ name: Hearth and Kin
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - '*'
   pull_request:
     branches: [ "master" ]
 
@@ -18,13 +19,14 @@ jobs:
     - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.12"
+        python-version: "3.12.0"
     
     - name: Cache poetry
       uses: actions/cache@v2
       with:
         path: ~/.local
         key: poetry-1.2.2-0
+
     - uses: snok/install-poetry@v1
       with:
         version: 1.2.2
@@ -39,8 +41,12 @@ jobs:
         key: pydeps-${{ hashFiles('**/poetry.lock') }}
 
     - name: Install dependencies
-      run: poetry install --no-interaction --no-root
+      run: poetry install --no-interaction --no-root --with dev
       if: steps.cache-deps.outputs.cache-hit != 'true'
     
+    - name: Lint with Ruff  
+      run: | 
+        poetry run ruff format --target-version=py312 .
+
     - name: Test with pytest
       run: poetry run pytest
