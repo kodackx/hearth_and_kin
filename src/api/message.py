@@ -10,7 +10,6 @@ from ..models.message import Message, MessageBase, MessageRead
 from ..services import audio, imagery, narrator
 
 router = APIRouter()
-mongodb = setup_mongodb()
 
 
 @router.post('/message', response_model=MessageRead)
