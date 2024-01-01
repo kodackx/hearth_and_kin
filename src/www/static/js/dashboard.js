@@ -1,18 +1,26 @@
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
-
     fetch('/rooms', {
         method: 'GET',
     })
     .then(response => response.json())
     .then(rooms => {
 
+        // Draw created rooms
         rooms.forEach(room => {
             var box = boxes.find(box => box.boxId === room.room_id);
-            box.boxElement.style.backgroundColor = 'blue';
             box.roomId = room.room_id;
-            box.roomCreated = true;
+            console.log(room.creator);
+            // Join any previously joined room
+            // TODO: only draw joined if user is in room
+            if (username == room.creator) {
+                drawJoinedRoom(box);
+            } else {
+                drawCreatedRoom(box);
+            }
         });
+
+        
     })
     .catch((error) => {
         console.error('Error:', error);
@@ -20,8 +28,49 @@ function initializeDashboard(boxes) {
 
     // Add event listeners to the boxes
     boxes.forEach(box => {
-        box.boxElement.addEventListener('click', () => handleBoxClick(box));
+        // box.boxElement.addEventListener('click', createClickHandler(box));
+        box.boxElement.addEventListener('click', () => createRoom(box), { 'once': true});
     });
+}
+
+function createClickHandler(box) {
+    return function() {
+        createRoom(box);
+    };
+}
+
+function drawCreatedRoom(box) {
+    // refreshBox(box);
+    box.boxElement.style.backgroundColor = 'blue';
+    box.roomCreated = true;
+    box.creator = username;
+    box.roomId = box.boxId;
+    box.boxElement.querySelector('.box-footer').textContent = 'Join Room';
+    //box.boxElement.removeEventListener('click', createClickHandler(box));
+    box.boxElement.addEventListener('click', () => joinRoom(box), { 'once': true});
+}
+
+
+function drawJoinedRoom(box) {
+    box.boxElement.querySelector('.box-footer').textContent = undefined;
+    box.boxElement.style.backgroundColor = 'green';
+    createButtons(box);
+}
+
+function drawLeftRoom(box) {
+    box.boxElement.style.backgroundColor = 'blue';
+    box.boxElement.querySelector('.box-footer').textContent = 'Join Room';
+    box.boxElement.addEventListener('click', () => joinRoom(box), { 'once': true});
+    removeButtons(box);
+}
+
+function drawDeletedRoom(box) {
+    box.boxElement.querySelector('.box-footer').textContent = 'Create New Room';
+    box.boxElement.style.backgroundColor = 'white';
+    box.roomId = undefined;
+    box.roomCreated = false;
+    box.creator = undefined;
+    removeButtons(box);
 }
 
 function createRoom(box) {
@@ -32,14 +81,12 @@ function createRoom(box) {
         },
         body: JSON.stringify({
             room_id: box.boxId,
-            username: username,
+            creator: username,
         }),
     })
     .then(response => {
         if (response.ok) {
-            box.boxElement.style.backgroundColor = 'blue';
-            box.roomCreated = true;
-            box.roomId = box.boxId;
+            drawCreatedRoom(box);
             alert('Room created!')
         } else {
             alert('Creating the room failed')
@@ -59,13 +106,12 @@ function joinRoom(box) {
         },
         body: JSON.stringify({
             room_id: box.roomId,
-            username: localStorage.getItem('username'),
+            username: username,
         }),
     })
     .then(response => {
         if (response.ok) {
-            box.boxElement.style.backgroundColor = 'green';
-            createButtons(box);
+            drawJoinedRoom(box);
         } else {
             alert('Joining the room failed')
             console.error('Error:', response);
@@ -76,42 +122,54 @@ function joinRoom(box) {
     });
 };
 
-function handleBoxClick(box) {
-    if (box.roomCreated) {
-        joinRoom(box)
-    } else {
-        createRoom(box)
-    }
-};
-
 function createButtons(box) {
-    box.boxElement.removeEventListener('click', handleBoxClick);
-    var leftButton = document.createElement('button');
-    leftButton.innerHTML = 'Play Game';
-    leftButton.id = 'leftButton' + box.boxId;  // Add a unique id
-    leftButton.addEventListener('click', () => startGame(box))
-    box.boxElement.appendChild(leftButton);
+    box.boxElement.removeEventListener('click', createClickHandler(box));
+    var playButton = document.createElement('button');
+    playButton.innerHTML = 'Play Game';
+    playButton.id = 'playButton' + box.boxId;  // Add a unique id
+    playButton.addEventListener('click', () => startGame(box))
+    box.boxElement.appendChild(playButton);
 
-    var rightButton = document.createElement('button');
-    rightButton.innerHTML = 'Leave Room';
-    rightButton.addEventListener('click', () => leaveRoom(box))
-    rightButton.id = 'rightButton' + box.boxId;  // Add a unique id
-    box.boxElement.appendChild(rightButton);
+    var leaveButton = document.createElement('button');
+    leaveButton.innerHTML = 'Leave Room';
+    leaveButton.addEventListener('click', () => leaveRoom(box))
+    leaveButton.id = 'leaveButton' + box.boxId;  // Add a unique id
+    box.boxElement.appendChild(leaveButton);
+
+    if (box.creator === username) {
+        var thirdButton = document.createElement('button');
+        thirdButton.innerHTML = 'Delete Room';
+        thirdButton.id = 'deleteButton' + box.boxId;  // Add a unique id
+        thirdButton.addEventListener('click', () => deleteRoom(box));
+        box.boxElement.appendChild(thirdButton);
+    }
 }
 
+function refreshBox(box) {
+    var parent = box.parentNode;
+    var newBox = box.cloneNode(true);
+    parent.replaceChild(newBox, box);
+}
 function removeButtons(box) {
     // Find the left and right buttons within the boxElement
-    var leftButton = document.getElementById('leftButton' + box.boxId);
-    var rightButton = document.getElementById('rightButton' + box.boxId);
+    var playButton = document.getElementById('playButton' + box.boxId);
+    var leaveButton = document.getElementById('leaveButton' + box.boxId);
+    var deleteButton = document.getElementById('deleteButton' + box.boxId);
     
     // Remove the left and right buttons if they exist
-    if (leftButton) {
-        leftButton.parentNode.removeChild(leftButton);
-        leftButton.remove();
+    if (playButton) {
+        playButton.parentNode.removeChild(playButton);
+        playButton.remove();
+        
     }
-    if (rightButton) {
-        rightButton.parentNode.removeChild(rightButton);
-        rightButton.remove();
+    if (leaveButton) {
+        leaveButton.parentNode.removeChild(leaveButton);
+        leaveButton.remove();
+
+    }
+    if (deleteButton) {
+        deleteButton.parentNode.removeChild(deleteButton);
+        deleteButton.remove();
 
     }
 }
@@ -139,6 +197,31 @@ function startGame(box) {
     });
 };
 
+function deleteRoom(box) {
+    fetch('/room/' + box.roomId, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            username: username,
+            room_id: box.roomId
+        }),
+    })
+    .then(response => response.json())
+    .then(response => {
+        if (response.ok) {
+            drawDeletedRoom(box);
+        } else {
+            alert('Deleting the room failed')
+            console.error('Error:', response);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+};
+
 function leaveRoom(box) {
     fetch('/room/' + box.roomId + '/leave', {
         method: 'POST',
@@ -150,12 +233,14 @@ function leaveRoom(box) {
             username: username,
         }),
     })
-    .then(response => response.json())
-    .then(data => {
-        box.boxElement.removeEventListener('click', () => handleBoxClick(box));
-        removeButtons(box)
-        alert(data.message);
-        box.boxElement.style.backgroundColor = 'white';
+    .then(response => {
+        if (response.ok) {
+            drawLeftRoom(box);
+        } else {
+            alert('Leaving the room failed')
+            console.error('Error:', response);
+        }
+
     })
     .catch((error) => {
         console.error('Error:', error);
@@ -164,9 +249,9 @@ function leaveRoom(box) {
 
 let username = localStorage.getItem('username');
 var boxes = [
-    { boxElement: document.getElementById('box1'), boxId: 1, roomId: undefined, roomCreated: false},
-    { boxElement: document.getElementById('box2'), boxId: 2, roomId: undefined, roomCreated: false},
-    { boxElement: document.getElementById('box3'), boxId: 3, roomId: undefined, roomCreated: false},
+    { boxElement: document.getElementById('box1'), boxId: 1, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
+    { boxElement: document.getElementById('box2'), boxId: 2, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
+    { boxElement: document.getElementById('box3'), boxId: 3, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
 ]
 
 initializeDashboard(boxes);

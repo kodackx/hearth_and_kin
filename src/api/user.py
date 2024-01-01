@@ -2,6 +2,7 @@ from bcrypt import checkpw
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session
 from src.core.database import engine
+from src.models.room import Room
 from src.models.user import User, UserBase
 from src.core.config import logger
 
@@ -27,9 +28,9 @@ async def create_user(user: UserBase):
 async def get_user_room(username: str):
     with Session(engine) as session:
         user = session.get(User, username)
-        if not user:
-            raise HTTPException(status_code=404, detail='User not found')
-        return user.room_id
+        if user:
+            return session.get(Room, user.room_id)
+        raise HTTPException(status_code=404, detail='User not found')
 
 
 @router.post('/login')

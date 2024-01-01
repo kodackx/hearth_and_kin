@@ -5,12 +5,20 @@ class RoomBase(Model):
     room_id: int = Field(nullable=False, primary_key=True)
 
 
-class RoomUser(RoomBase):
+class RoomJoin(RoomBase):
     username: str = Field(foreign_key='user.username')
 
 
-class RoomCreate(RoomUser):
-    creator: str = Field(foreign_key='user.username', alias='username')
+class RoomCreate(RoomBase):
+    creator: str = Field(foreign_key='user.username', alias='creator')
+
+
+class RoomDelete(RoomJoin):
+    pass
+
+
+class RoomRead(RoomCreate):
+    pass
 
 
 class Room(RoomCreate, table=True):
