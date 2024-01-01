@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel as Model, Field, Relationship
+from sqlmodel import SQLModel as Model, Field
 
 
 class RoomBase(Model):
@@ -6,16 +6,12 @@ class RoomBase(Model):
 
 
 class RoomUser(RoomBase):
-    username: str
+    username: str = Field(foreign_key='user.username')
 
 
 class RoomCreate(RoomUser):
-    pass
+    creator: str = Field(foreign_key='user.username', alias='username')
 
 
-class RoomRead(RoomCreate):
-    users: list['User'] = Relationship(back_populates='room')  # noqa: F821
-
-
-class Room(RoomRead, table=True):
+class Room(RoomCreate, table=True):
     pass
