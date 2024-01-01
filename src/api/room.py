@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException
 from sqlmodel import Session, select
 
 
@@ -9,19 +9,17 @@ from ..models.room import Room, RoomCreate, RoomUser
 router = APIRouter()
 
 
-@router.post('/room')
-async def create_room(room: RoomCreate, response: Response):
+@router.post('/room', status_code=201)
+async def create_room(room: RoomCreate):
     with Session(engine) as session:
         db_room = session.get(Room, room.room_id)
         if db_room is not None:
-            response.status_code = status.HTTP_400_BAD_REQUEST
-            return {'error': 'Room already exists'}
+            raise HTTPException(400, 'Room already exists')
 
         new_room = Room.from_orm(room)
         session.add(new_room)
         session.commit()
         session.refresh(new_room)
-        response.status_code = status.HTTP_201_CREATED
         return {'message': f'Room {room.room_id} created successfully'}
 
 
@@ -38,7 +36,7 @@ async def get_room(room_id: int):
 
 
 @router.post('/room/{room_id}/join')
-async def join_room(room: RoomUser, response: Response):
+async def join_room(room: RoomUser):
     with Session(engine) as session:
         db_room = session.get(Room, room.room_id)
         db_user = session.get(User, room.username)

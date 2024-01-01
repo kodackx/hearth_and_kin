@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
@@ -87,7 +87,7 @@ def gpt_narrator(input: str, chain: LLMChain) -> str:
 
 
 @router.post('/message')
-async def generate_message(message: MessageBase, response: Response):
+async def generate_message(message: MessageBase):
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_id = audio_path = background_path = background_image = None
     try:
@@ -105,8 +105,7 @@ async def generate_message(message: MessageBase, response: Response):
                 logger.debug(f'[MESSAGE] {background_image = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {'error': f'An error occurred while generating the response: {e}'}
+        raise HTTPException(500, f'An error occurred while generating the response: {e}')
     # Will send to user
     # TODO: Replace socketio.emit with the appropriate method to send data to the client
     # socketio.emit('new_message', {'message': 'Openai reply: '})
@@ -123,5 +122,4 @@ async def generate_message(message: MessageBase, response: Response):
         session.add(new_message)
         session.commit()
         session.refresh(new_message)
-        response.status_code = status.HTTP_201_CREATED
         return new_message

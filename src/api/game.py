@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter
 from ..core.database import engine
 from sqlmodel import Session
 from ..models.game import Game, GameCreate, GameRead
@@ -6,14 +6,13 @@ from ..models.game import Game, GameCreate, GameRead
 router = APIRouter()
 
 
-@router.post('/game')
-async def create_game(game: GameCreate, response: Response) -> Game:
+@router.post('/game', status_code=201)
+async def create_game(game: GameCreate) -> Game:
     with Session(engine) as session:
         new_game = Game.from_orm(game)
         session.add(new_game)
         session.commit()
         session.refresh(new_game)
-        response.status_code = status.HTTP_201_CREATED
         return new_game
 
 
