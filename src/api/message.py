@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
@@ -11,7 +11,7 @@ from langchain.schema import SystemMessage
 from sqlmodel import Session
 
 from ..core.config import logger, GENERATE_IMAGE, GENERATE_AUDIO
-from ..core.database import engine
+from ..core.database import get_session
 from ..core.mongodb import setup_mongodb
 from ..models.message import Message, MessageBase
 from ..services import audio, imagery
@@ -87,7 +87,7 @@ def gpt_narrator(input: str, chain: LLMChain) -> str:
 
 
 @router.post('/message')
-async def generate_message(message: MessageBase):
+async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_id = audio_path = background_path = background_image = None
     try:
@@ -109,17 +109,16 @@ async def generate_message(message: MessageBase):
     # Will send to user
     # TODO: Replace socketio.emit with the appropriate method to send data to the client
     # socketio.emit('new_message', {'message': 'Openai reply: '})
-    with Session(engine) as session:
-        new_message = Message(
-            game_id=message.game_id,
-            username=message.username,
-            message=message.message,
-            narrator_reply=narrator_reply,
-            audio_path=audio_path,
-            image_path=background_path,
-        )
-        logger.debug(f'{new_message = }')
-        session.add(new_message)
-        session.commit()
-        session.refresh(new_message)
-        return new_message
+    new_message = Message(
+        game_id=message.game_id,
+        username=message.username,
+        message=message.message,
+        narrator_reply=narrator_reply,
+        audio_path=audio_path,
+        image_path=background_path,
+    )
+    logger.debug(f'{new_message = }')
+    session.add(new_message)
+    session.commit()
+    session.refresh(new_message)
+    return new_message

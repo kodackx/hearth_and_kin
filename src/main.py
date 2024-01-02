@@ -3,11 +3,11 @@ from pathlib import Path
 
 # read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 
 from .api import character, game, message, room, user
-from .core.database import create_db_and_tables
+from .core.database import create_db_and_tables, get_session
 from .core.mongodb import setup_mongodb
 
 load_dotenv('.env')
@@ -30,11 +30,11 @@ async def home(request: Request):
     return Response(content=open('src/www/templates/index.html', 'r').read(), media_type='text/html')
 
 
-app.include_router(user.router, prefix='', tags=['user'])
-app.include_router(room.router, prefix='', tags=['room'])
-app.include_router(game.router, prefix='', tags=['game'])
-app.include_router(character.router, prefix='', tags=['character'])
-app.include_router(message.router, prefix='', tags=['message'])
+app.include_router(user.router, prefix='', tags=['user'], dependencies=[Depends(get_session)])
+app.include_router(room.router, prefix='', tags=['room'], dependencies=[Depends(get_session)])
+app.include_router(game.router, prefix='', tags=['game'], dependencies=[Depends(get_session)])
+app.include_router(character.router, prefix='', tags=['character'], dependencies=[Depends(get_session)])
+app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session)])
 
 
 @app.get('/dashboard')
