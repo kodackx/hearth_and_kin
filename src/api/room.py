@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import Session, select
 
 
-from ..models.user import User
+from ..models.user import User, UserRead
 from ..core.database import get_session
 from ..models.room import Room, RoomCreate, RoomJoin, RoomDelete
 
@@ -15,7 +15,7 @@ async def create_room(*, room: RoomCreate, session: Session = Depends(get_sessio
     if db_room is not None:
         raise HTTPException(400, 'Room already exists')
     new_room = Room(creator=room.creator, room_id=room.room_id)
-    # new_room = Room.from_orm(room)
+
     session.add(new_room)
     session.commit()
     session.refresh(new_room)
@@ -26,11 +26,15 @@ async def create_room(*, room: RoomCreate, session: Session = Depends(get_sessio
 async def delete_room(*, room: RoomDelete, session: Session = Depends(get_session)):
     statement = select(Room).where(Room.room_id == room.room_id).where(Room.creator == room.username)
     db_room = session.exec(statement).first()
-    user = session.exec(select(User).where(User.room_id == room.room_id)).first()
-    if user:
-        raise HTTPException(400, 'Unable to delete room with users in it')
+
     if not db_room:
         raise HTTPException(404, 'Room created by user not found')
+
+    users = session.exec(select(User).where(User.room_id == room.room_id)).all()
+    # Kick out any users in room
+    for user in users:
+        user.room_id = None
+        session.add(user)
 
     session.delete(db_room)
     session.commit()
@@ -46,6 +50,15 @@ async def get_rooms(session: Session = Depends(get_session)):
 @router.get('/room/{room_id}', response_model=Room)
 async def get_room(*, room_id: int, session: Session = Depends(get_session)):
     return session.get(Room, room_id)
+
+
+@router.get('/room/{room_id}/users', response_model=list[UserRead])
+async def get_room_users(*, session: Session = Depends(get_session), room_id: int):
+    room = session.get(Room, room_id)
+    if room:
+        statement = select(User).where(User.room_id == room_id)
+        return session.exec(statement).all()
+    raise HTTPException(status_code=404, detail='Room not found')
 
 
 @router.post('/room/{room_id}/join')

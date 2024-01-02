@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post('/user', status_code=201)
 async def create_user(*, user: UserBase, session: Session = Depends(get_session)):
     logger.debug(f'CREATE_USER: {user = }')
-    # with Session(engine) as session:
+
     db_user = session.get(User, user.username)
     if db_user is not None:
         raise HTTPException(400, 'Username already exists. Please try a different one.')
@@ -25,8 +25,7 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
 
 
 @router.get('/user/{username}/room')
-async def get_user_room(*, username: str, session: Session = Depends(get_session)):
-    # with Session(engine) as session:
+async def get_user_room(*, session: Session = Depends(get_session), username: str):
     user = session.get(User, username)
     if user:
         return session.get(Room, user.room_id)
@@ -34,8 +33,7 @@ async def get_user_room(*, username: str, session: Session = Depends(get_session
 
 
 @router.post('/login')
-async def login(*, user: UserBase, session: Session = Depends(get_session)):
-    # with Session(engine) as session:
+async def login(*, session: Session = Depends(get_session), user: UserBase):
     db_user = session.get(User, user.username)
     if db_user is not None and checkpw(user.password.encode(), db_user.password.encode()):
         return {'message': 'Login successful'}

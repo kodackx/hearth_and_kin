@@ -1,9 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 
-import sys
-
-# Use in-memory db for testing
-sqlite_url = 'sqlite:///test.db' if 'pytest' in sys.modules else 'sqlite:///db/database.db'
+sqlite_url = 'sqlite:///db/database.db'
 
 connect_args = {'check_same_thread': False}
 
