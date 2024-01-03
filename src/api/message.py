@@ -66,7 +66,7 @@ prompt = ChatPromptTemplate.from_messages(
 memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
 llm = ChatOpenAI(
-    model_name='gpt-4',
+    model_name='gpt-4',  # type: ignore
     # max_tokens=max_length,
     temperature=0.5,
 )
@@ -110,7 +110,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     # TODO: Replace socketio.emit with the appropriate method to send data to the client
     # socketio.emit('new_message', {'message': 'Openai reply: '})
     new_message = Message(
-        game_id=message.game_id,
+        story_id=message.story_id,
         username=message.username,
         message=message.message,
         narrator_reply=narrator_reply,

@@ -2,7 +2,7 @@ from bcrypt import checkpw
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from ..core.database import get_session
-from ..models.room import Room
+from ..models.story import Story
 from ..models.user import User, UserBase
 from ..core.config import logger
 
@@ -24,11 +24,11 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
     return {'message': 'User registered successfully! Please log in now.'}
 
 
-@router.get('/user/{username}/room')
-async def get_user_room(*, session: Session = Depends(get_session), username: str):
+@router.get('/user/{username}/story')
+async def get_user_story(*, session: Session = Depends(get_session), username: str):
     user = session.get(User, username)
     if user:
-        return session.get(Room, user.room_id)
+        return session.get(Story, user.story_id)
     raise HTTPException(status_code=404, detail='User not found')
 
 

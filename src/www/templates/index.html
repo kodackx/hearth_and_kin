@@ -20,7 +20,7 @@
                     height: auto;
                 }
                 
-                #auth, #game {
+                #auth, #story {
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
@@ -79,10 +79,10 @@
 
             <hr>  <!-- Line separator -->
             
-            <div id="room">
-                <input type="text" id="room_id" placeholder="Room ID">
-                <button onclick="createRoom()">Create Room</button>
-                <button onclick="joinRoom()">Join Room</button>
+            <div id="story">
+                <input type="text" id="story_id" placeholder="Story ID">
+                <button onclick="createStory()">Create Story</button>
+                <button onclick="joinStory()">Join Story</button>
             </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -142,16 +142,16 @@
             });
         }
 
-        function createRoom() {
-            var room_id = $('#room_id').val();
-            $.post('/room', {room_id: room_id}, function(data) {
+        function createStory() {
+            var story_id = $('#story_id').val();
+            $.post('/story', {story_id: story_id}, function(data) {
                 alert(data.message);
             });
         }
 
-        function joinRoom() {
-            var room_id = $('#room_id').val();
-            // Socket.IO logic for joining a game can go here
+        function joinStory() {
+            var story_id = $('#story_id').val();
+            // Socket.IO logic for joining a story can go here
         }
     </script>
 </body>

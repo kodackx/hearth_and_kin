@@ -1,22 +1,22 @@
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
-    fetch('/rooms', {
+    fetch('/stories', {
         method: 'GET',
     })
     .then(response => response.json())
-    .then(rooms => {
+    .then(storys => {
 
-        // Draw created rooms
-        rooms.forEach(room => {
-            var box = boxes.find(box => box.boxId === room.room_id);
-            box.roomId = room.room_id;
-            console.log(room.creator);
-            // Join any previously joined room
-            // TODO: only draw joined if user is in room
-            if (username == room.creator) {
-                drawJoinedRoom(box);
+        // Draw created storys
+        storys.forEach(story => {
+            var box = boxes.find(box => box.boxId === story.story_id);
+            box.storyId = story.story_id;
+            console.log(story.creator);
+            // Join any previously joined story
+            // TODO: only draw joined if user is in story
+            if (username == story.creator) {
+                drawJoinedStory(box);
             } else {
-                drawCreatedRoom(box);
+                drawCreatedStory(box);
             }
         });
 
@@ -29,67 +29,67 @@ function initializeDashboard(boxes) {
     // Add event listeners to the boxes
     boxes.forEach(box => {
         // box.boxElement.addEventListener('click', createClickHandler(box));
-        box.boxElement.addEventListener('click', () => createRoom(box), { 'once': true});
+        box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
     });
 }
 
 function createClickHandler(box) {
     return function() {
-        createRoom(box);
+        createStory(box);
     };
 }
 
-function drawCreatedRoom(box) {
+function drawCreatedStory(box) {
     // refreshBox(box);
     box.boxElement.style.backgroundColor = 'blue';
-    box.roomCreated = true;
+    box.storyCreated = true;
     box.creator = username;
-    box.roomId = box.boxId;
-    box.boxElement.querySelector('.box-footer').textContent = 'Join Room';
+    box.storyId = box.boxId;
+    box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
     //box.boxElement.removeEventListener('click', createClickHandler(box));
-    box.boxElement.addEventListener('click', () => joinRoom(box), { 'once': true});
+    box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
 }
 
 
-function drawJoinedRoom(box) {
+function drawJoinedStory(box) {
     box.boxElement.querySelector('.box-footer').textContent = undefined;
     box.boxElement.style.backgroundColor = 'green';
     createButtons(box);
 }
 
-function drawLeftRoom(box) {
+function drawLeftStory(box) {
     box.boxElement.style.backgroundColor = 'blue';
-    box.boxElement.querySelector('.box-footer').textContent = 'Join Room';
-    box.boxElement.addEventListener('click', () => joinRoom(box), { 'once': true});
+    box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+    box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
     removeButtons(box);
 }
 
-function drawDeletedRoom(box) {
-    box.boxElement.querySelector('.box-footer').textContent = 'Create New Room';
+function drawDeletedStory(box) {
+    box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
     box.boxElement.style.backgroundColor = 'white';
-    box.roomId = undefined;
-    box.roomCreated = false;
+    box.storyId = undefined;
+    box.storyCreated = false;
     box.creator = undefined;
     removeButtons(box);
 }
 
-function createRoom(box) {
-    fetch('/room', {
+function createStory(box) {
+    fetch('/story', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            room_id: box.boxId,
+            story_id: box.boxId,
             creator: username,
         }),
     })
     .then(response => {
         if (response.ok) {
-            drawCreatedRoom(box);
-            alert('Room created!')
+            drawCreatedStory(box);
+            alert('Story created!')
         } else {
-            alert('Creating the room failed')
+            alert('Creating the story failed')
             console.error('Error:', response);
         }
     })
@@ -98,22 +98,22 @@ function createRoom(box) {
     });
 };
 
-function joinRoom(box) {
-    fetch('/room/' + box.roomId + '/join', {
+function joinStory(box) {
+    fetch('/story/' + box.storyId + '/join', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            room_id: box.roomId,
+            story_id: box.storyId,
             username: username,
         }),
     })
     .then(response => {
         if (response.ok) {
-            drawJoinedRoom(box);
+            drawJoinedStory(box);
         } else {
-            alert('Joining the room failed')
+            alert('Joining the story failed')
             console.error('Error:', response);
         }
     })
@@ -125,22 +125,22 @@ function joinRoom(box) {
 function createButtons(box) {
     box.boxElement.removeEventListener('click', createClickHandler(box));
     var playButton = document.createElement('button');
-    playButton.innerHTML = 'Play Game';
+    playButton.innerHTML = 'Play Story';
     playButton.id = 'playButton' + box.boxId;  // Add a unique id
-    playButton.addEventListener('click', () => startGame(box))
+    playButton.addEventListener('click', () => startStory(box))
     box.boxElement.appendChild(playButton);
 
     var leaveButton = document.createElement('button');
-    leaveButton.innerHTML = 'Leave Room';
-    leaveButton.addEventListener('click', () => leaveRoom(box))
+    leaveButton.innerHTML = 'Leave Story';
+    leaveButton.addEventListener('click', () => leaveStory(box))
     leaveButton.id = 'leaveButton' + box.boxId;  // Add a unique id
     box.boxElement.appendChild(leaveButton);
 
     if (box.creator === username) {
         var thirdButton = document.createElement('button');
-        thirdButton.innerHTML = 'Delete Room';
+        thirdButton.innerHTML = 'Delete Story';
         thirdButton.id = 'deleteButton' + box.boxId;  // Add a unique id
-        thirdButton.addEventListener('click', () => deleteRoom(box));
+        thirdButton.addEventListener('click', () => deleteStory(box));
         box.boxElement.appendChild(thirdButton);
     }
 }
@@ -174,21 +174,21 @@ function removeButtons(box) {
     }
 }
 
-function startGame(box) {
-    fetch('/game', {
+function startStory(box) {
+    fetch('/story', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            room_id: box.roomId,
+            story_id: box.storyId,
             description: prompt('Describe your character in a few words. Mention race, class, and any other important details.'),
         }),
     })
     .then(response => response.json())
     .then(data => {
         if (confirm(data.description)) {
-            localStorage.setItem('game_id', data.game_id);
+            localStorage.setItem('story_id', data.story_id);
             window.location.href = '/story';
         }
     })
@@ -197,23 +197,23 @@ function startGame(box) {
     });
 };
 
-function deleteRoom(box) {
-    fetch('/room/' + box.roomId, {
+function deleteStory(box) {
+    fetch('/story/' + box.storyId, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
             username: username,
-            room_id: box.roomId
+            story_id: box.storyId
         }),
     })
     .then(response => response.json())
     .then(response => {
         if (response.ok) {
-            drawDeletedRoom(box);
+            drawDeletedStory(box);
         } else {
-            alert('Deleting the room failed')
+            alert('Deleting the story failed')
             console.error('Error:', response);
         }
     })
@@ -222,22 +222,22 @@ function deleteRoom(box) {
     });
 };
 
-function leaveRoom(box) {
-    fetch('/room/' + box.roomId + '/leave', {
+function leaveStory(box) {
+    fetch('/story/' + box.storyId + '/leave', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            room_id: box.roomId,
+            story_id: box.storyId,
             username: username,
         }),
     })
     .then(response => {
         if (response.ok) {
-            drawLeftRoom(box);
+            drawLeftStory(box);
         } else {
-            alert('Leaving the room failed')
+            alert('Leaving the story failed')
             console.error('Error:', response);
         }
 
@@ -249,9 +249,9 @@ function leaveRoom(box) {
 
 let username = localStorage.getItem('username');
 var boxes = [
-    { boxElement: document.getElementById('box1'), boxId: 1, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
-    { boxElement: document.getElementById('box2'), boxId: 2, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
-    { boxElement: document.getElementById('box3'), boxId: 3, roomId: undefined, roomCreated: false, creator: undefined, inGame: false},
+    { boxElement: document.getElementById('box1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
+    { boxElement: document.getElementById('box2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
+    { boxElement: document.getElementById('box3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
 ]
 
 initializeDashboard(boxes);

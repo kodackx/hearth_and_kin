@@ -10,7 +10,7 @@ import base64
 
 
 def generate_image(prompt_text):
-    llm = ChatOpenAI(model_name='gpt-3.5-turbo')
+    llm = ChatOpenAI(model_name='gpt-3.5-turbo')  # type: ignore
     prompt = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
@@ -36,7 +36,7 @@ def generate_image(prompt_text):
         + summary
     )
     try:
-        image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_text_adjusted)
+        image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_text_adjusted)  # type: ignore
     except Exception as e:
         print('[GEN IMAGE] Image generation failed: ' + repr(e))
         image_url = '[NO_IMAGE]'
@@ -49,7 +49,7 @@ def obtain_image_from_url(image_url):
     img = Image.open(BytesIO(response.content))
     # define path to save image
     unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    dir_path = os.path.join('src', 'www', 'static')
+    dir_path = os.path.join('src', 'www', 'static', 'img')
     os.makedirs(dir_path, exist_ok=True)
     filename = unique_id + '.jpg'
     file_path = os.path.join(dir_path, filename)
