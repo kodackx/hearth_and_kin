@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
 
+from .core.database import create_db_and_tables
+import os
+from .api import user, room, game, character, message, newcharacter
+
 # read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Response
@@ -35,6 +39,7 @@ app.include_router(user.router, prefix='', tags=['user'], dependencies=[Depends(
 app.include_router(story.router, prefix='', tags=['story'], dependencies=[Depends(get_session)])
 app.include_router(character.router, prefix='', tags=['character'], dependencies=[Depends(get_session)])
 app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session)])
+app.include_router(newcharacter.router, prefix='', tags=['message'])
 
 
 @app.get('/dashboard')
@@ -45,6 +50,10 @@ async def dashboard_page(request: Request) -> Response:
 @app.get('/story')
 async def story_page(request: Request):
     return Response(content=open('src/www/templates/story.html', 'r').read(), media_type='text/html')
+
+@app.get('/newcharacter')
+async def characterflow(request: Request):
+    return Response(content=open('src/www/templates/newcharacter.html', 'r').read(), media_type='text/html')
 
 
 # TODO: figure out how this works in fastapi

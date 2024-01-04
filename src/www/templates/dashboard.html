@@ -74,19 +74,52 @@
     </div>
 
     <div class="container">
-        <div class="box" id="box1">
+        <div class="box" id="newchar">
             <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
+            <div class="box-footer">New Character Flow</div>
         </div>
-        <div class="box" id="box2">
+        <div class="box" id="newstory">
             <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
-        </div>
-        <div class="box" id="box3">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
+            <div class="box-footer">New Story Flow</div>
         </div>
     </div>
-    <script type="module" src="static/js/dashboard.js"></script>
+
+    <script>
+    window.onload = function() {
+        // Replace 'username' with the actual username
+        document.getElementById('username').textContent = 'admin';
+
+        // Add event listeners to the boxes
+        document.getElementById('newstory').addEventListener('click', function() {
+            var description = prompt('[NOT WORKING!] Describe your character in a few words. Mention race, class, and any other important details.');
+            if (description) {
+                fetch('/game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: description,
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle the response
+                    // alert(data.message)
+                    if (confirm(data.description)) {
+                        window.location.href = '/story';
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+
+        document.getElementById('newchar').addEventListener('click', function() {
+            window.location.href = '/newcharacter';
+        });
+    }
+    </script>
 </body>
 </html>

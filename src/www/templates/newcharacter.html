@@ -1,0 +1,394 @@
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <button id="start-button">Create your character...</button>
+    <div class="flex-container" id="main-content">
+        <!-- <div class="story-image" id="story-image"></div> -->
+        <div class="chat-section">
+            <div class="container fade-in" id="chat-container">
+                <!-- <audio id="audio" controls>
+                    <source id="source" src="" type="audio/wav" />
+                </audio> -->
+                <div class="card" id="chat-box">
+                    <div class="card-body">
+                        <!-- Chat messages will be appended here -->
+                    </div>
+                </div>
+                <!-- Input box for new messages -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="message-input" placeholder="Type a message">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
+                        <div id="spinner" style="display: none;">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </div>
+</body>
+</html>
+<style>
+
+body {
+    background-image: url('static/character_creation.png');
+    background-color: rgba(18, 0, 46, 0.901);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#start-button {
+    background-color: #8b4513;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    /* display: inline-block; */
+    font-size: larger;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#story-image {
+    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    display: none;
+    flex: 20%;
+    animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
+    transition: background 5s ease-in-out;
+    width: 20%; /* Adjust as needed */
+    padding-top: 20%; /* This makes the height equal to the width */
+    border: 5px solid rgba(94, 57, 2, 0.901);
+    border-radius: 30px; /* Adjust as needed */
+    background-size: cover;
+    background-position: center;
+}
+
+.rounded-avatar {
+    width: 100%;        /* Responsive width */
+    height: auto;       /* Maintain aspect ratio */
+    aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
+    object-fit: cover;  /* Ensures the image covers the area */
+    border-radius: 50%; /* Fully rounded crop */
+    display: block;     /* Remove any extra space below the image */
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    /* margin-top: 20px;
+    margin-bottom: 20px; */
+    max-width: 1200px;
+    max-height: 100vh;
+}
+
+.chat-section {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.container, .container-lg, .container-md, .container-sm, .container-xl {
+    max-width: 1800px !important;
+    width: 100% !important;
+}
+.loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #db7a34; 
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.fade-in {
+    opacity: 0;
+    animation: fadeIn ease 1s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.creation-message {
+    font-size: larger; /* Adjust the font size as needed */
+    font-family: 'Almendra', serif;
+    color: #ffd4b6;
+    animation: fadeIn 2s ease-in;
+}
+
+.user-message {
+    font-size: larger; /* Adjust the font size as needed */
+    font-family: 'Merriweather', serif;
+    color: #ffd4b6;
+    animation: fadeIn 2s ease-in;
+}
+
+body {
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+    font-size: larger;
+}
+
+#chat-container {
+    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100vh;
+    width: 120vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    /* flex: 10%; */
+}
+
+#chat-box {
+    /* font color change */
+    color: #eaeaea; /* Dark brown text */
+    width: 90%;
+    height: 80%;
+    /* border: 1px solid #000; */
+    padding: 20px;
+    overflow-y: auto;
+    /* background-color: rgba(94, 57, 2, 0.901); Semi-transparent orange */
+    background-color: transparent;
+    flex-grow: 1;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    display: flex;        /* Use flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center;  /* Center vertically */
+}
+
+.input-group {
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+    border: 1px solid #5D3A00; /* Dark brown */
+    border-radius: 5px; /* Rounded corners */
+    color: #5D3A00; /* Dark brown text */
+    width: 80%; /* Same as the width of the chat box */
+    max-width: 80%; /* Prevent the input from becoming wider than the chat box */
+}
+
+.input-group .form-control {
+    border: none; /* Remove default border */
+    background-color: transparent; /* Transparent background */
+}
+
+.input-group .btn-outline-secondary {
+    border-color: #5D3A00; /* Dark brown border */
+    color: #5D3A00; /* Dark brown text */
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: #5D3A00; /* Dark brown background */
+    color: #fff; /* White text */
+}
+</style>
+<script>
+    // Start flow
+    document.getElementById('main-content').style.display = 'none';
+    document.getElementById('start-button').style.display = 'block';
+
+    document.getElementById('start-button').addEventListener('click', function() {
+        document.getElementById('main-content').style.display = 'flex';
+        this.style.display = 'none';
+        displayIntroText()
+        var imageUrl = "";
+        changeBackgroundImage(imageUrl);
+        var ambiance = "static/ethereal.m4a";
+        let audio = new Audio(ambiance);
+        audio.volume = 0.5; // 50% volume
+        audio.play();
+    });
+
+    document.getElementById('message-input').addEventListener('keypress', function(e) {
+        var key = e.which || e.keyCode;
+        if (key === 13) { // 13 is the key code for Enter
+            e.preventDefault(); // Prevent the default action to stop the form from submitting
+            document.getElementById('send-button').click(); // Trigger the click event on the send button
+        }
+    });
+
+    // Function to send a new message
+    document.getElementById('send-button').addEventListener('click', function() {
+        const message = document.getElementById('message-input').value;
+        appendMessageUser(message);
+        document.getElementById('message-input').value = '';
+        // Show the spinner
+        document.getElementById('spinner').style.display = 'block';
+        // changeBackgroundImage(imageUrl);
+
+        // const loadingMessageId = appendMessage('Narrator is thinking...');
+
+        fetch('/charactermessage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+            }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove the loading message
+            // removeMessage(loadingMessageId);
+            if (data.message.includes('Narrator:')) {
+                var formattedMessage = data.message.replace(/\n/g, '<br>');
+                console.log('Received successful reply :' + formattedMessage)
+                document.getElementById('spinner').style.display = 'none';
+                // add append message here from creator
+                creatorReply(formattedMessage);
+            } else {
+                appendMessage('[ERROR] Failed to send message.');
+            }
+
+            // Handle the audio data
+            if (data.audio) {
+                base64ToBlob(data.audio, 'audio/wav')
+                    .then(audioBlob => {
+                        let audioUrl = URL.createObjectURL(audioBlob);
+                        let narration = new Audio(audioUrl);
+                        narration.volume = 0.75; // 75% volume
+                        narration.play();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            // Assuming `data` is the response from the server
+            if (data.image) {
+                let imagePath = data.image; // The server path for the image
+                // Create an image element and apply the 'rounded-image' class
+                appendMessagePortrait(message)
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            document.getElementById('spinner').style.display = 'none';
+        });
+    });
+
+    //function to wait
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function displayIntroText() {
+        const messages = [
+            "From the mists of primordial space, where the planets dance in a celestial waltz, your character emerges. Begin to weave the tapestry of their existence.<br>",
+            "Envision them in the vastness of this universe. Who are they? What race do they belong to – are they a stoic Dwarf, a mystical Elf, a resourceful Human, or perhaps something more arcane? Let the stars whisper their race to your mind.",
+            "Now, think of their class. Are they a brave Warrior, a cunning Rogue, or a wise Wizard? Each class carries its own destiny. What path does your character tread upon?",
+            "Delve deeper into their essence. What is their name – a name that echoes in the halls of time? What are their most striking features? Do they bear scars of ancient battles, or eyes that glimmer with untold knowledge?",
+            "Imagine their attire and armor. Is it a suit of unbreakable mail, robes woven with the threads of magic, or leathers as silent as the night?",
+            "Consider their personality. Are they driven by honor, thirst for adventure, a quest for knowledge, or the shadows of their past?",
+            "Finally, picture them holding an item of great significance. Is it a weapon engraved with runes, a mystical amulet, or an ancient tome? This item will be a companion in their journey.",
+            "Let your words flow freely and paint the portrait of your character. Their story begins with your imagination. Here, in the realm of Hearth and Kin, every detail you conjure breathes life into their existence."
+        ]; // Your messages
+
+        for (const message of messages) {
+            appendMessage(message);
+            await wait(3000); // Wait for 3 seconds
+        }
+    }
+
+    //general reply function that splits the text into chunks but still uses appendMessage function
+    function creatorReply(message) {
+        // Split the formattedMessage into lines
+        var lines = message.split('<br>');
+        var lineIndex = 0;
+        // Calculate the interval time
+        var intervalTime = 10000 / lines.length;
+        // Set up the interval
+        var intervalId = setInterval(function() {
+            // Create a new div for the line
+            var lineDiv = document.createElement('div');
+            lineDiv.className = 'fade-in';
+            appendMessage(lines[lineIndex]);
+            // Increment the line index
+            lineIndex++;
+            // If we've gone through all the lines, clear the interval
+            if (lineIndex >= lines.length) {
+                clearInterval(intervalId);
+            }
+        }, intervalTime);
+    }
+
+    // Function to append a new message to the chat box
+    function appendMessage(message) {
+        const chatBox = document.getElementById('chat-box');
+        const messageElement = document.createElement('p');
+        messageElement.innerHTML = message;  // Use innerHTML instead of textContent
+        messageElement.classList.add('creation-message');  
+        chatBox.appendChild(messageElement);
+        return messageElement.id;
+    }
+
+    // Function to append a new message to the chat box
+    function appendMessageUser(message) {
+        const chatBox = document.getElementById('chat-box');
+        const messageElement = document.createElement('p');
+        messageElement.innerHTML = message;  // Use innerHTML instead of textContent
+        messageElement.classList.add('user-message');  
+        chatBox.appendChild(messageElement);
+        return messageElement.id;
+    }
+
+    // Function to append a new portrait to the chat box
+    function appendMessagePortrait(message) {
+        // Create an image element and apply the 'rounded-image' class
+        const chatBox = document.getElementById('chat-box');
+        const imgElement = document.createElement('img');
+        imgElement.src = message;
+        imgElement.classList.add('rounded-image');
+        chatBox.appendChild(imgElement);
+        return imgElement.id;
+    }
+
+    // Function to remove a message from the chat box
+    function removeMessage(messageId) {
+        const messageElement = document.getElementById(messageId);
+        messageElement.remove();
+    }
+
+    // 3rd version of changing background image but this time with functioning transition
+    function changeBackgroundImage(imagePath) {
+        let oldBackground = document.getElementById('story-image');
+        let newBackground = document.getElementById('story-image');
+
+        // Set the new background image and fade it in
+        newBackground.style.backgroundImage = `url(${imagePath})`;
+        newBackground.style.opacity = 1;
+    }
+
+    // Function to convert a base64 string to a Blob object
+    function base64ToBlob(base64, mime = '') {
+        return fetch(`data:${mime};base64,${base64}`).then(res => res.blob());
+    }
+  
+</script>

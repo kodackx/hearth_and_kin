@@ -6,6 +6,8 @@ __pycache__
 .ruff_cache
 .vscode
 *.db
+src/www/static/ethereal.m4a
+
 *.wav
 *.jpg
 *.txt
