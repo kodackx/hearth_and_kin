@@ -63,6 +63,20 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.finalize-button {
+    display: block;
+    width: 50%;
+    height: auto;
+    margin: 20px auto;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    font-size: large;
+}
+
 #story-image {
     /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
     display: none;
@@ -257,6 +271,7 @@ body {
             // removeMessage(loadingMessageId);
             if (data.message.includes('Narrator:')) {
                 var formattedMessage = data.message.replace(/\n/g, '<br>');
+                formattedMessage = formattedMessage.replace('Narrator: ', '');
                 console.log('Received successful reply :' + formattedMessage)
                 document.getElementById('spinner').style.display = 'none';
                 // add append message here from creator
@@ -358,7 +373,18 @@ body {
         imgElement.src = message;
         imgElement.classList.add('rounded-avatar');
         chatBox.appendChild(imgElement);
+        appendFinalizeButton(); // Append the button after the portrait
         return imgElement.id;
+    }
+
+    // Function to append a new button to the chat box
+    function appendFinalizeButton() {
+        const chatBox = document.getElementById('chat-box');
+        const buttonElement = document.createElement('button');
+        buttonElement.innerHTML = "Finalize character";
+        buttonElement.classList.add('finalize-button');  
+        chatBox.appendChild(buttonElement);
+        return buttonElement.id;
     }
 
     // Function to remove a message from the chat box
