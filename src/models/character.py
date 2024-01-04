@@ -7,6 +7,7 @@ class CharacterBase(Model):
     story_id: Optional[int] = Field(default=None)
     user_description: Optional[str] = Field(nullable=True, default=None)
     description: Optional[str] = Field(nullable=True, default=None)
+    portrait_path: Optional[str] = Field(default=None)
     strength: Optional[int] = Field(default=3)
     dexterity: Optional[int] = Field(default=3)
     con: Optional[int] = Field(default=3)

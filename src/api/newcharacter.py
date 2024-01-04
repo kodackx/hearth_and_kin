@@ -92,7 +92,8 @@ async def generate_character_message(message: MessageBase, response: Response):
         # Will send to narrator and obtain audio
         # audio_path = audio.obtain_audio(narrator_reply)
         # encoded_audio = audio.send_audio(audio_path)
-        final_character_creation_key = "FINAL CHARACTER CREATION"
+        final_character_creation_key = "FINAL CHARACTER DESCRIPTION:"
+        portrait_path = None
         if final_character_creation_key in narrator_reply:
             character_data = narrator_reply.split(final_character_creation_key, 1)[1]
             logger.debug(f'[CREATION IMAGE] {character_data}')
@@ -101,24 +102,6 @@ async def generate_character_message(message: MessageBase, response: Response):
             logger.debug(f'[MESSAGE] {portrait_path = }')
             # portrait_image = imagery.obtain_image_from_url(portrait_path)
             # logger.debug(f'[MESSAGE] {portrait_image = }')
-    except Exception as e:
-        logger.error(f'[CREATION MESSAGE] {e}')
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {'error': f'An error occurred while generating the response: {e}'}
-    # Will send to user
-    # TODO: Replace socketio.emit with the appropriate method to send data to the client
-    # socketio.emit('new_message', {'message': 'Openai reply: '})
-    with Session(engine) as session:
-        new_message = Message(
-            message=message.message,
-            narrator_reply=narrator_reply,
-            # audio=audio_path,
-            # image=background_path,
-        )
-        logger.debug(f'{new_message = }')
-        session.add(new_message)
-        session.commit()
-        session.refresh(new_message)
         response.status_code = status.HTTP_201_CREATED
         return {
             'message': 'Narrator: ' + narrator_reply,
@@ -126,3 +109,22 @@ async def generate_character_message(message: MessageBase, response: Response):
             'image': portrait_path,
             'status': 'success',
         }
+    except Exception as e:
+        logger.error(f'[CREATION MESSAGE] {e}')
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {'error': f'An error occurred while generating the response: {e}'}
+    # Will send to user
+    # TODO: Replace socketio.emit with the appropriate method to send data to the client
+    # socketio.emit('new_message', {'message': 'Openai reply: '})
+    # with Session(engine) as session:
+    #     new_message = Message(
+    #         message=message.message,
+    #         narrator_reply=narrator_reply,
+    #         # audio=audio_path,
+    #         # image=background_path,
+    #     )
+    #     logger.debug(f'{new_message = }')
+    #     session.add(new_message)
+    #     session.commit()
+    #     session.refresh(new_message)
+

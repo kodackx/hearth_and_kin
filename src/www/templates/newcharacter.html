@@ -39,7 +39,7 @@
 <style>
 
 body {
-    background-image: url('static/character_creation.png');
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('static/character_creation.png');
     background-color: rgba(18, 0, 46, 0.901);
     background-repeat: no-repeat;
     background-size: cover;
@@ -78,7 +78,7 @@ body {
 }
 
 .rounded-avatar {
-    width: 100%;        /* Responsive width */
+    width: 70%;        /* Responsive width */
     height: auto;       /* Maintain aspect ratio */
     aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
     object-fit: cover;  /* Ensures the image covers the area */
@@ -158,7 +158,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     width: 100%;
-    height: 100vh;
+    height: 94vh;
     width: 120vh;
     display: flex;
     justify-content: center;
@@ -220,7 +220,7 @@ body {
         this.style.display = 'none';
         displayIntroText()
         var imageUrl = "";
-        changeBackgroundImage(imageUrl);
+        // changeBackgroundImage(imageUrl);
         var ambiance = "static/ethereal.m4a";
         let audio = new Audio(ambiance);
         audio.volume = 0.5; // 50% volume
@@ -242,10 +242,6 @@ body {
         document.getElementById('message-input').value = '';
         // Show the spinner
         document.getElementById('spinner').style.display = 'block';
-        // changeBackgroundImage(imageUrl);
-
-        // const loadingMessageId = appendMessage('Narrator is thinking...');
-
         fetch('/charactermessage', {
             method: 'POST',
             headers: {
@@ -264,7 +260,12 @@ body {
                 console.log('Received successful reply :' + formattedMessage)
                 document.getElementById('spinner').style.display = 'none';
                 // add append message here from creator
-                creatorReply(formattedMessage);
+                creatorReply(formattedMessage).then(() => { // Wait for creatorReply to finish
+                    if (data.image) {
+                        let imagePath = data.image;
+                        appendMessagePortrait(imagePath);
+                    }
+                });
             } else {
                 appendMessage('[ERROR] Failed to send message.');
             }
@@ -279,13 +280,6 @@ body {
                         narration.play();
                     })
                     .catch(error => console.error('Error:', error));
-            }
-
-            // Assuming `data` is the response from the server
-            if (data.image) {
-                let imagePath = data.image; // The server path for the image
-                // Create an image element and apply the 'rounded-image' class
-                appendMessagePortrait(message)
             }
         })
         .catch((error) => {
@@ -319,24 +313,21 @@ body {
 
     //general reply function that splits the text into chunks but still uses appendMessage function
     function creatorReply(message) {
-        // Split the formattedMessage into lines
-        var lines = message.split('<br>');
-        var lineIndex = 0;
-        // Calculate the interval time
-        var intervalTime = 10000 / lines.length;
-        // Set up the interval
-        var intervalId = setInterval(function() {
-            // Create a new div for the line
-            var lineDiv = document.createElement('div');
-            lineDiv.className = 'fade-in';
-            appendMessage(lines[lineIndex]);
-            // Increment the line index
-            lineIndex++;
-            // If we've gone through all the lines, clear the interval
-            if (lineIndex >= lines.length) {
-                clearInterval(intervalId);
-            }
-        }, intervalTime);
+        return new Promise((resolve, reject) => {
+            var lines = message.split('<br>');
+            var lineIndex = 0;
+            var intervalTime = 10000 / lines.length;
+            var intervalId = setInterval(function() {
+                var lineDiv = document.createElement('div');
+                lineDiv.className = 'fade-in';
+                appendMessage(lines[lineIndex]);
+                lineIndex++;
+                if (lineIndex >= lines.length) {
+                    clearInterval(intervalId);
+                    resolve(); // Resolve the Promise when all messages have been appended
+                }
+            }, intervalTime);
+        });
     }
 
     // Function to append a new message to the chat box
@@ -365,7 +356,7 @@ body {
         const chatBox = document.getElementById('chat-box');
         const imgElement = document.createElement('img');
         imgElement.src = message;
-        imgElement.classList.add('rounded-image');
+        imgElement.classList.add('rounded-avatar');
         chatBox.appendChild(imgElement);
         return imgElement.id;
     }
