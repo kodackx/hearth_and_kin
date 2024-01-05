@@ -1,10 +1,12 @@
-from sqlmodel import SQLModel as Model, Field
+from sqlmodel import Relationship, SQLModel as Model, Field
 from typing import Optional
 
 
 class CharacterBase(Model):
-    # user_id: int = Relationship(back_populates='user.user_id')
-    description: Optional[str] = Field(nullable=True, default=None)
+    username: str = Relationship(back_populates='user.username')
+    story_id: Optional[int] = Relationship(back_populates='story.story_id')
+    user_description: Optional[str] = Field(nullable=True, default=None)
+    model_description: Optional[str] = Field(nullable=True, default=None)
     strength: Optional[int] = Field(default=3)
     dexterity: Optional[int] = Field(default=3)
     con: Optional[int] = Field(default=3)

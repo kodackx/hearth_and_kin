@@ -7,6 +7,9 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
+from src.models.character import CharacterRead
+
+from src.models.message import MessageBase
 from ..core.config import logger
 ################
 # OpenAI stuff #
@@ -67,20 +70,18 @@ chat_llm_chain = LLMChain(
 )
 
 
-def gpt_narrator(input: str, chain):
-    # TODO: get the session stuff from the db
-    message_and_character_data = (
-        input
-        + '(Character Data: '
-        # + session.get('character_data')
-        + ')'
-        + '(Location: '
-        # + session.get('location')
-        + ')'
-        + '(Current Goal: '
-        # + session.get('goal')
-        + ')'
-    )
+def gpt_narrator(character: CharacterRead, message: MessageBase, chain):
+    message_and_character_data = message.message
+
+    if character.user_description:
+        message_and_character_data += '(Character Data: ' + character.user_description
+
+    if character.location:
+        message_and_character_data += '(Location: ' + character.location
+
+    if character.goal:
+        message_and_character_data += '(Current Goal: ' + character.goal
+
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)
     logger.debug(f'[GPT Narrator] {output = }')

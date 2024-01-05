@@ -1,6 +1,8 @@
 from bcrypt import checkpw
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
+
+from src.models.character import Character, CharacterRead
 from ..core.database import get_session
 from ..models.story import Story
 from ..models.user import User, UserBase
@@ -39,3 +41,12 @@ async def login(*, session: Session = Depends(get_session), user: UserBase):
         return {'message': 'Login successful'}
 
     raise HTTPException(401, 'Invalid credentials')
+
+
+@router.get('/user/{username}/characters', status_code=200, response_model=list[CharacterRead])
+async def get_characters(*, username: str, session: Session = Depends(get_session)):
+    characters = session.exec(select(Character)).all()  # .where(Character.username == username)).all()
+    if not characters:
+        raise HTTPException(404, 'User not found')
+    logger.debug(f'[USER]: returned {characters = }')
+    return characters

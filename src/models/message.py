@@ -6,6 +6,7 @@ from datetime import datetime
 class MessageBase(Model):
     message: str
     story_id: int = Field(foreign_key='story.story_id')
+    character_id: int = Field(foreign_key='character.character_id')
     username: str = Field(foreign_key='user.username')
     timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
