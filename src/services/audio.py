@@ -41,7 +41,7 @@ def obtain_audio(text: str) -> tuple[str, str]:
     file_path = os.path.join(dir_path, 'audio.wav')
 
     with open(file_path, 'wb') as f:
-        f.write(audio)
+        f.write(audio)  # type: ignore
 
     return audio_id, file_path
     # play(audio)

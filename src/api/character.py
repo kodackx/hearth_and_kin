@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..core.database import get_session
 from sqlmodel import Session
-from ..models.character import Character, CharacterCreate, CharacterRead
+from ..models.character import Character, CharacterCreate, CharacterRead, CharacterUpdate
 from ..core.config import logger
 
 router = APIRouter()
@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.post('/character', status_code=201, response_model=CharacterRead)
 async def create_character(*, character: CharacterCreate, session: Session = Depends(get_session)):
-    new_character = Character.from_orm(character)
+    new_character = Character.model_validate(character)
     session.add(new_character)
     session.commit()
     session.refresh(new_character)
@@ -26,11 +26,11 @@ async def get_character(*, character_id: int, session: Session = Depends(get_ses
 
 
 @router.patch('/character/{character_id}', status_code=201, response_model=CharacterRead)
-async def update_character(*, character: CharacterCreate, character_id: int, session: Session = Depends(get_session)):
+async def update_character(*, character: CharacterUpdate, character_id: int, session: Session = Depends(get_session)):
     db_character = session.get(Character, character_id)
     if not db_character:
         raise HTTPException(404, 'Character not found')
-    character_data = character.dict(exclude_unset=True)
+    character_data = character.model_dump(exclude_unset=True)
     for key, value in character_data.items():
         setattr(db_character, key, value)
     session.add(db_character)

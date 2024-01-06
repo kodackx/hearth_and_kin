@@ -20,7 +20,9 @@ def test_create_character(session: Session, client: TestClient):
 
     # Verify character added
     assert response.status_code == 201
-    character = session.get(Character, 1)
+    assert 'character_id' in response.json().keys(), response.json()
+    character_id = response.json()['character_id']
+    character = session.get(Character, character_id)
     assert character is not None
     # TODO:make this dynamic
     assert character.charisma == 5
@@ -58,7 +60,7 @@ def test_update_character(session: Session, client: TestClient):
     _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
 
     # Create character
-    _ = client.post(
+    response = client.post(
         '/character',
         json={
             'username': 'test_user',
@@ -67,10 +69,10 @@ def test_update_character(session: Session, client: TestClient):
             'charisma': 5,
         },
     )
-
+    character_id = response.json()['character_id']
     # Update character
     response = client.patch(
-        '/character/1',
+        f'/character/{character_id}',
         json={
             'username': 'test_user',
             'user_description': 'new desc',
@@ -80,7 +82,7 @@ def test_update_character(session: Session, client: TestClient):
     )
 
     # Verify character updated
-    assert response.status_code == 201
+    assert response.status_code == 201, response.json()
     character = session.get(Character, 1)
     assert character is not None
     # TODO:make this dynamic

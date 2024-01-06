@@ -21,5 +21,5 @@ class StoryRead(StoryCreate):
     active: bool = Field(default=False)
 
 
-class Story(StoryRead, table=True):
+class Story(StoryRead, table=True):  # type: ignore
     pass

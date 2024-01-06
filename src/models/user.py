@@ -1,7 +1,7 @@
 from bcrypt import gensalt, hashpw
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
-from pydantic import validator
+from pydantic import field_validator
 
 
 class UserBase(Model):
@@ -18,7 +18,7 @@ class UserRead(Model):
     # characters: list[Character] = Relationship(back_populates='users')
 
 
-class User(UserBase, UserRead, table=True):
-    @validator('password')
+class User(UserBase, UserRead, table=True):  # type: ignore
+    @field_validator('password')
     def hash_password(cls, v: str):
         return hashpw(v.encode(), gensalt()).decode()

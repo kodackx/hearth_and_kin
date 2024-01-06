@@ -22,5 +22,5 @@ class MessageRead(MessageBase):
     narrator_reply: str
 
 
-class Message(MessageRead, table=True):
+class Message(MessageRead, table=True):  # type: ignore
     pass

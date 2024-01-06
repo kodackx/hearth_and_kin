@@ -2,7 +2,7 @@ import pytest
 from src.models.user import UserBase
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,7 @@ from pydantic.error_wrappers import ValidationError
 def test_create_user_model(user_input):
     # Cant create user with too short username or password
     with pytest.raises(ValidationError):
-        UserBase(**user_input)
+        UserBase.model_validate(user_input)
 
 
 @pytest.mark.asyncio

@@ -58,7 +58,7 @@ prompt = ChatPromptTemplate.from_messages(
 memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
 llm = ChatOpenAI(
-    model_name='gpt-4',
+    model_name='gpt-4',  # type: ignore
     # max_tokens=max_length,
     temperature=0.5,
 )
@@ -70,17 +70,17 @@ chat_llm_chain = LLMChain(
 )
 
 
-def gpt_narrator(character: CharacterRead, message: MessageBase, chain):
+def gpt_narrator(character: CharacterRead, message: MessageBase, chain) -> str:
     message_and_character_data = message.message
 
     if character.user_description:
-        message_and_character_data += '(Character Data: ' + character.user_description
+        message_and_character_data += f'(Character Data: {character.user_description})'
 
     if character.location:
-        message_and_character_data += '(Location: ' + character.location
+        message_and_character_data += f'(Location: {character.location})'
 
     if character.goal:
-        message_and_character_data += '(Current Goal: ' + character.goal
+        message_and_character_data += f'(Current Goal: {character.goal})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)

@@ -18,7 +18,7 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
     db_user = session.get(User, user.username)
     if db_user is not None:
         raise HTTPException(400, 'Username already exists. Please try a different one.')
-    new_user = User.from_orm(user)
+    new_user = User.model_validate(user)
     logger.debug(new_user)
     session.add(new_user)
     session.commit()

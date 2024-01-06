@@ -2,7 +2,7 @@ import pytest
 from sqlmodel import Session
 from src.models.user import UserBase
 from fastapi.testclient import TestClient
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from pydantic.error_wrappers import ValidationError
 )
 def test_login_model(user_input):
     with pytest.raises(ValidationError):
-        UserBase(**user_input)
+        UserBase.model_validate(user_input)
 
 
 @pytest.mark.parametrize(
