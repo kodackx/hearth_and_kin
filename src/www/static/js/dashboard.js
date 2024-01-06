@@ -1,30 +1,9 @@
+import { handleResponse } from './utils.js'
+
+
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
-    fetch('/stories', {
-        method: 'GET',
-    })
-    .then(response => response.json())
-    .then(storys => {
-
-        // Draw created storys
-        storys.forEach(story => {
-            var box = boxes.find(box => box.boxId === story.story_id);
-            box.storyId = story.story_id;
-            console.log(story.creator);
-            // Join any previously joined story
-            // TODO: only draw joined if user is in story
-            if (username == story.creator) {
-                drawJoinedStory(box);
-            } else {
-                drawCreatedStory(box);
-            }
-        });
-
-        
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+    loadStories();
 
     // Add event listeners to the boxes
     boxes.forEach(box => {
@@ -39,6 +18,11 @@ function createClickHandler(box) {
     };
 }
 
+function playOrResumeStory(box) {
+    localStorage.setItem('story_id', box.storyId);
+    window.location.href = '/story';
+}
+
 function drawCreatedStory(box) {
     // refreshBox(box);
     box.boxElement.style.backgroundColor = 'blue';
@@ -50,6 +34,11 @@ function drawCreatedStory(box) {
     box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
 }
 
+function drawActiveStory(box) {
+    box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
+    box.boxElement.style.backgroundColor = 'purple';
+    box.boxElement.addEventListener('click', () => playOrResumeStory(box), { 'once': true});
+}
 
 function drawJoinedStory(box) {
     box.boxElement.querySelector('.box-footer').textContent = undefined;
@@ -70,7 +59,37 @@ function drawDeletedStory(box) {
     box.storyId = undefined;
     box.storyCreated = false;
     box.creator = undefined;
+    box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
     removeButtons(box);
+}
+
+function loadStories() {
+    fetch('/stories', {
+        method: 'GET',
+    })
+    .then(response => handleResponse(response, stories => {
+        // Draw created storys
+        stories.forEach(story => {
+            var box = boxes.find(box => box.boxId === story.story_id);
+            box.storyId = story.story_id;
+            // Join any previously joined story
+            // TODO: only draw joined if user is in story
+            if (story.active && username == story.creator) {
+                console.log('hej')
+                drawActiveStory(box)
+            }
+            else if (!story.active && username == story.creator) {
+                drawJoinedStory(box);
+            } else {
+                drawCreatedStory(box);
+            }
+        });
+
+        
+    }))
+    .catch((error) => {
+        alert(error);
+    });
 }
 
 function createStory(box) {
@@ -84,17 +103,12 @@ function createStory(box) {
             creator: username,
         }),
     })
-    .then(response => {
-        if (response.ok) {
+    .then(response => handleResponse(response, data => {
             drawCreatedStory(box);
             alert('Story created!')
-        } else {
-            alert('Creating the story failed')
-            console.error('Error:', response);
-        }
-    })
+    }))
     .catch((error) => {
-        console.error('Error:', error);
+        alert(error);
     });
 };
 
@@ -109,25 +123,77 @@ function joinStory(box) {
             username: username,
         }),
     })
-    .then(response => {
-        if (response.ok) {
+    .then(response => handleResponse(response, data => {
             drawJoinedStory(box);
-        } else {
-            alert('Joining the story failed')
-            console.error('Error:', response);
-        }
-    })
+            alert('Story joined!')
+    }))
     .catch((error) => {
-        console.error('Error:', error);
+        alert(error);
+    })
+};
+
+function playStory(box) {
+    fetch('/story/' + box.storyId + '/play', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: box.storyId,
+            username: username,
+        }),
+    })
+    .then(response => handleResponse(response, data => {
+        playOrResumeStory(box)
+    }))
+    .catch((error) => {
+        alert(error);
+    })
+};
+
+function deleteStory(box) {
+    fetch('/story/' + box.storyId, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            username: username,
+            story_id: box.storyId
+        }),
+    })
+    .then(response => handleResponse(response, data => {
+        alert('Story deleted!')
+        drawDeletedStory(box);
+    }))
+};
+
+function leaveStory(box) {
+    fetch('/story/' + box.storyId + '/leave', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: box.storyId,
+            username: username,
+        }),
+    })
+    .then(response => handleResponse(response, data => {
+        drawLeftStory(box);
+    }))
+    .catch((error) => {
+        alert(error);
     });
 };
+
 
 function createButtons(box) {
     box.boxElement.removeEventListener('click', createClickHandler(box));
     var playButton = document.createElement('button');
     playButton.innerHTML = 'Play Story';
     playButton.id = 'playButton' + box.boxId;  // Add a unique id
-    playButton.addEventListener('click', () => startStory(box))
+    playButton.addEventListener('click', () => playStory(box))
     box.boxElement.appendChild(playButton);
 
     var leaveButton = document.createElement('button');
@@ -174,84 +240,11 @@ function removeButtons(box) {
     }
 }
 
-function startStory(box) {
-    fetch('/story', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            story_id: box.storyId,
-            description: prompt('Describe your character in a few words. Mention race, class, and any other important details.'),
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (confirm(data.description)) {
-            localStorage.setItem('story_id', data.story_id);
-            window.location.href = '/story';
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-};
-
-function deleteStory(box) {
-    fetch('/story/' + box.storyId, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            username: username,
-            story_id: box.storyId
-        }),
-    })
-    .then(response => response.json())
-    .then(response => {
-        if (response.ok) {
-            drawDeletedStory(box);
-        } else {
-            alert('Deleting the story failed')
-            console.error('Error:', response);
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-};
-
-function leaveStory(box) {
-    fetch('/story/' + box.storyId + '/leave', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            story_id: box.storyId,
-            username: username,
-        }),
-    })
-    .then(response => {
-        if (response.ok) {
-            drawLeftStory(box);
-        } else {
-            alert('Leaving the story failed')
-            console.error('Error:', response);
-        }
-
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-};
-
 let username = localStorage.getItem('username');
 var boxes = [
-    { boxElement: document.getElementById('box1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
-    { boxElement: document.getElementById('box2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
-    { boxElement: document.getElementById('box3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, inStory: false},
+    { boxElement: document.getElementById('box1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('box2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('box3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
 ]
 
 initializeDashboard(boxes);

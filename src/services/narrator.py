@@ -7,10 +7,11 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
-from src.models.character import CharacterRead
+from src.models.character import Character
 
-from src.models.message import MessageBase
-from ..core.config import logger
+from src.models.message import MessageBase, MessageRead
+from src.core.config import logger
+
 ################
 # OpenAI stuff #
 ################
@@ -55,32 +56,40 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-llm = ChatOpenAI(
-    model_name='gpt-4',  # type: ignore
-    # max_tokens=max_length,
-    temperature=0.5,
-)
-chat_llm_chain = LLMChain(
-    llm=llm,
-    prompt=prompt,
-    verbose=True,
-    memory=memory,
-)
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead]) -> LLMChain:
+    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+
+    for message in message_history:
+        memory.chat_memory.add_user_message(message.message)
+        memory.chat_memory.add_ai_message(message.narrator_reply)
+
+    llm = ChatOpenAI(
+        model_name='gpt-4',  # type: ignore
+        # max_tokens=max_length,
+        temperature=0.5,
+    )
+    chat_llm_chain = LLMChain(
+        llm=llm,
+        prompt=prompt,
+        verbose=True,
+        memory=memory,
+    )
+
+    return chat_llm_chain
 
 
-def gpt_narrator(character: CharacterRead, message: MessageBase, chain) -> str:
+def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
     message_and_character_data = message.message
 
     if character.user_description:
-        message_and_character_data += f'(Character Data: {character.user_description})'
+        message_and_character_data += f'\n(Character Data: {character.user_description})'
 
     if character.location:
-        message_and_character_data += f'(Location: {character.location})'
+        message_and_character_data += f'\n(Location: {character.location})'
 
     if character.goal:
-        message_and_character_data += f'(Current Goal: {character.goal})'
+        message_and_character_data += f'\n(Current Goal: {character.goal})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)

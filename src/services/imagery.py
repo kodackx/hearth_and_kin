@@ -7,6 +7,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import base64
+from ..core.config import logger
 
 
 def generate_image(prompt_text):
@@ -24,7 +25,7 @@ def generate_image(prompt_text):
         """,
     )
     summary = LLMChain(llm=llm, prompt=prompt).run(prompt_text=prompt_text)
-    print('[GEN IMAGE]: ' + summary)
+    logger.debug('[GEN IMAGE]: ' + summary)
     image_url = ''
     prompt_text_adjusted = (
         """
@@ -38,7 +39,7 @@ def generate_image(prompt_text):
     try:
         image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_text_adjusted)  # type: ignore
     except Exception as e:
-        print('[GEN IMAGE] Image generation failed: ' + repr(e))
+        logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
         image_url = '[NO_IMAGE]'
     return image_url
 

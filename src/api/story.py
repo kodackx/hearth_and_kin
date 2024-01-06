@@ -6,12 +6,12 @@ from src.models.message import Message
 
 from ..models.user import User, UserRead
 from ..core.database import get_session
-from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete
+from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
 
 router = APIRouter()
 
 
-@router.post('/story', status_code=201)
+@router.post('/story', status_code=201, response_model=StoryRead)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
     db_story = session.get(Story, story.story_id)
     if db_story is not None:
@@ -21,10 +21,10 @@ async def create_story(*, story: StoryCreate, session: Session = Depends(get_ses
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
-    return {'message': f'Story {story.story_id} created successfully'}
+    return new_story
 
 
-@router.delete('/story/{story_id}', status_code=200)
+@router.delete('/story/{story_id}', status_code=200, response_model=StoryRead)
 async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)):
     statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.username)
     db_story = session.exec(statement).first()
@@ -41,7 +41,7 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
     session.delete(db_story)
     session.commit()
 
-    return {'message': 'Story deleted'}
+    return db_story
 
 
 @router.get('/stories')
@@ -70,7 +70,7 @@ async def get_story_users(*, session: Session = Depends(get_session), story_id: 
     raise HTTPException(status_code=404, detail='Story not found')
 
 
-@router.post('/story/{story_id}/join')
+@router.post('/story/{story_id}/join', response_model=StoryRead)
 async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)):
     db_story = session.get(Story, story.story_id)
     db_user = session.get(User, story.username)
@@ -86,10 +86,10 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
-    return {'message': f'User {story.username} joined story {story.story_id}'}
+    return db_story
 
 
-@router.post('/story/{story_id}/play')
+@router.post('/story/{story_id}/play', response_model=StoryRead)
 async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)):
     db_story = session.get(Story, story.story_id)
     db_user = session.get(User, story.username)
@@ -98,8 +98,8 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
         raise HTTPException(404, 'Story or user does not exist')
     if db_user.story_id != db_story.story_id:
         raise HTTPException(400, 'User in different story.')
-    if db_story.active:
-        raise HTTPException(400, 'Story is already in play.')
+    # if db_story.active:
+    #    raise HTTPException(400, 'Story is already in play.')
 
     if not db_story.creator == db_user.username:
         raise HTTPException(400, 'Only story creator can play story.')
@@ -107,7 +107,7 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
-    return {'message': f'User {story.username} played story {story.story_id}'}
+    return db_story
 
 
 @router.post('/story/{story_id}/leave')

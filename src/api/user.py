@@ -1,10 +1,7 @@
 from bcrypt import checkpw
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-
-from src.models.character import Character, CharacterRead
+from sqlmodel import Session
 from ..core.database import get_session
-from ..models.story import Story
 from ..models.user import User, UserBase
 from ..core.config import logger
 
@@ -26,14 +23,6 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
     return {'message': 'User registered successfully! Please log in now.'}
 
 
-@router.get('/user/{username}/story')
-async def get_user_story(*, session: Session = Depends(get_session), username: str):
-    user = session.get(User, username)
-    if user:
-        return session.get(Story, user.story_id)
-    raise HTTPException(status_code=404, detail='User not found')
-
-
 @router.post('/login')
 async def login(*, session: Session = Depends(get_session), user: UserBase):
     db_user = session.get(User, user.username)
@@ -41,12 +30,3 @@ async def login(*, session: Session = Depends(get_session), user: UserBase):
         return {'message': 'Login successful'}
 
     raise HTTPException(401, 'Invalid credentials')
-
-
-@router.get('/user/{username}/characters', status_code=200, response_model=list[CharacterRead])
-async def get_characters(*, username: str, session: Session = Depends(get_session)):
-    characters = session.exec(select(Character)).all()  # .where(Character.username == username)).all()
-    if not characters:
-        raise HTTPException(404, 'User not found')
-    logger.debug(f'[USER]: returned {characters = }')
-    return characters

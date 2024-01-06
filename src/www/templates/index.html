@@ -99,14 +99,13 @@
                 body: JSON.stringify(data)
             })
             .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err; });
+                if (response.ok) {
+                    alert('User successfully created!')
+                } else if (response.status == 400) {
+                    alert('A user with that username already exists')
+                } else {
+                    alert('An error occurred: ', response.json())
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Received data: ", data);  // Log the response data
-                alert(data.message);
             })
             .catch((error) => {
                 console.error('Error:', error);
@@ -127,14 +126,14 @@
                     password: password,
                 }),
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Login successful') {
+            .then(response => {
+                if (response.ok) {
                     localStorage.setItem('username', username);
                     window.location.href = '/dashboard';
+                } else if (response.status == 401) {
+                    alert('No user with that password exists');
                 } else {
-                    // Handle login failure
-                    alert(data.error);
+                    alert('An error occurred: ', response.json())
                 }
             })
             .catch((error) => {
