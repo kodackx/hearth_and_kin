@@ -6,21 +6,21 @@ from ..models.character import Character
 from ..core.config import logger, GENERATE_IMAGE, GENERATE_AUDIO
 from ..core.database import get_session
 from ..core.mongodb import setup_mongodb
-from ..models.message import Message, MessageBase
+from ..models.message import Message, MessageBase, MessageRead
 from ..services import audio, imagery, narrator
 
 router = APIRouter()
 mongodb = setup_mongodb()
 
 
-@router.post('/message')
+@router.post('/message', response_model=MessageRead)
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # TODO: do we have to recreate the chain at every call? Possible to cache this?
     messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
     chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
 
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
-    audio_id = audio_path = background_path = background_image = None
+    audio_id = audio_path = image_url = image_path = None
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
         # Not sure if we want to get this from the endpoint or just query the db here
@@ -34,10 +34,10 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
             audio_id, audio_path = audio.obtain_audio(narrator_reply)
             _ = await audio.store_audio(audio_id, audio_path)
         if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
-            background_path = imagery.generate_image(narrator_reply)
-            logger.debug(f'[MESSAGE] {background_path = }')
-            background_image = imagery.obtain_image_from_url(background_path)
-            logger.debug(f'[MESSAGE] {background_image = }')
+            image_url = imagery.generate_image(narrator_reply)
+            logger.debug(f'[MESSAGE] {image_url = }')
+            image_path = await imagery.store_image(image_url)
+            logger.debug(f'[MESSAGE] {image_path = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
@@ -49,9 +49,8 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         message=message.message,
         narrator_reply=narrator_reply,
         audio_path=audio_path,
-        image_path=background_path,
+        image_path=image_path,
     )
-    logger.debug(f'{new_message = }')
     session.add(new_message)
     session.commit()
     session.refresh(new_message)

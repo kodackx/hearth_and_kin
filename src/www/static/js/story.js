@@ -157,11 +157,10 @@ function removeMessage(messageId) {
 // 3rd version of changing background image but this time with functioning transition
 function tryChangeBackgroundImage(imagePath) {
     if (imagePath) {
-        let oldBackground = document.getElementById('story-image');
         let newBackground = document.getElementById('story-image');
 
         // Set the new background image and fade it in
-        newBackground.style.backgroundImage = `url(${imagePath})`;
+        newBackground.style.backgroundImage = `url('${imagePath}')`;
         newBackground.style.opacity = 1;
     }
 }

@@ -3,7 +3,7 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-import requests
+import httpx
 from PIL import Image
 from io import BytesIO
 import base64
@@ -44,9 +44,10 @@ def generate_image(prompt_text):
     return image_url
 
 
-def obtain_image_from_url(image_url):
+async def store_image(image_url: str) -> str:
     # obtain image from url
-    response = requests.get(image_url)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(image_url)
     img = Image.open(BytesIO(response.content))
     # define path to save image
     unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
@@ -56,4 +57,4 @@ def obtain_image_from_url(image_url):
     file_path = os.path.join(dir_path, filename)
     # save image to local file for debugging
     img.save(file_path)
-    return file_path
+    return file_path.replace('src/www/', '')
