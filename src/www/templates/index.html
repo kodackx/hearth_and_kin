@@ -73,85 +73,19 @@
             <div id="auth">
                 <input type="text" id="username" placeholder="Username">
                 <input type="password" id="password" placeholder="Password">
-                <button onclick="register()">Register</button>
-                <button onclick="login()">Login</button>
+                <button id="registerBtn">Register</button>
+                <button id="loginBtn">Login</button>
             </div>
-
+            <div id="errorContainer"></div>
             <hr>  <!-- Line separator -->
             
             <div id="story">
                 <input type="text" id="story_id" placeholder="Story ID">
-                <button onclick="createStory()">Create Story</button>
-                <button onclick="joinStory()">Join Story</button>
+                <button id="createStoryBtn">Create Story</button>
+                <button id="joinStoryBtn">Join Story</button>
             </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script>
-        function register() {
-            var username = document.getElementById('username').value;
-            var password = document.getElementById('password').value;
-            var data = {'username': username, 'password': password};
-            fetch('/user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert('User successfully created!')
-                } else if (response.status == 400) {
-                    alert('A user with that username already exists')
-                } else {
-                    alert('An error occurred: ', response.json())
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert(error.error)
-            });
-        }
-
-        function login() {
-            var username = $('#username').val();
-            var password = $('#password').val();
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                }),
-            })
-            .then(response => {
-                if (response.ok) {
-                    localStorage.setItem('username', username);
-                    window.location.href = '/dashboard';
-                } else if (response.status == 401) {
-                    alert('No user with that password exists');
-                } else {
-                    alert('An error occurred: ', response.json())
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-
-        function createStory() {
-            var story_id = $('#story_id').val();
-            $.post('/story', {story_id: story_id}, function(data) {
-                alert(data.message);
-            });
-        }
-
-        function joinStory() {
-            var story_id = $('#story_id').val();
-            // Socket.IO logic for joining a story can go here
-        }
-    </script>
+    <script type="module" src="static/js/index.js"></script> 
 </body>
 </html>
