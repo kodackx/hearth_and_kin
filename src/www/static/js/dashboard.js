@@ -23,12 +23,12 @@ function playOrResumeStory(box) {
     window.location.href = '/story';
 }
 
-function drawCreatedStory(box) {
+function drawCreatedStory(box, story) {
     // refreshBox(box);
     box.boxElement.style.backgroundColor = 'blue';
     box.storyCreated = true;
-    box.creator = username;
-    box.storyId = box.boxId;
+    box.creator = story.creator;
+    box.storyId = story.story_id;
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
     //box.boxElement.removeEventListener('click', createClickHandler(box));
     box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
@@ -38,6 +38,7 @@ function drawActiveStory(box) {
     box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
     box.boxElement.style.backgroundColor = 'purple';
     box.boxElement.addEventListener('click', () => playOrResumeStory(box), { 'once': true});
+    createButtons(box);
 }
 
 function drawJoinedStory(box) {
@@ -73,15 +74,13 @@ function loadStories() {
             var box = boxes.find(box => box.boxId === story.story_id);
             box.storyId = story.story_id;
             // Join any previously joined story
-            // TODO: only draw joined if user is in story
-            if (story.active && username == story.creator) {
-                console.log('hej')
+            if (story.active && story_id == story.story_id) {
                 drawActiveStory(box)
             }
-            else if (!story.active && username == story.creator) {
+            else if (!story.active && story_id == story.story_id) {
                 drawJoinedStory(box);
             } else {
-                drawCreatedStory(box);
+                drawCreatedStory(box, story);
             }
         });
 
@@ -104,7 +103,7 @@ function createStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
-            drawCreatedStory(box);
+            drawCreatedStory(box, data);
             alert('Story created!')
     }))
     .catch((error) => {
@@ -124,6 +123,7 @@ function joinStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+            localStorage.setItem('story_id', data.storyId);
             drawJoinedStory(box);
             alert('Story joined!')
     }))
@@ -163,6 +163,7 @@ function deleteStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+        localStorage.setItem('story_id', undefined);
         alert('Story deleted!')
         drawDeletedStory(box);
     }))
@@ -180,6 +181,7 @@ function leaveStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+        localStorage.setItem('story_id', undefined);
         drawLeftStory(box);
     }))
     .catch((error) => {
@@ -190,12 +192,18 @@ function leaveStory(box) {
 
 function createButtons(box) {
     box.boxElement.removeEventListener('click', createClickHandler(box));
-    var playButton = document.createElement('button');
-    playButton.innerHTML = 'Play Story';
-    playButton.id = 'playButton' + box.boxId;  // Add a unique id
-    playButton.addEventListener('click', () => playStory(box))
-    box.boxElement.appendChild(playButton);
-
+    if (box.creator === username) {
+        var playButton = document.createElement('button');
+        if (box.storyId === story_id) {
+            playButton.innerHTML = 'Resume Story';
+            playButton.addEventListener('click', () => resumeStory(box))
+        } else {
+            playButton.innerHTML = 'Play Story';
+            playButton.addEventListener('click', () => playStory(box))
+        }
+        playButton.id = 'playButton' + box.boxId;  // Add a unique id
+        box.boxElement.appendChild(playButton);
+    }
     var leaveButton = document.createElement('button');
     leaveButton.innerHTML = 'Leave Story';
     leaveButton.addEventListener('click', () => leaveStory(box))
@@ -241,6 +249,7 @@ function removeButtons(box) {
 }
 
 let username = localStorage.getItem('username');
+let story_id = localStorage.getItem('story_id');
 var boxes = [
     { boxElement: document.getElementById('box1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
     { boxElement: document.getElementById('box2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
