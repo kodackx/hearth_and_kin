@@ -1,8 +1,13 @@
 import pytest
-from sqlmodel import Session
-from src.models.user import UserBase
+from src.main import app
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
+from src.models.user import User, UserBase
+from unittest.mock import patch
+from src.api.user import login
+from fastapi import Response
+from pydantic.error_wrappers import ValidationError
+
+client = TestClient(app)
 
 
 @pytest.mark.parametrize(
@@ -16,7 +21,7 @@ from pydantic import ValidationError
 )
 def test_login_model(user_input):
     with pytest.raises(ValidationError):
-        UserBase.model_validate(user_input)
+        UserBase(**user_input)
 
 
 @pytest.mark.parametrize(
@@ -27,10 +32,12 @@ def test_login_model(user_input):
     ],
 )
 @pytest.mark.asyncio
-async def test_login_logic(user_input, expected_status, session: Session, client: TestClient):
-    # Create the user first
-    response = client.post('/user', json={'username': 'user', 'password': 'pass'})
-    assert response.status_code == 201
-    # Try logging in
-    response = client.post('/login', json=user_input)
-    assert response.status_code == expected_status
+async def test_login_logic(user_input, expected_status):
+    test_input = UserBase(**user_input)
+    mock_db_response = User(username='user', password='pass')
+    response = Response()
+
+    with patch('src.api.user.Session') as mock_db:
+        mock_db.return_value.__enter__.return_value.get.return_value = mock_db_response
+        _ = await login(test_input, response)
+        assert response.status_code == expected_status

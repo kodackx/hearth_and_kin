@@ -6,6 +6,3 @@ __pycache__
 .ruff_cache
 .vscode
 *.db
-*.wav
-*.jpg
-*.txt
