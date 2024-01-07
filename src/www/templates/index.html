@@ -20,7 +20,7 @@
                     height: auto;
                 }
                 
-                #auth, #game {
+                #auth, #story {
                     display: flex;
                     flex-direction: column;
                     gap: 10px;
@@ -68,92 +68,24 @@
             </style>
         </head>
         <body>
-            <img id="logo" src="/static/DALL.png" alt="Logo">
+            <img id="logo" src="static/img/DALL.png" alt="Logo">
         
             <div id="auth">
                 <input type="text" id="username" placeholder="Username">
                 <input type="password" id="password" placeholder="Password">
-                <button onclick="register()">Register</button>
-                <button onclick="login()">Login</button>
+                <button id="registerBtn">Register</button>
+                <button id="loginBtn">Login</button>
             </div>
-
+            <div id="errorContainer"></div>
             <hr>  <!-- Line separator -->
             
-            <div id="room">
-                <input type="text" id="room_id" placeholder="Room ID">
-                <button onclick="createRoom()">Create Room</button>
-                <button onclick="joinRoom()">Join Room</button>
+            <div id="story">
+                <input type="text" id="story_id" placeholder="Story ID">
+                <button id="createStoryBtn">Create Story</button>
+                <button id="joinStoryBtn">Join Story</button>
             </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script>
-        function register() {
-            var username = document.getElementById('username').value;
-            var password = document.getElementById('password').value;
-            var data = {'username': username, 'password': password};
-            console.log("Sending data: ", data);  // Log the data you're sending
-            fetch('/user', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err; });
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log("Received data: ", data);  // Log the response data
-                alert(data.message);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert(error.error)
-            });
-        }
-
-        function login() {
-            var username = $('#username').val();
-            var password = $('#password').val();
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username,
-                    password: password,
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Login successful') {
-                    // Redirect to a different page
-                    window.location.href = '/dashboard';
-                } else {
-                    // Handle login failure
-                    alert(data.error);
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-
-        function createRoom() {
-            var room_id = $('#room_id').val();
-            $.post('/room', {room_id: room_id}, function(data) {
-                alert(data.message);
-            });
-        }
-
-        function joinRoom() {
-            var room_id = $('#room_id').val();
-            // Socket.IO logic for joining a game can go here
-        }
-    </script>
+    <script type="module" src="static/js/index.js"></script> 
 </body>
 </html>
