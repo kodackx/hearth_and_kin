@@ -10,7 +10,6 @@ from ..services import audio, imagery, narrator
 
 router = APIRouter()
 
-
 @router.post('/message', response_model=MessageRead)
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # TODO: do we have to recreate the chain at every call? Possible to cache this?
