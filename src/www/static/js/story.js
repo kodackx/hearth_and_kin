@@ -8,6 +8,25 @@ document.getElementById('start-button').style.display = 'block';
 
 document.getElementById('start-button').addEventListener('click', drawStoryPage)
 
+const socket = new WebSocket('ws://127.0.0.1:8000/ws/prompt');
+
+// Event listener for when the connection is established
+socket.onopen = function() {
+    console.log('WebSocket connection opened');
+};
+
+// Event listener for when a message is received from the server
+// TODO: clean up: https://websockets.readthedocs.io/en/stable/intro/tutorial1.html#transmit-from-server-to-browser
+// Make WS responseHandler
+socket.onmessage = function(message) {
+    processMessage(JSON.parse(message.data))
+};
+
+window.addEventListener('beforeunload', function() {
+    socket.close();
+});
+
+
 async function drawStoryPage() {
     document.getElementById('main-content').style.display = 'flex';
     this.style.display = 'none';
@@ -68,7 +87,7 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
-async function sendMessage() {
+function sendMessage() {
     const message = document.getElementById('message-input').value;
     appendMessage('User: ' + message);
     document.getElementById('message-input').value = '';
@@ -78,19 +97,17 @@ async function sendMessage() {
 
     // const loadingMessageId = appendMessage('Narrator is thinking...');
 
-    fetch('/message', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            message: message, 
-            username: username,
-            character_id: character_id,
-            story_id: story_id
-        }),
-    })
-    .then(response => handleResponse(response, data => {
+    // Send data to the server
+    socket.send(JSON.stringify({
+        message: message,
+        username: username,
+        character_id: character_id,
+        story_id: story_id
+    }))
+}
+
+function processMessage(data) {
+    try {
         // Remove the loading message
         // removeMessage(loadingMessageId);
         if (data.narrator_reply) {
@@ -123,18 +140,18 @@ async function sendMessage() {
                 }
             }, intervalTime);
         } else {
-            appendMessage('Failed to send message');
+            appendMessage('Failed to retrieve message');
         }
 
         tryPlayAudio(data.audio_path)
-        tryChangeBackgroundImage(data.image_path);
-    }))
-    .catch((error) => {
+        tryChangeBackgroundImage(data.image_path)
+    } catch (error) {
         console.error(error);
         document.getElementById('spinner').style.display = 'none';
         alert(error);
-    });
+    }
 }
+
 
 // Function to send a new message
 document.getElementById('send-button').addEventListener('click', sendMessage);
