@@ -1,27 +1,34 @@
 import { handleResponse } from './utils.js'
 
+// Retrieve stored variables
 const story_id = localStorage.getItem('story_id');
 const character_id = 1; //localStorage.getItem('character_id');
 const username = localStorage.getItem('username');
+
+// Set up elements
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
-
+document.getElementById('send-button').addEventListener('click', sendMessage);
 document.getElementById('start-button').addEventListener('click', drawStoryPage)
 
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    var key = e.which || e.keyCode;
+    if (key === 13) { // 13 is the key code for Enter
+        e.preventDefault(); // Prevent the default action to stop the form from submitting
+        document.getElementById('send-button').click(); // Trigger the click event on the send button
+    }
+});
+
+// Event listener for communication of messages
 const socket = new WebSocket('ws://127.0.0.1:8000/ws/prompt');
 
-// Event listener for when the connection is established
-socket.onopen = function() {
-    console.log('WebSocket connection opened');
-};
-
-// Event listener for when a message is received from the server
 // TODO: clean up: https://websockets.readthedocs.io/en/stable/intro/tutorial1.html#transmit-from-server-to-browser
 // Make WS responseHandler
 socket.onmessage = function(message) {
     processMessage(JSON.parse(message.data))
 };
 
+// Close connection when user exits website
 window.addEventListener('beforeunload', function() {
     socket.close();
 });
@@ -77,15 +84,6 @@ function tryPlayAudio(audioPath) {
     }
 }
 
-    
-
-document.getElementById('message-input').addEventListener('keypress', function(e) {
-    var key = e.which || e.keyCode;
-    if (key === 13) { // 13 is the key code for Enter
-        e.preventDefault(); // Prevent the default action to stop the form from submitting
-        document.getElementById('send-button').click(); // Trigger the click event on the send button
-    }
-});
 
 function sendMessage() {
     const message = document.getElementById('message-input').value;
@@ -152,10 +150,6 @@ function processMessage(data) {
     }
 }
 
-
-// Function to send a new message
-document.getElementById('send-button').addEventListener('click', sendMessage);
-
 // Function to append a new message to the chat box
 function appendMessage(message) {
     const chatBox = document.getElementById('chat-box');
@@ -163,12 +157,6 @@ function appendMessage(message) {
     messageElement.textContent = message;
     chatBox.appendChild(messageElement);
     return messageElement.id;
-}
-
-// Function to remove a message from the chat box
-function removeMessage(messageId) {
-    const messageElement = document.getElementById(messageId);
-    messageElement.remove();
 }
 
 // 3rd version of changing background image but this time with functioning transition
