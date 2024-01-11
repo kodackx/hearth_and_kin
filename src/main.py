@@ -9,7 +9,6 @@ from fastapi.staticfiles import StaticFiles
 from .api import character, message, story, user
 from .core.database import create_db_and_tables, get_session
 from .core.mongodb import setup_mongodb
-from .core.websocket import get_socket
 
 load_dotenv('.env')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -34,7 +33,7 @@ async def home(request: Request):
 app.include_router(user.router, prefix='', tags=['user'], dependencies=[Depends(get_session)])
 app.include_router(story.router, prefix='', tags=['story'], dependencies=[Depends(get_session)])
 app.include_router(character.router, prefix='', tags=['character'], dependencies=[Depends(get_session)])
-app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session), Depends(get_socket)])
+app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session)])
 
 
 @app.get('/dashboard')

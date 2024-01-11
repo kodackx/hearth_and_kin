@@ -21,9 +21,6 @@ document.getElementById('message-input').addEventListener('keypress', function(e
 
 // Event listener for communication of messages
 const socket = new WebSocket('ws://127.0.0.1:8000/ws/prompt');
-
-// TODO: clean up: https://websockets.readthedocs.io/en/stable/intro/tutorial1.html#transmit-from-server-to-browser
-// Make WS responseHandler
 socket.onmessage = function(message) {
     processMessage(JSON.parse(message.data))
 };
