@@ -1,6 +1,52 @@
 import { handleResponse } from './utils.js'
 
 
+// Event listener for communication of messages
+// TODO add websocket file and functions for handling the received websocket actions
+const socket = new WebSocket('ws://127.0.0.1:8000/ws/story');
+socket.onmessage = function(message) {
+    let parsedMessage = JSON.parse(message.data)
+    let action = parsedMessage.action
+    let data = parsedMessage.data
+    console.log('client received: ', parsedMessage)
+    let box = boxes[data.story_id - 1]
+    switch (action) {
+        case 'create_story':
+            console.log('create story received, drawing box')
+            drawCreatedStory(box, data)
+            box.boxElement.querySelector('.box-content').textContent = data.creator;
+            break;
+        case 'join_story':
+            if (data.username == username) {
+                drawJoinedStory(box)
+            } else {
+                box.boxElement.querySelector('.box-content').textContent = data.username;
+            }
+        case 'leave_story':
+            if (data.username == username) {
+                drawLeftStory(box)
+            } else {
+                box.boxElement.querySelector('.box-content').textContent = '+';
+            }
+        case 'delete_story':
+            drawDeletedStory(box)
+        default:
+            break;
+    }
+};
+
+function sendSocket(action, data) {
+    socket.send(JSON.stringify({
+        action: action,
+        data: data 
+    }))
+}
+
+// Close connection when user exits website
+window.addEventListener('beforeunload', function() {
+    socket.close();
+});
+
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
     loadStories();
@@ -72,15 +118,16 @@ function loadStories() {
         // Draw created storys
         stories.forEach(story => {
             var box = boxes.find(box => box.boxId === story.story_id);
-            box.storyId = story.story_id;
-            // Join any previously joined story
-            if (story.active && story_id == story.story_id) {
-                drawActiveStory(box)
-            }
-            else if (!story.active && story_id == story.story_id) {
-                drawJoinedStory(box);
-            } else {
-                drawCreatedStory(box, story);
+            if (story.story_id <= 3) { // we only support 3 boxes/stories for now
+                // Join any previously joined story
+                if (story.active && story_id == story.story_id) {
+                    drawActiveStory(box)
+                }
+                else if (!story.active && story_id == story.story_id) {
+                    drawJoinedStory(box);
+                } else {
+                    drawCreatedStory(box, story);
+                }
             }
         });
 
@@ -103,8 +150,9 @@ function createStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
-            drawCreatedStory(box, data);
-            alert('Story created!')
+        sendSocket('create_story', data)
+        //drawCreatedStory(box, data);
+        //alert('Story created!')
     }))
     .catch((error) => {
         alert(error);
@@ -123,9 +171,9 @@ function joinStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+            sendSocket('join_story', data)
             localStorage.setItem('story_id', data.storyId);
-            drawJoinedStory(box);
-            alert('Story joined!')
+            //alert('Story joined!')
     }))
     .catch((error) => {
         alert(error);
@@ -144,6 +192,7 @@ function playStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+        sendSocket('play_story', data)
         playOrResumeStory(box)
     }))
     .catch((error) => {
@@ -163,6 +212,7 @@ function deleteStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+        sendSocket('delete_story', data)
         localStorage.setItem('story_id', undefined);
         alert('Story deleted!')
         drawDeletedStory(box);
@@ -181,6 +231,7 @@ function leaveStory(box) {
         }),
     })
     .then(response => handleResponse(response, data => {
+        sendSocket('leave_story', data)
         localStorage.setItem('story_id', undefined);
         drawLeftStory(box);
     }))

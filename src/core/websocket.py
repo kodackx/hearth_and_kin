@@ -11,7 +11,8 @@ class WebsocketManager:
     def disconnect(self, websocket: WebSocket) -> None:
         self.active_connections.remove(websocket)
 
-    async def broadcast(self, message: str) -> None:
+    async def broadcast(self, action: str, payload: dict) -> None:
+        message = {'action': action, 'data': payload}
         for connection in self.active_connections:
             await connection.send_json(message)
 

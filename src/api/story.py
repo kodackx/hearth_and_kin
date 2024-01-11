@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from sqlmodel import Session, select
-
+from src.core.websocket import WebsocketManager
+from ..core.config import logger
 from src.models.message import Message
 
 
@@ -9,10 +10,24 @@ from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
 
 router = APIRouter()
+socket_manager = WebsocketManager()
+
+@router.websocket('/ws/story')
+async def story_updates(websocket: WebSocket, session: Session = Depends(get_session)):
+    await socket_manager.connect(websocket)
+    try:
+        while True:
+            message = await websocket.receive_json()
+            #logger.debug(f'WS: {test}')
+            await socket_manager.broadcast(message['action'], message['data'])
+            #await socket_manager.broadcast(new_message.model_dump()
+    
+    except WebSocketDisconnect:
+        socket_manager.disconnect(websocket)
 
 
-@router.post('/story', status_code=201, response_model=StoryRead)
-async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
+@router.post('/story', status_code=201)
+async def create_story(*,story: StoryCreate, session: Session = Depends(get_session)) -> StoryCreate:
     db_story = session.get(Story, story.story_id)
     if db_story is not None:
         raise HTTPException(400, 'Story already exists')
@@ -24,8 +39,8 @@ async def create_story(*, story: StoryCreate, session: Session = Depends(get_ses
     return new_story
 
 
-@router.delete('/story/{story_id}', status_code=200, response_model=StoryRead)
-async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)):
+@router.delete('/story/{story_id}', status_code=200)
+async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)) -> StoryDelete:
     statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.username)
     db_story = session.exec(statement).first()
 
@@ -44,25 +59,26 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
     return db_story
 
 
+
 @router.get('/stories')
-async def get_stories(session: Session = Depends(get_session)):
+async def get_stories(session: Session = Depends(get_session)) -> list[StoryRead]:
     return session.exec(select(Story)).all()
 
 
-@router.get('/story/{story_id}', response_model=Story)
-async def get_story(*, story_id: int, session: Session = Depends(get_session)):
+@router.get('/story/{story_id}')
+async def get_story(*, story_id: int, session: Session = Depends(get_session)) -> StoryRead:
     return session.get(Story, story_id)
 
 
-@router.get('/story/{story_id}/messages', response_model=list[Message])
-async def get_story_messages(*, story_id: int, session: Session = Depends(get_session)):
+@router.get('/story/{story_id}/messages')
+async def get_story_messages(*, story_id: int, session: Session = Depends(get_session)) -> list[Message]:
     messages = session.exec(select(Message).where(Message.story_id == story_id)).all()
 
     return messages
 
 
-@router.get('/story/{story_id}/users', response_model=list[UserRead])
-async def get_story_users(*, session: Session = Depends(get_session), story_id: int):
+@router.get('/story/{story_id}/users')
+async def get_story_users(*, session: Session = Depends(get_session), story_id: int) -> list[UserRead]:
     story = session.get(Story, story_id)
     if story:
         statement = select(User).where(User.story_id == story_id)
@@ -70,8 +86,8 @@ async def get_story_users(*, session: Session = Depends(get_session), story_id: 
     raise HTTPException(status_code=404, detail='Story not found')
 
 
-@router.post('/story/{story_id}/join', response_model=StoryRead)
-async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)):
+@router.post('/story/{story_id}/join')
+async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
     db_story = session.get(Story, story.story_id)
     db_user = session.get(User, story.username)
 
@@ -86,11 +102,11 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
-    return db_story
+    return story
 
 
-@router.post('/story/{story_id}/play', response_model=StoryRead)
-async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)):
+@router.post('/story/{story_id}/play')
+async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
     db_story = session.get(Story, story.story_id)
     db_user = session.get(User, story.username)
 
@@ -111,7 +127,7 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
 
 
 @router.post('/story/{story_id}/leave')
-async def leave_story(*, story: StoryJoin, session: Session = Depends(get_session)):
+async def leave_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
     statement = select(User).where(User.username == story.username).where(User.story_id == story.story_id)
     user = session.exec(statement).first()
     if not user:
@@ -122,4 +138,4 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
     session.commit()
     session.refresh(user)
 
-    return {'message': f'User {story.username} left story {story.story_id}'}
+    return story
