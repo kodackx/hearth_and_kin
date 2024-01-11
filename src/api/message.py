@@ -3,36 +3,17 @@ from sqlmodel import Session, select
 
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger
 from ..core.database import get_session
+from ..core.websocket import get_socket, WebsocketManager
 from ..models.character import Character
 from ..models.message import Message, MessageBase, MessageRead
 from ..services import audio, imagery, narrator
-import json
 
 router = APIRouter()
 
-class ConnectionManager:
-    def __init__(self) -> None:
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket) -> None:
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket) -> None:
-        self.active_connections.remove(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
-        await websocket.send_json(message)
-
-    async def broadcast(self, message: str) -> None:
-        for connection in self.active_connections:
-            await connection.send_json(message)
-
-manager = ConnectionManager()
 
 @router.websocket('/ws/prompt')
-async def generate_reply(websocket: WebSocket, session: Session = Depends(get_session)):
-    await manager.connect(websocket)
+async def generate_reply(websocket: WebSocket, socket_manager: WebsocketManager = Depends(get_socket), session: Session = Depends(get_session)):
+    await socket_manager.connect(websocket)
     try:
         while True:
             message = await websocket.receive_json()
@@ -49,7 +30,7 @@ async def generate_reply(websocket: WebSocket, session: Session = Depends(get_se
                 # Not sure if we want to get this from the endpoint or just query the db here
                 character = session.get(Character, message.character_id)
                 if character is None:
-                    raise WebSocketException(404, 'Character not found')
+                    raise WebSocketException(1002, 'Character not found')
                 # Will send to openai and obtain reply
                 narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
 
@@ -63,7 +44,7 @@ async def generate_reply(websocket: WebSocket, session: Session = Depends(get_se
                     logger.debug(f'[MESSAGE] {image_path = }')
             except Exception as e:
                 logger.error(f'[MESSAGE] {e}')
-                raise WebSocketException(500, f'An error occurred while generating the response: {e}')
+                raise WebSocketException(1007, f'An error occurred while generating the response: {e}')
                 #raise HTTPException(500, f'An error occurred while generating the response: {e}')
 
             new_message = Message(
@@ -79,11 +60,11 @@ async def generate_reply(websocket: WebSocket, session: Session = Depends(get_se
             session.commit()
             session.refresh(new_message)
 
-            await manager.broadcast(new_message.model_dump(exclude='timestamp'))
+            await socket_manager.broadcast(new_message.model_dump(exclude='timestamp'))
     
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        await manager.broadcast("Client left the chat")
+        socket_manager.disconnect(websocket)
+        await socket_manager.broadcast("Client left the chat")
 
 
 @router.post('/message', response_model=MessageRead)
