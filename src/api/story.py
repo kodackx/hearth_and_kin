@@ -18,9 +18,7 @@ async def story_updates(websocket: WebSocket, session: Session = Depends(get_ses
     try:
         while True:
             message = await websocket.receive_json()
-            #logger.debug(f'WS: {test}')
             await socket_manager.broadcast(message['action'], message['data'])
-            #await socket_manager.broadcast(new_message.model_dump()
     
     except WebSocketDisconnect:
         socket_manager.disconnect(websocket)
@@ -36,11 +34,12 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
+    await socket_manager.broadcast('create_story', StoryCreate.model_validate(new_story))
     return new_story
 
 
-@router.delete('/story/{story_id}', status_code=200)
-async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)) -> StoryDelete:
+@router.delete('/story/{story_id}', status_code=200, response_model=StoryDelete)
+async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)):
     statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.username)
     db_story = session.exec(statement).first()
 
@@ -55,8 +54,10 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
 
     session.delete(db_story)
     session.commit()
-
-    return db_story
+    # TODO: Story has no username field so cant implicitly cast to StoryDelete
+    deleted_story = StoryDelete(story_id=story.story_id, username=story.username)
+    await socket_manager.broadcast('delete_story', deleted_story)
+    return deleted_story
 
 
 
@@ -67,6 +68,9 @@ async def get_stories(session: Session = Depends(get_session)) -> list[StoryRead
 
 @router.get('/story/{story_id}')
 async def get_story(*, story_id: int, session: Session = Depends(get_session)) -> StoryRead:
+    db_story = session.get(Story, story_id)
+    if db_story is None:
+        raise HTTPException(404, 'Story not found')
     return session.get(Story, story_id)
 
 
@@ -102,6 +106,7 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
+    await socket_manager.broadcast('join_story', story)
     return story
 
 
@@ -123,6 +128,7 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
+    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story))
     return db_story
 
 
@@ -137,5 +143,5 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
     session.add(user)
     session.commit()
     session.refresh(user)
-
+    await socket_manager.broadcast('leave_story', StoryJoin.model_validate(story))
     return story

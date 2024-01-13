@@ -1,7 +1,8 @@
 import { handleResponse } from './utils.js'
+import './api/story.js'
 
 // Retrieve stored variables
-const story_id = localStorage.getItem('story_id');
+const story_id = localStorage.getItem('joinedStoryId');
 const character_id = 1; //localStorage.getItem('character_id');
 const username = localStorage.getItem('username');
 
