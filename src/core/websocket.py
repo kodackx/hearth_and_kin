@@ -1,6 +1,7 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 from sqlmodel import SQLModel
 from fastapi.encoders import jsonable_encoder
+from .config import logger  # noqa: F401
 
 
 class WebsocketManager:
@@ -20,6 +21,16 @@ class WebsocketManager:
         message = {'action': action, 'data': payload}
         for connection in self.active_connections:
             await connection.send_json(message)
+    
+    async def endpoint(self, websocket: WebSocket) -> None:
+        await self.connect(websocket)
+        try:
+            while True:
+                message = await websocket.receive_json()
+                await self.broadcast(message['action'], message['data'])
+        
+        except WebSocketDisconnect:
+            self.disconnect(websocket)
 
 def get_socket():
     websocket = WebsocketManager()

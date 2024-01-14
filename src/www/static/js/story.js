@@ -1,9 +1,9 @@
 import { handleResponse } from './utils.js'
-import './api/story.js'
+import * as messageApi from './api/message.js'
+import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 // Retrieve stored variables
-const story_id = localStorage.getItem('joinedStoryId');
-const character_id = 1; //localStorage.getItem('character_id');
+const storyId = localStorage.getItem('joinedStoryId');
 const username = localStorage.getItem('username');
 
 // Set up elements
@@ -20,17 +20,31 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
-// Event listener for communication of messages
-const socket = new WebSocket('ws://127.0.0.1:8000/ws/prompt');
-socket.onmessage = function(message) {
-    processMessage(JSON.parse(message.data))
-};
 
-// Close connection when user exits website
+connectToWebSocket(messageApi.webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function() {
-    socket.close();
+    closeWebSocket(messageApi.webSocketEndpoint);
 });
 
+function handleMessage(message) {
+    let parsedMessage = JSON.parse(message.data);
+    let action = parsedMessage.action;
+    let data = parsedMessage.data;
+    let userAction = data.username == username
+    console.log('client received: ', parsedMessage);
+    switch (action) {
+        case 'message':
+            if(!userAction)
+                appendMessage(`${data.username}: ${data.message}`);
+            processMessage('Narrator: ' + data.narrator_reply)
+            tryPlayAudio(data.audio_path)
+            tryChangeBackgroundImage(data.image_path)
+            break;
+        default:
+            alert('Got action ', action, ' from websocket. NYI')
+            break
+    }
+}
 
 async function drawStoryPage() {
     document.getElementById('main-content').style.display = 'flex';
@@ -42,7 +56,7 @@ async function drawStoryPage() {
     audio.volume = 0.5; // 50% volume
     audio.play();
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
-    await fetch(`/story/${story_id}/messages`)
+    await fetch(`/story/${storyId}/messages`)
     .then(response => handleResponse(response, messages => {
 
         if (messages.length === 0) {
@@ -55,7 +69,7 @@ async function drawStoryPage() {
         } else {
             // Iterate through the array of messages and append them to the main-content
             messages.forEach(message => {
-                appendMessage('User: ' + message.message);
+                appendMessage(`${message.username}: ${message.message}`);
                 appendMessage('Narrator: ' + message.narrator_reply);
             });
 
@@ -85,7 +99,7 @@ function tryPlayAudio(audioPath) {
 
 function sendMessage() {
     const message = document.getElementById('message-input').value;
-    appendMessage('User: ' + message);
+    appendMessage(`${username}:  ${message}`);
     document.getElementById('message-input').value = '';
     // Show the spinner
     document.getElementById('spinner').style.display = 'block';
@@ -94,53 +108,41 @@ function sendMessage() {
     // const loadingMessageId = appendMessage('Narrator is thinking...');
 
     // Send data to the server
-    socket.send(JSON.stringify({
-        message: message,
-        username: username,
-        character_id: character_id,
-        story_id: story_id
-    }))
+    messageApi.sendMessage(message)
 }
 
-function processMessage(data) {
+function processMessage(narratorMessage) {
     try {
-        // Remove the loading message
-        // removeMessage(loadingMessageId);
-        if (data.narrator_reply) {
-            var formattedMessage = data.narrator_reply.replace(/\n/g, '<br>');
-            console.log('Received successful reply: ' + formattedMessage)
-            document.getElementById('spinner').style.display = 'none';
-            // Split the formattedMessage into lines
-            var lines = formattedMessage.split('<br>');
-            var lineIndex = 0;
+    // Remove the loading message
+    // removeMessage(loadingMessageId);
+        var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
+        console.log('Received successful reply: ' + formattedMessage)
+        document.getElementById('spinner').style.display = 'none';
+        // Split the formattedMessage into lines
+        var lines = formattedMessage.split('<br>');
+        var lineIndex = 0;
 
-            // Calculate the interval time
-            var intervalTime = 1 / lines.length;
+        // Calculate the interval time
+        var intervalTime = 1 / lines.length;
 
-            // Set up the interval
-            var intervalId = setInterval(function() {
-                // Create a new div for the line
-                var lineDiv = document.createElement('div');
-                lineDiv.className = 'fade-in';
-                lineDiv.innerHTML = lines[lineIndex];
+        // Set up the interval
+        var intervalId = setInterval(function() {
+            // Create a new div for the line
+            var lineDiv = document.createElement('div');
+            lineDiv.className = 'fade-in';
+            lineDiv.innerHTML = lines[lineIndex];
 
-                // Append the div to the message container
-                document.getElementById('chat-box').appendChild(lineDiv);
+            // Append the div to the message container
+            document.getElementById('chat-box').appendChild(lineDiv);
 
-                // Increment the line index
-                lineIndex++;
+            // Increment the line index
+            lineIndex++;
 
-                // If we've gone through all the lines, clear the interval
-                if (lineIndex >= lines.length) {
-                    clearInterval(intervalId);
-                }
-            }, intervalTime);
-        } else {
-            appendMessage('Failed to retrieve message');
-        }
-
-        tryPlayAudio(data.audio_path)
-        tryChangeBackgroundImage(data.image_path)
+            // If we've gone through all the lines, clear the interval
+            if (lineIndex >= lines.length) {
+                clearInterval(intervalId);
+            }
+        }, intervalTime);
     } catch (error) {
         console.error(error);
         document.getElementById('spinner').style.display = 'none';

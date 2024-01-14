@@ -1,7 +1,7 @@
 import { handleResponse, fetchDataAsync } from "../utils.js";
 
 const username = localStorage.getItem('username')
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story'
+export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/dashboard'
 export function createStory(storyId) {
     fetch('/story', {
         method: 'POST',

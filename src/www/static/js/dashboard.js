@@ -55,10 +55,11 @@ function handleStoryMessage(message) {
             drawDeletedStory(box);
             break;
         case 'play_story':
-            drawActiveStory(box)
             if (box.users.find(user => user == username)) {
                 drawResumeStory(box)
                 playOrResumeStory(box);
+            } else {
+                drawActiveStory(box)
             }
             break;
         default:
@@ -203,7 +204,7 @@ function createButtons(box) {
         var playButton = document.createElement('button');
         if (box.storyActive) {
             playButton.innerHTML = 'Resume Story';
-            playButton.addEventListener('click', () => storyApi.resumeStory(box.storyId))
+            playButton.addEventListener('click', () => storyApi.playStory(box.storyId))
         } else {
             playButton.innerHTML = 'Play Story';
             playButton.addEventListener('click', () => storyApi.playStory(box.storyId))

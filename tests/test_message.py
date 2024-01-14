@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from src.models.message import MessageBase, MessageCreate
+from src.models.message import MessageCreate
 
 def test_websocket(session: Session, client: TestClient):
     _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
