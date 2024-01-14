@@ -1,10 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Depends, WebSocket
 from sqlmodel import Session, select
-from src.core.websocket import WebsocketManager
-from ..core.config import logger
-from src.models.message import Message
 
-
+from ..core.websocket import WebsocketManager
+from ..models.message import Message
 from ..models.user import User, UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
@@ -12,16 +10,9 @@ from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
 router = APIRouter()
 socket_manager = WebsocketManager()
 
-@router.websocket('/ws/story')
-async def story_updates(websocket: WebSocket, session: Session = Depends(get_session)):
-    await socket_manager.connect(websocket)
-    try:
-        while True:
-            message = await websocket.receive_json()
-            await socket_manager.broadcast(message['action'], message['data'])
-    
-    except WebSocketDisconnect:
-        socket_manager.disconnect(websocket)
+@router.websocket('/ws/dashboard')
+async def dashboard_websocket(websocket: WebSocket):
+    await socket_manager.endpoint(websocket)
 
 
 @router.post('/story', status_code=201)
