@@ -5,7 +5,7 @@ import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 // Retrieve stored variables
 const storyId = localStorage.getItem('joinedStoryId');
 const username = localStorage.getItem('username');
-
+export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + storyId 
 // Set up elements
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
@@ -21,9 +21,9 @@ document.getElementById('message-input').addEventListener('keypress', function(e
 });
 
 
-connectToWebSocket(messageApi.webSocketEndpoint, handleMessage);
+connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function() {
-    closeWebSocket(messageApi.webSocketEndpoint);
+    closeWebSocket(webSocketEndpoint);
 });
 
 function handleMessage(message) {
@@ -34,8 +34,9 @@ function handleMessage(message) {
     console.log('client received: ', parsedMessage);
     switch (action) {
         case 'message':
-            if(!userAction)
-                appendMessage(`${data.username}: ${data.message}`);
+            appendMessage(`${data.username}: ${data.message}`);
+            break;
+        case 'reply':
             processMessage('Narrator: ' + data.narrator_reply)
             tryPlayAudio(data.audio_path)
             tryChangeBackgroundImage(data.image_path)
@@ -99,7 +100,6 @@ function tryPlayAudio(audioPath) {
 
 function sendMessage() {
     const message = document.getElementById('message-input').value;
-    appendMessage(`${username}:  ${message}`);
     document.getElementById('message-input').value = '';
     // Show the spinner
     document.getElementById('spinner').style.display = 'block';

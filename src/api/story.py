@@ -12,7 +12,7 @@ socket_manager = WebsocketManager()
 
 @router.websocket('/ws/dashboard')
 async def dashboard_websocket(websocket: WebSocket):
-    await socket_manager.endpoint(websocket)
+    await socket_manager.endpoint(websocket, 0)
 
 
 @router.post('/story', status_code=201)
@@ -25,7 +25,7 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
-    await socket_manager.broadcast('create_story', StoryCreate.model_validate(new_story))
+    await socket_manager.broadcast('create_story', StoryCreate.model_validate(new_story), 0)
     return new_story
 
 
@@ -47,7 +47,7 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
     session.commit()
     # TODO: Story has no username field so cant implicitly cast to StoryDelete
     deleted_story = StoryDelete(story_id=story.story_id, username=story.username)
-    await socket_manager.broadcast('delete_story', deleted_story)
+    await socket_manager.broadcast('delete_story', deleted_story, 0)
     return deleted_story
 
 
@@ -97,7 +97,7 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
-    await socket_manager.broadcast('join_story', story)
+    await socket_manager.broadcast('join_story', story, 0)
     return story
 
 
@@ -119,7 +119,7 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
-    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story))
+    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), 0)
     return db_story
 
 
@@ -134,5 +134,5 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
     session.add(user)
     session.commit()
     session.refresh(user)
-    await socket_manager.broadcast('leave_story', StoryJoin.model_validate(story))
+    await socket_manager.broadcast('leave_story', StoryJoin.model_validate(story), 0)
     return story
