@@ -11,12 +11,14 @@ from ..services import audio, imagery, narrator
 router = APIRouter()
 socket_manager = WebsocketManager()
 
-@router.websocket('/ws/story')
-async def story_websocket(websocket: WebSocket):
-    await socket_manager.endpoint(websocket)
+@router.websocket('/ws/story/{story_id}')
+async def story_websocket(websocket: WebSocket, story_id: int):
+    await socket_manager.endpoint(websocket, story_id)
 
 @router.post('/message', response_model=MessageRead)
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
+    # Broadcast the incoming message to all users
+    await socket_manager.broadcast('message', message, message.story_id)
     
     # TODO: do we have to recreate the chain at every call? Possible to cache this?
     messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
@@ -31,7 +33,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         if character is None:
             raise HTTPException(404, 'Character not found')
         # Will send to openai and obtain reply
-        narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
+        #narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
 
         if GENERATE_AUDIO:  # Will send to narrator and obtain audio
             audio_id, audio_path = audio.obtain_audio(narrator_reply)
@@ -50,7 +52,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         character_id=message.character_id,
         username=message.username,
         message=message.message,
-        narrator_reply=narrator_reply,
+        narrator_reply='reply',#narrator_reply,
         audio_path=audio_path,
         image_path=image_path,
     )
@@ -60,6 +62,6 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
 
     # Timestamp field is not json serializable by websocket, exclude it here before passing to websocket
     websocket_message = MessageRead.model_validate(new_message).model_dump(exclude='timestamp')
-    await socket_manager.broadcast('message', websocket_message)
+    await socket_manager.broadcast('reply', websocket_message, message.story_id)
 
     return new_message

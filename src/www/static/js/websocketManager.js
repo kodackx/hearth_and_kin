@@ -11,7 +11,7 @@ export function sendMessage(endpoint, action, data) {
     if (socket) {
         socket.send(JSON.stringify({
             action: action,
-            data: data 
+            data: data
         }))
     } else {
         console.error(`WebSocket connection for endpoint ${endpoint} not found.`);
