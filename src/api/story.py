@@ -52,8 +52,8 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
 
 
 
-@router.get('/stories')
-async def get_stories(session: Session = Depends(get_session)) -> list[StoryRead]:
+@router.get('/stories', response_model=list[StoryRead])
+async def get_stories(session: Session = Depends(get_session)):
     return session.exec(select(Story)).all()
 
 
@@ -62,7 +62,7 @@ async def get_story(*, story_id: int, session: Session = Depends(get_session)) -
     db_story = session.get(Story, story_id)
     if db_story is None:
         raise HTTPException(404, 'Story not found')
-    return session.get(Story, story_id)
+    return db_story
 
 
 @router.get('/story/{story_id}/messages')
@@ -73,7 +73,7 @@ async def get_story_messages(*, story_id: int, session: Session = Depends(get_se
 
 
 @router.get('/story/{story_id}/users')
-async def get_story_users(*, session: Session = Depends(get_session), story_id: int) -> list[UserRead]:
+async def get_story_users(*, session: Session = Depends(get_session), story_id: int):
     story = session.get(Story, story_id)
     if story:
         statement = select(User).where(User.story_id == story_id)
