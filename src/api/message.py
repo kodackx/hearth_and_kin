@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlmodel import Session, select
 
-from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger
+from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, GENERATE_REPLY, logger
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
@@ -20,29 +20,29 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
     
-    # TODO: do we have to recreate the chain at every call? Possible to cache this?
-    messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
-
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
-    audio_id = audio_path = image_url = image_path = None
+    audio_path = image_path = narrator_reply = None
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
         # Not sure if we want to get this from the endpoint or just query the db here
         character = session.get(Character, message.character_id)
         if character is None:
             raise HTTPException(404, 'Character not found')
-        # Will send to openai and obtain reply
-        #narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
+        
+        if GENERATE_REPLY: # Will send to openai and obtain reply
+            # TODO: do we have to recreate the chain at every call? Possible to cache this?
+            messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
+            chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
+            narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
 
-        if GENERATE_AUDIO:  # Will send to narrator and obtain audio
-            audio_id, audio_path = audio.obtain_audio(narrator_reply)
-            _ = await audio.store_audio(audio_id, audio_path)
-        if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
-            image_url = imagery.generate_image(narrator_reply)
-            logger.debug(f'[MESSAGE] {image_url = }')
-            image_path = await imagery.store_image(image_url)
-            logger.debug(f'[MESSAGE] {image_path = }')
+            if GENERATE_AUDIO:  # Will send to narrator and obtain audio
+                audio_id, audio_path = audio.obtain_audio(narrator_reply)
+                _ = await audio.store_audio(audio_id, audio_path)
+            if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
+                image_url = imagery.generate_image(narrator_reply)
+                logger.debug(f'[MESSAGE] {image_url = }')
+                image_path = await imagery.store_image(image_url)
+                logger.debug(f'[MESSAGE] {image_path = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
@@ -52,7 +52,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         character_id=message.character_id,
         username=message.username,
         message=message.message,
-        narrator_reply='reply',#narrator_reply,
+        narrator_reply=narrator_reply or 'Narrator says hi',
         audio_path=audio_path,
         image_path=image_path,
     )
