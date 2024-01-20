@@ -1,21 +1,24 @@
-import os
 import base64
-
-# import simpleaudio as sa
-from elevenlabs import generate, set_api_key
+import os
+from ..core.mongodb import setup_mongodb
 
 # client = OpenAI()
-
 # Obtain your API key from elevenlabs.ai
 # Using .env file to store API key
 from dotenv import load_dotenv
 
-load_dotenv('.env')
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-set_api_key(os.environ.get('ELEVENLABS_API_KEY'))
-# also read elevenlabs voice id from .env file
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
+# import simpleaudio as sa
+from elevenlabs import generate, set_api_key
 
+load_dotenv('.env')
+
+ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
+assert ELEVENLABS_API_KEY is not None
+ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
+assert ELEVENLABS_VOICE_ID is not None
+set_api_key(ELEVENLABS_API_KEY)
+
+mongodb = setup_mongodb()
 # def encode_image(image_path):
 #     while True:
 #         try:
@@ -29,29 +32,30 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 #             time.sleep(0.1)
 
 
-def obtain_audio(text):
-    audio = generate(text, voice=os.environ.get('ELEVENLABS_VOICE_ID'))
+def obtain_audio(text: str) -> tuple[str, str]:
+    audio = generate(text, voice=ELEVENLABS_VOICE_ID)
 
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    dir_path = os.path.join('data', 'narration', unique_id)
+    audio_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+    dir_path = os.path.join('data', 'narration', audio_id)
     os.makedirs(dir_path, exist_ok=True)
     file_path = os.path.join(dir_path, 'audio.wav')
 
     with open(file_path, 'wb') as f:
-        f.write(audio)
+        f.write(audio)  # type: ignore
 
-    return file_path
+    return audio_id, file_path
     # play(audio)
 
 
-def send_audio(audio_path):
+async def store_audio(audio_id: str, audio_path: str):
+    # TODO: store this on S3 rather than in mongodb.
     with open(audio_path, 'rb') as audio_file:
         encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
         # save to local file for debugging
         with open('./data/audio.txt', 'w') as f:
             f.write(encoded_string)
-
-    return encoded_string
+        collection = mongodb.get_collection('audio')
+        await collection.insert_one({'audio_id': audio_id, 'audio_data': encoded_string})
 
 
 # def generate_new_line(base64_image):
