@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Response, status
 from ..models.message import Message, MessageBase
+from ..models.character import CharacterCreateMessage
 from ..core.config import logger
 from ..services import audio, imagery
 from ..core.database import engine
@@ -19,7 +20,8 @@ router = APIRouter()
 prompt_narrator = """
 The player is starting a new journey in Hearth and Kin, a game inspired from Dungeons and Dragons.
 You must act like a primordial being that exists in the mists of space, and guide them in creating a new character for a story.
-So far, this is the instruction they have received:
+
+Take them step by step and guide them as noted below:
 -
 From the mists of primordial space, where the planets dance in a celestial waltz, your character emerges. Begin to weave the tapestry of their existence.
 
@@ -83,7 +85,7 @@ def gpt_character_creator(input: str, chain: LLMChain) -> str:
 
 
 @router.post('/charactermessage')
-async def generate_character_message(message: MessageBase, response: Response):
+async def generate_character_message(message: CharacterCreateMessage, response: Response):
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     try:
         logger.debug(f'[MESSAGE] {message.message = }')

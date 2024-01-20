@@ -11,3 +11,6 @@ src/www/static/ethereal.m4a
 *.wav
 *.jpg
 *.txt
+.DS_Store
+src/www/.DS_Store
+src/.DS_Store

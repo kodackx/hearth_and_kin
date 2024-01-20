@@ -17,6 +17,8 @@ class CharacterBase(Model):
     location: Optional[str] = Field(default='The town of Hearth')
     goal: Optional[str] = Field(default='Find a quest to embark on and a party to join')
 
+class CharacterCreateMessage(Model):
+    message: str
 
 class CharacterCreate(CharacterBase):
     pass

@@ -1,18 +1,18 @@
 import os
 from pathlib import Path
 
-from .core.database import create_db_and_tables
-import os
-from .api import user, room, game, character, message, newcharacter
+# from .core.database import create_db_and_tables
+# import os
+# from .api import user, room, game, character, message
 
 # read OPENAI_API_KEY from .env file
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 
-from .api import character, message, story, user
+from .api import character, message, story, user, newcharacter
 from .core.database import create_db_and_tables, get_session
-from .core.mongodb import setup_mongodb
+# from .core.mongodb import setup_mongodb
 
 load_dotenv('.env')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -21,7 +21,7 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
 
 app = FastAPI()
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
-mongo_db = setup_mongodb()
+# mongo_db = setup_mongodb()
 
 
 @app.router.on_startup.append
