@@ -6,9 +6,9 @@ import * as storyApi from './api/story.js'
 // Connect to the dashboard websocket endpoint with the specific message handler
 
 connectToWebSocket(storyApi.webSocketEndpoint, handleStoryMessage);
-window.addEventListener('beforeunload', function() {
+window.addEventListener('beforeunload', function () {
     localStorage.setItem('joinedStoryId', joinedStoryId)
-    closeWebSocket(storyApi.webSocketEndpoint);
+    //closeWebSocket(storyApi.webSocketEndpoint);
 });
 
 function handleStoryMessage(message) {
@@ -35,19 +35,14 @@ function handleStoryMessage(message) {
         case 'leave_story':
             if (userAction) {
                 joinedStoryId = null
-                drawLeftStory(box,data);
+                drawLeftStory(box, data);
             }
             box.users.pop(data.username)
-            if (box.users.length == 0){
+            if (box.users.length == 0) {
                 box.boxElement.querySelector('.box-content').textContent = `No users in story`
             } else {
                 box.boxElement.querySelector('.box-content').textContent = `Users in story: ${box.users.join(', ')}`
             }
-            break;
-        case 'delete_story':
-            box.users = []
-            joinedStoryId = null
-            drawDeletedStory(box);
             break;
         case 'delete_story':
             box.users = []
@@ -78,13 +73,13 @@ function playOrResumeStory(box) {
 }
 
 function joinStoryHandler(storyId) {
-    return function() {
+    return function () {
         storyApi.joinStory(storyId);
     };
 }
 
 function createStoryHandler(storyId) {
-    return function() {
+    return function () {
         storyApi.createStory(storyId);
     };
 }
@@ -126,8 +121,8 @@ function drawJoinedStory(box) {
 function drawLeftStory(box) {
     box.boxElement.style.backgroundColor = 'blue';
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    
-    updateEventListener(box, joinStoryHandler)    
+
+    updateEventListener(box, joinStoryHandler)
     removeButtons(box);
 }
 // TODO: event listener handling
@@ -154,61 +149,64 @@ function loadStories() {
     fetch('/stories', {
         method: 'GET',
     })
-    .then(response => handleResponse(response, stories => {
-        stories.forEach(story => {
-            if (story.story_id <= 3) { // we only support 3 boxes/stories for now
-                let box = boxes.find(box => box.boxId === story.story_id) // TODO: decide how we want to populate boxes
-                if (box) {
-                    box.storyId = story.story_id
-                    box.creator = story.creator
-                    box.storyActive = story.active
-                    storyApi.getStoryUsers(story.story_id).then(users => {
-                        if (users.length === 0) {
-                            // Handle the case where there are no users
-                        } else {
-                            users.forEach(user => {
-                                box.users.push(user.username);
-                            });
-                            box.boxElement.querySelector('.box-content').textContent = `Users in story: ${box.users.join(', ')}`
-                        }   
-                        if (story.active && story.story_id != joinedStoryId) {
-                            drawActiveStory(box);
-                        } else if (story.active && story.story_id == joinedStoryId) { 
-                            drawResumeStory(box)
-                        }
-                        else if (!story.active && story.story_id == joinedStoryId) {
-                            drawJoinedStory(box);
-                        } else {
-                            drawCreatedStory(box, story);
-                        }
-                })}
-        }})
-    }))
-    .then( () => {
+        .then(response => handleResponse(response, stories => {
+            stories.forEach(story => {
+                if (story.story_id <= 3) { // we only support 3 boxes/stories for now
+                    let box = boxes.find(box => box.boxId === story.story_id) // TODO: decide how we want to populate boxes
+                    if (box) {
+                        box.storyId = story.story_id
+                        box.creator = story.creator
+                        box.storyActive = story.active
+                        storyApi.getStoryUsers(story.story_id).then(users => {
+                            console.log(story.story_id)
+                            console.log(box)
+                            if (users.length === 0) {
+                                // Handle the case where there are no users
+                            } else {
+                                users.forEach(user => {
+                                    box.users.push(user.username);
+                                });
+                                box.boxElement.querySelector('.box-content').textContent = `Users in story: ${box.users.join(', ')}`
+                            }
+                            if (story.active && story.story_id != joinedStoryId) {
+                                drawActiveStory(box);
+                            } else if (story.active && story.story_id == joinedStoryId) {
+                                drawResumeStory(box)
+                            }
+                            else if (!story.active && story.story_id == joinedStoryId) {
+                                drawJoinedStory(box);
+                            } else {
+                                drawCreatedStory(box, story);
+                            }
+                        })
+                    }
+                }
+            })
+        }))
+        .then(() => {
             boxes.forEach(box => {
-                if(!box.storyId) {
+                if (!box.storyId) {
                     box.clickHandler = createStoryHandler(box.boxId);
                     box.boxElement.addEventListener('click', box.clickHandler);
                 }
             })
-    })
-    .catch((error) => {
-        alert(error);
-    })
+        })
+        .catch((error) => {
+            alert(error);
+        })
 }
 
 
 function createButtons(box) {
-    box.boxElement.removeEventListener('click', box.clickHandler);
+    // box.boxElement.removeEventListener('click', box.clickHandler);
     if (box.creator === username) {
         var playButton = document.createElement('button');
         if (box.storyActive) {
             playButton.innerHTML = 'Resume Story';
-            playButton.addEventListener('click', () => storyApi.playStory(box.storyId))
         } else {
             playButton.innerHTML = 'Play Story';
-            playButton.addEventListener('click', () => storyApi.playStory(box.storyId))
         }
+        playButton.addEventListener('click', () => storyApi.playStory(box.storyId))
         playButton.id = 'playButton' + box.boxId;  // Add a unique id
         box.boxElement.appendChild(playButton);
     }
@@ -232,12 +230,12 @@ function removeButtons(box) {
     var playButton = document.getElementById('playButton' + box.boxId);
     var leaveButton = document.getElementById('leaveButton' + box.boxId);
     var deleteButton = document.getElementById('deleteButton' + box.boxId);
-    
+
     // Remove the left and right buttons if they exist
     if (playButton) {
         playButton.parentNode.removeChild(playButton);
         playButton.remove();
-        
+
     }
     if (leaveButton) {
         leaveButton.parentNode.removeChild(leaveButton);
@@ -254,9 +252,9 @@ function removeButtons(box) {
 const username = localStorage.getItem('username')
 var joinedStoryId = localStorage.getItem('joinedStoryId')
 var boxes = [
-    { boxElement: document.getElementById('box1'), boxId: 1, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null},
-    { boxElement: document.getElementById('box2'), boxId: 2, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null},
-    { boxElement: document.getElementById('box3'), boxId: 3, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null},
+    { boxElement: document.getElementById('box1'), boxId: 1, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null },
+    { boxElement: document.getElementById('box2'), boxId: 2, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null },
+    { boxElement: document.getElementById('box3'), boxId: 3, storyId: null, storyCreated: false, creator: null, storyActive: false, users: [], clickHandler: null },
 ]
 
 initializeDashboard(boxes);

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, WebSocket
 from sqlmodel import Session, select
 
 from ..core.websocket import WebsocketManager
-from ..models.message import Message
+from ..models.message import Message, MessageRead
 from ..models.user import User, UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
@@ -57,7 +57,7 @@ async def get_stories(session: Session = Depends(get_session)):
     return session.exec(select(Story)).all()
 
 
-@router.get('/story/{story_id}')
+@router.get('/story/{story_id}', response_model=StoryRead)
 async def get_story(*, story_id: int, session: Session = Depends(get_session)) -> StoryRead:
     db_story = session.get(Story, story_id)
     if db_story is None:
@@ -66,13 +66,13 @@ async def get_story(*, story_id: int, session: Session = Depends(get_session)) -
 
 
 @router.get('/story/{story_id}/messages')
-async def get_story_messages(*, story_id: int, session: Session = Depends(get_session)) -> list[Message]:
+async def get_story_messages(*, story_id: int, session: Session = Depends(get_session)) -> list[MessageRead]:
     messages = session.exec(select(Message).where(Message.story_id == story_id)).all()
 
     return messages
 
 
-@router.get('/story/{story_id}/users')
+@router.get('/story/{story_id}/users', response_model=list[UserRead])
 async def get_story_users(*, session: Session = Depends(get_session), story_id: int):
     story = session.get(Story, story_id)
     if story:
