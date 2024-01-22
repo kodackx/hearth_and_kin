@@ -7,13 +7,22 @@ from ..core.config import logger
 router = APIRouter()
 
 
-@router.post('/character', status_code=201, response_model=CharacterRead)
-async def create_character(*, character: CharacterCreate, session: Session = Depends(get_session)):
-    new_character = Character.model_validate(character)
-    session.add(new_character)
-    session.commit()
-    session.refresh(new_character)
-    return new_character
+@router.post('/createcharacter', status_code=201, response_model=CharacterRead)
+async def create_character(*, character_stats: CharacterCreate, session: Session = Depends(get_session)):
+    try:
+        new_character = Character.model_validate(character_stats)
+        session.add(new_character)
+        session.commit()
+        session.refresh(new_character)
+        logger.debug(f'[CREATECHARACTER] New character created with ID: {new_character.character_id}')
+        response = {
+            'character_id': new_character.character_id,
+            'status': 'success'
+        }
+        return response
+    except Exception as e:
+        logger.error(f'[CREATECHARACTER] Failed to create character: {e}')
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get('/character/{character_id}', response_model=CharacterRead)

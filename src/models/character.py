@@ -3,6 +3,7 @@ from typing import Optional
 
 
 class CharacterBase(Model):
+    character_id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Relationship(back_populates='user.username')
     story_id: Optional[int] = Field(default=None)
     user_description: Optional[str] = Field(nullable=True, default=None)
@@ -10,7 +11,7 @@ class CharacterBase(Model):
     portrait_path: Optional[str] = Field(default=None)
     strength: Optional[int] = Field(default=3)
     dexterity: Optional[int] = Field(default=3)
-    con: Optional[int] = Field(default=3)
+    constitution: Optional[int] = Field(default=3)
     intelligence: Optional[int] = Field(default=3)
     wisdom: Optional[int] = Field(default=3)
     charisma: Optional[int] = Field(default=3)

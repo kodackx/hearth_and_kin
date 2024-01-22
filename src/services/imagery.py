@@ -12,7 +12,7 @@ from ..core.config import logger
 
 def generate_image(prompt_text):
     llm = ChatOpenAI(model_name='gpt-3.5-turbo')  # type: ignore
-    prompt = PromptTemplate(
+    prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
         You are a virtual D&D scene generator. 
@@ -24,37 +24,54 @@ def generate_image(prompt_text):
         {prompt_text}
         """,
     )
-    summary = LLMChain(llm=llm, prompt=prompt).run(prompt_text=prompt_text)
+    summary = LLMChain(llm=llm, prompt=prompt_gpt_helper).run(prompt_text=prompt_text)
     logger.debug('[GEN IMAGE]: ' + summary)
     image_url = ''
-    prompt_text_adjusted = (
+    prompt_dalle = (
         """
         You are a virtual D&D scene generator. 
         The narrator is currently developing a story.
         You will be given a summary of a scene and you must build an image based on it.
-        Use a fantasy sketch style and make it look like a D&D scene.
+        Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
         """
         + summary
     )
     try:
-        image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_text_adjusted)  # type: ignore
+        image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_dalle)  # type: ignore
     except Exception as e:
         logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
         image_url = '[NO_IMAGE]'
     return image_url
 
 
-async def store_image(image_url: str) -> str:
-    # obtain image from url
-    async with httpx.AsyncClient() as client:
-        response = await client.get(image_url)
-    img = Image.open(BytesIO(response.content))
-    # define path to save image
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    dir_path = os.path.join('src', 'www', 'static', 'img')
-    os.makedirs(dir_path, exist_ok=True)
-    filename = unique_id + '.jpg'
-    file_path = os.path.join(dir_path, filename)
-    # save image to local file for debugging
-    img.save(file_path)
-    return file_path.replace('src/www/', '')
+async def store_image(image_url: str, type: str) -> str:
+    if type == 'story':
+        # obtain image from url
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+        img = Image.open(BytesIO(response.content))
+        # define path to save image
+        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+        dir_path = os.path.join('data', 'visuals', visual_id)
+        os.makedirs(dir_path, exist_ok=True)
+        file_path = os.path.join(dir_path, 'image.jpg')
+        img.save(file_path)
+        return file_path
+    elif type== 'character':
+        # obtain image from url
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+        img = Image.open(BytesIO(response.content))
+        # define path to save image
+        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+        # dir_path = os.path.join('data', 'characters', visual_id)
+        dir_path = os.path.join('src', 'www', 'static', 'characters', visual_id)
+        os.makedirs(dir_path, exist_ok=True)
+        file_path = os.path.join(dir_path, 'character.jpg')
+        img.save(file_path)
+        serve_image_path = file_path.replace('src/www/static/', '')
+        return serve_image_path 
+    else:
+        error = 'Invalid store image type. Can only store `character` or `story` images'
+        return error
+    

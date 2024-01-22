@@ -249,6 +249,32 @@ body {
         }
     });
 
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('finalize-button')) {
+            // Retrieve the character data from localStorage
+            var characterData = JSON.parse(localStorage.getItem('characterData'));
+            fetch('/createcharacter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(characterData),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('POST request sent successfully:', data);
+            })
+            .catch(error => {
+                console.error('Failed to send POST request:', error);
+            });
+        }
+    });
+
     // Function to send a new message
     document.getElementById('send-button').addEventListener('click', function() {
         const message = document.getElementById('message-input').value;
@@ -267,8 +293,23 @@ body {
         })
         .then(response => response.json())
         .then(data => {
-            // Remove the loading message
-            // removeMessage(loadingMessageId);
+            // check for finalized characters stats
+            if (data.character_data) {
+                let characterData = data.character_data;
+                localStorage.setItem('characterData', JSON.stringify(data.character_data));
+            }
+            // check for audio
+            if (data.audio) {
+                base64ToBlob(data.audio, 'audio/wav')
+                .then(audioBlob => {
+                    let audioUrl = URL.createObjectURL(audioBlob);
+                    let narration = new Audio(audioUrl);
+                    narration.volume = 0.75; // 75% volume
+                    narration.play();
+                })
+                .catch(error => console.error('Error:', error));
+            }
+            // check if we have a narrator reply
             if (data.message.includes('Narrator:')) {
                 var formattedMessage = data.message.replace(/\n/g, '<br>');
                 formattedMessage = formattedMessage.replace('Narrator: ', '');
@@ -283,18 +324,6 @@ body {
                 });
             } else {
                 appendMessage('[ERROR] Failed to send message.');
-            }
-
-            // Handle the audio data
-            if (data.audio) {
-                base64ToBlob(data.audio, 'audio/wav')
-                    .then(audioBlob => {
-                        let audioUrl = URL.createObjectURL(audioBlob);
-                        let narration = new Audio(audioUrl);
-                        narration.volume = 0.75; // 75% volume
-                        narration.play();
-                    })
-                    .catch(error => console.error('Error:', error));
             }
         })
         .catch((error) => {
@@ -322,7 +351,7 @@ body {
 
         for (const message of messages) {
             appendMessage(message);
-            await wait(3000); // Wait for 3 seconds
+            await wait(1000); // Wait for 1 second between intro messages
         }
     }
 

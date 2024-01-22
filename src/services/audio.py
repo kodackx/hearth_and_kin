@@ -39,7 +39,7 @@ def obtain_audio(text: str) -> tuple[str, str]:
     dir_path = os.path.join('data', 'narration', audio_id)
     os.makedirs(dir_path, exist_ok=True)
     file_path = os.path.join(dir_path, 'audio.wav')
-
+    # this writes audio to storage already, no need for below
     with open(file_path, 'wb') as f:
         f.write(audio)  # type: ignore
 
@@ -47,13 +47,14 @@ def obtain_audio(text: str) -> tuple[str, str]:
     # play(audio)
 
 
-async def store_audio(audio_id: str, audio_path: str):
-    # TODO: store this on S3 rather than in mongodb.
-    with open(audio_path, 'rb') as audio_file:
-        encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
-        # save to local file for debugging
-        with open('./data/audio.txt', 'w') as f:
-            f.write(encoded_string)
+# async def store_audio(audio_id: str, audio_path: str):
+#     # TODO: store this on S3 rather than in mongodb.
+#     dir_path = os.path.join('data', 'visuals', 'static', 'img')
+#     with open(audio_path, 'rb') as audio_file:
+#         encoded_string = base64.b64encode(audio_file.read()).decode('utf-8')
+#         # save to local file for debugging
+#         with open('./data/audio.txt', 'w') as f:
+#             f.write(encoded_string)
         # collection = mongodb.get_collection('audio')
         # await collection.insert_one({'audio_id': audio_id, 'audio_data': encoded_string})
 

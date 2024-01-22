@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Response, status
 from ..models.message import Message, MessageBase
-from ..models.character import CharacterCreateMessage
+from ..models.character import CharacterCreateMessage, CharacterBase, CharacterCreate
 from ..core.config import logger
 from ..services import audio, imagery
 from ..core.database import engine
@@ -14,6 +14,7 @@ from langchain.prompts import (
 )
 from langchain.schema import SystemMessage
 from sqlmodel import Session
+import random
 
 router = APIRouter()
 
@@ -83,6 +84,22 @@ def gpt_character_creator(input: str, chain: LLMChain) -> str:
     print('[Character Creator] Output is: ' + output)
     return output
 
+def initialize_character_stats(description: str, portrait_path: str):
+    # Initialize and randomize character stats
+    character_stats = {
+        'strength': random.randint(1, 20),
+        'dexterity': random.randint(1, 20),
+        'constitution': random.randint(1, 20),
+        'intelligence': random.randint(1, 20),
+        'wisdom': random.randint(1, 20),
+        'charisma': random.randint(1, 20),
+        'userdescription': description,
+        'portrait_path': portrait_path,
+        'location': 'The town of Hearth',
+        'goal': 'Find a quest to embark on and a party to join'
+    }
+    return character_stats
+
 
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response):
@@ -96,20 +113,26 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
         # encoded_audio = audio.send_audio(audio_path)
         final_character_creation_key = "FINAL CHARACTER DESCRIPTION:"
         portrait_path = None
+        character_description = None
+        character_data = None
         if final_character_creation_key in narrator_reply:
-            character_data = narrator_reply.split(final_character_creation_key, 1)[1]
-            logger.debug(f'[CREATION IMAGE] {character_data}')
+            character_description = narrator_reply.split(final_character_creation_key, 1)[1]
+            logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
-            portrait_path = imagery.generate_image(narrator_reply)
+            portrait_url = imagery.generate_image(narrator_reply)
+            portrait_path = await imagery.store_image(portrait_url, type='character')
             logger.debug(f'[MESSAGE] {portrait_path = }')
             # portrait_image = imagery.obtain_image_from_url(portrait_path)
             # logger.debug(f'[MESSAGE] {portrait_image = }')
+            character_data = initialize_character_stats(character_description, portrait_path)
         response.status_code = status.HTTP_201_CREATED
         return {
             'message': 'Narrator: ' + narrator_reply,
             # 'audio': encoded_audio,
             'image': portrait_path,
-            'status': 'success',
+            'description': character_description,
+            'character_data': character_data,
+            'status': 'success'
         }
     except Exception as e:
         logger.error(f'[CREATION MESSAGE] {e}')
