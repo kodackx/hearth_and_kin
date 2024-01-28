@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends, HTTPException
+from ..core.database import get_session
+from sqlmodel import Session
 from ..models.message import Message, MessageBase
-from ..models.character import CharacterCreateMessage, CharacterBase, CharacterCreate
+from ..models.character import CharacterBase, Character, CharacterCreate, CharacterRead, CharacterUpdate, CharacterCreateMessage
 from ..core.config import logger
 from ..services import audio, imagery
 from ..core.database import engine
@@ -15,6 +17,7 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from sqlmodel import Session
 import random
+from pydantic import ValidationError
 
 router = APIRouter()
 
@@ -93,7 +96,7 @@ def initialize_character_stats(description: str, portrait_path: str):
         'intelligence': random.randint(1, 20),
         'wisdom': random.randint(1, 20),
         'charisma': random.randint(1, 20),
-        'userdescription': description,
+        'description': description,
         'portrait_path': portrait_path,
         'location': 'The town of Hearth',
         'goal': 'Find a quest to embark on and a party to join'
@@ -153,3 +156,24 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
     #     session.commit()
     #     session.refresh(new_message)
 
+@router.post('/createcharacter', status_code=201, response_model=CharacterRead)
+# async def create_character(*, character_stats: CharacterCreate, session: Session = Depends(get_session)):
+async def create_character(character_stats: CharacterCreate, session: Session = Depends(get_session)):
+    logger.debug('[CREATECHARACTER] This is what I received: ' + character_stats)
+    try:
+        new_character = Character.model_validate(character_stats)
+        session.add(new_character)
+        session.commit()
+        session.refresh(new_character)
+        logger.debug(f'[CREATECHARACTER] New character created with ID: {new_character.character_id}')
+        response = {
+            'character_id': new_character.character_id,
+            'status': 'success'
+        }
+        return response
+    except ValidationError as ve:
+        logger.error(f'[CREATECHARACTER] Validation error: {ve.json()}')
+        raise HTTPException(status_code=422, detail=ve.errors())
+    except Exception as e:
+        logger.error(f'[CREATECHARACTER] Failed to create character: {e}')
+        raise HTTPException(status_code=500, detail=str(e))

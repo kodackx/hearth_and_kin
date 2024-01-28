@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
     <title>Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #8b4513;
+            font-family: 'MedievalSharp', Arial, sans-serif;
+            background-color: #8b4513ad;
             background-image: url("static/img/login1.png");
             background-repeat: no-repeat;
-            background-size: cover;
+            /* background-size: cover; */
+            background-position-x: center;
             background-attachment: scroll; 
             position: relative;
         }
@@ -21,7 +23,7 @@
             right: 0;
             bottom: 0;
             left: 0;
-            background-color: rgba(0, 0, 0, 0.5);
+            /* background-color: rgba(0, 0, 0, 0.5); */
         }
         .box, .banner, .container {
             position: relative;
@@ -36,20 +38,26 @@
             justify-content: center;
             align-items: center;
             margin: 10px;
-            background-color: #fff;
+            background-color: rgba(139, 69, 19, 0.8); 
             font-size: 2em;
-            color: #8b4513;
+            color: #f4d9c5;
             flex-direction: column;
             justify-content: space-between;
+        }
+        .box:hover {
+            background-color: rgba(255, 255, 255, 0.8); /* Add a hover effect with a semi-transparent white background */
+            cursor: pointer; /* Change the cursor to indicate it's clickable */
+            color: #000; /* Change text color to black for visibility */
         }
         .container {
             display: flex;
             justify-content: space-around;
         }
         .banner {
-            background-color: #8b4513;
+            background-color: rgba(139, 69, 19, 0.8); 
             border-radius: 10px;
             padding: 20px;
+            margin: 20px;
             text-align: center;
             color: #fff;
         }
@@ -64,6 +72,16 @@
             text-align: center;
             padding: 10px;
             font-size: 0.5em;
+        }
+        #username {
+            font-weight: bold;
+            color: #f4d9c5;
+            background-color: #8b4513;
+            padding: 2px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -126,8 +144,8 @@
 <!-- martin's architecture for stories and rooms + tweaks from old setup -->
 <body>
     <div class="banner">
-        <h1>Welcome to the Dashboard</h1>
-        <p>Logged in as <span id="username"></span></p>
+        <h1>Welcome to the world of Hearth & Kin</h1>
+        <p>You are logged in as <span id="username"></span></p>
     </div>
 
     <div class="container">

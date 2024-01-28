@@ -253,6 +253,9 @@ body {
         if (event.target.classList.contains('finalize-button')) {
             // Retrieve the character data from localStorage
             var characterData = JSON.parse(localStorage.getItem('characterData'));
+            characterData.username = localStorage.getItem('username');
+            // characterData = { character_stats: characterData };
+            console.log('Sending character data to API:', characterData);
             fetch('/createcharacter', {
                 method: 'POST',
                 headers: {
@@ -297,6 +300,7 @@ body {
             if (data.character_data) {
                 let characterData = data.character_data;
                 localStorage.setItem('characterData', JSON.stringify(data.character_data));
+                console.log('Character saved:', characterData);
             }
             // check for audio
             if (data.audio) {
