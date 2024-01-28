@@ -67,7 +67,7 @@
         }
     </style>
 </head>
-<body>
+<!-- <body>
     <div class="banner">
         <h1>Welcome to the Dashboard</h1>
         <p>Logged in as <span id="username"></span></p>
@@ -120,6 +120,39 @@
             window.location.href = '/newcharacter';
         });
     }
+    </script>
+</body> -->
+
+<!-- martin's architecture for stories and rooms + tweaks from old setup -->
+<body>
+    <div class="banner">
+        <h1>Welcome to the Dashboard</h1>
+        <p>Logged in as <span id="username"></span></p>
+    </div>
+
+    <div class="container">
+        <div class="box" id="box1">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Story</div>
+        </div>
+        <div class="box" id="box2">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Story</div>
+        </div>
+        <div class="box" id="box3">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Story</div>
+        </div>
+        <div class="box" id="newchar">
+            <div class="box-content">+</div>
+            <div class="box-footer">New Character Flow</div>
+        </div>
+    </div>
+    <script type="module" src="static/js/dashboard.js"></script>
+    <script>
+        document.getElementById('newchar').addEventListener('click', function() {
+            window.location.href = '/newcharacter';
+        });
     </script>
 </body>
 </html>

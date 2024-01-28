@@ -15,9 +15,9 @@ def generate_image(prompt_text):
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
-        You are a virtual D&D scene generator. 
-        You will be given the latest narrator text from a story that is currently developing.
-        You must build a short prompt to generate an image based on the text.(no more than 100 tokens)
+        You are a virtual D&D scene prompt generator. 
+        You will be given the latest narrator text from a cozy fantasy story that is currently developing.
+        You must build a short prompt to generate an image based on the text. (no more than 100 tokens)
         Return it as "Scene Summary:".
         ---
         Here is the narration text:
@@ -29,10 +29,11 @@ def generate_image(prompt_text):
     image_url = ''
     prompt_dalle = (
         """
-        You are a virtual D&D scene generator. 
-        The narrator is currently developing a story.
-        You will be given a summary of a scene and you must build an image based on it.
+        You will be given a summary of a D&D story scene and you must build an image based on it.
+        The illustration should mimic the style of a graphic novel, with bold and precise linework and a color palette of vibrant highlights. 
+        The scene should feel alive and dynamic, yet cozy and intimate, capturing the essence of a fantasy adventure just about to unfold.
         Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
+        Here is the scene description:
         """
         + summary
     )
@@ -69,7 +70,7 @@ async def store_image(image_url: str, type: str) -> str:
         os.makedirs(dir_path, exist_ok=True)
         file_path = os.path.join(dir_path, 'character.jpg')
         img.save(file_path)
-        serve_image_path = file_path.replace('src/www/static/', '')
+        serve_image_path = file_path.replace('src/www/', '')
         return serve_image_path 
     else:
         error = 'Invalid store image type. Can only store `character` or `story` images'
