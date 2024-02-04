@@ -9,10 +9,10 @@ def test_create_character(session: Session, client: TestClient):
 
     # Try create character
     response = client.post(
-        '/character',
+        '/createcharacter',
         json={
             'username': 'test_user',
-            'user_description': 'desc',
+            'description': 'desc',
             'goal': 'to find the secret',
             'charisma': 5,
         },
@@ -39,10 +39,10 @@ def test_update_character(session: Session, client: TestClient):
 
     # Create character
     response = client.post(
-        '/character',
+        '/createcharacter',
         json={
             'username': 'test_user',
-            'user_description': 'desc',
+            'description': 'desc',
             'goal': 'to find the secret',
             'charisma': 5,
         },
@@ -53,7 +53,7 @@ def test_update_character(session: Session, client: TestClient):
         f'/character/{character_id}',
         json={
             'username': 'test_user',
-            'user_description': 'new desc',
+            'description': 'new desc',
             'goal': 'to find the new secret',
             'charisma': 1,
         },
