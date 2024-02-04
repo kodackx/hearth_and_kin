@@ -261,7 +261,7 @@ body {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: characterData,
+                body: JSON.stringify(characterData),
             })
             .then(response => {
                 if (!response.ok) {
