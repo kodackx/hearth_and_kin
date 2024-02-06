@@ -3,6 +3,7 @@ from ..core.database import get_session
 from sqlmodel import Session
 from ..models.character import Character, CharacterCreate, CharacterRead, CharacterUpdate
 from ..core.config import logger
+from typing import List
 
 router = APIRouter()
 
@@ -29,3 +30,19 @@ async def update_character(*, character: CharacterUpdate, character_id: int, ses
     session.refresh(db_character)
     logger.debug(f'[CHARACTER]: updated character {db_character}')
     return db_character
+
+# need to add a listing of all characters that the user has created
+# Dummy function for getting the current user based on the token
+# You need to replace this with your actual logic for retrieving the user
+# async def get_current_user() -> User:
+#     # Your logic here to get the user from the token
+#     user_id = decode_token(token)  # Assuming a function to decode token and get user_id
+#     user = session.query(User).filter(User.id == user_id).first()
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     return user
+
+@router.get('/characters', response_model=List[CharacterRead])
+async def list_characters_for_user(current_user: str, session: Session = Depends(get_session)):
+    characters = session.query(Character).filter(Character.username == current_user).all()
+    return characters

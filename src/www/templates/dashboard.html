@@ -6,6 +6,7 @@
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
     <title>Dashboard</title>
     <style>
+
         body {
             font-family: 'MedievalSharp', Arial, sans-serif;
             background-color: #8b4513ad;
@@ -29,7 +30,7 @@
             position: relative;
             z-index: 2;
         }
-        .box {
+        .box, .character-box {
             width: 200px;
             height: 200px;
             border: 2px solid #8b4513;
@@ -44,7 +45,7 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        .box:hover {
+        .box:hover, .character-box:hover {
             background-color: rgba(255, 255, 255, 0.8); /* Add a hover effect with a semi-transparent white background */
             cursor: pointer; /* Change the cursor to indicate it's clickable */
             color: #000; /* Change text color to black for visibility */
@@ -82,6 +83,45 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+        .container-title {
+            font-family: 'MedievalSharp', Arial, sans-serif; /* Use the MedievalSharp font for thematic consistency */
+            color: #f4d9c5; /* A light, parchment-like color for readability */
+            text-shadow: 2px 2px 4px #000; /* Add a subtle shadow for depth */
+            text-align: center; /* Center-align the titles */
+            margin-bottom: 20px; /* Add some space below the titles */
+            /* border-bottom: 2px solid #8b4513; A thematic underline to separate sections */
+            padding-bottom: 10px; /* Space between text and underline */
+        }
+        .rounded-avatar {
+            width: 70%;        /* Responsive width */
+            height: auto;       /* Maintain aspect ratio */
+            aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
+            object-fit: cover;  /* Ensures the image covers the area */
+            border-radius: 50%; /* Fully rounded crop */
+            display: block;     /* Remove any extra space below the image */
+        }
+        .character-box .character-description {
+            visibility: hidden;
+            position: absolute;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 100;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            max-width: 200px;
+            text-align: center;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.5s linear;
+        }
+
+        .character-box:hover .character-description {
+            visibility: visible;
+            opacity: 1;
         }
     </style>
 </head>
@@ -147,8 +187,24 @@
         <h1>Welcome to the world of Hearth & Kin</h1>
         <p>You are logged in as <span id="username"></span></p>
     </div>
-
     <div class="container">
+        <h1 class="container-title">CHARACTERS</h1><br><br>
+        <div class="character-box" id="newchar1">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Character</div>
+        </div>
+        <div class="character-box" id="newchar2">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Character</div>
+        </div>
+        <div class="character-box" id="newchar3">
+            <div class="box-content">+</div>
+            <div class="box-footer">Create New Character</div>
+        </div>
+    </div>
+    <hr style="border: 3px solid #8b4513d5; background-color: #8b4513ad;">
+    <div class="container">
+        <h1 class="container-title">STORIES</h1>
         <div class="box" id="box1">
             <div class="box-content">+</div>
             <div class="box-footer">Create New Story</div>
@@ -161,16 +217,7 @@
             <div class="box-content">+</div>
             <div class="box-footer">Create New Story</div>
         </div>
-        <div class="box" id="newchar">
-            <div class="box-content">+</div>
-            <div class="box-footer">New Character Flow</div>
-        </div>
     </div>
     <script type="module" src="static/js/dashboard.js"></script>
-    <script>
-        document.getElementById('newchar').addEventListener('click', function() {
-            window.location.href = '/newcharacter';
-        });
-    </script>
 </body>
 </html>
