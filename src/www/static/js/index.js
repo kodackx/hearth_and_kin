@@ -1,7 +1,5 @@
 document.getElementById('registerBtn').addEventListener('click', register);
 document.getElementById('loginBtn').addEventListener('click', login);
-document.getElementById('createStoryBtn').addEventListener('click', createStory);
-document.getElementById('joinStoryBtn').addEventListener('click', joinStory);
 
 function register() {
     var username = document.getElementById('username').value;
@@ -65,16 +63,4 @@ function handleApiResponse(response, successCallback) {
         })
     }
     return response.json().then(successCallback)
-}
-
-function createStory() {
-    var story_id = $('#story_id').val();
-    $.post('/story', {story_id: story_id}, function(data) {
-        alert('NYI');
-    });
-}
-
-function joinStory() {
-    var story_id = $('#story_id').val();
-    // Socket.IO logic for joining a story can go here
 }

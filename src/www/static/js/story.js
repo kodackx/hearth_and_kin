@@ -2,10 +2,10 @@ import { handleResponse } from './utils.js'
 import * as messageApi from './api/message.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
-// Retrieve stored variables
-const storyId = localStorage.getItem('joinedStoryId');
+const story_id = localStorage.getItem('story_id');
+const character_id = localStorage.getItem('character_id');
 const username = localStorage.getItem('username');
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + storyId
+export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
