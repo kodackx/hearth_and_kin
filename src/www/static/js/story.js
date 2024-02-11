@@ -1,7 +1,7 @@
 import { handleResponse } from './utils.js'
 
 const story_id = localStorage.getItem('story_id');
-const character_id = 1; //localStorage.getItem('character_id');
+const character_id = localStorage.getItem('character_id');
 const username = localStorage.getItem('username');
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';

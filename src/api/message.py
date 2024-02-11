@@ -29,11 +29,10 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
 
         if GENERATE_AUDIO:  # Will send to narrator and obtain audio
             audio_id, audio_path = audio.obtain_audio(narrator_reply)
-            _ = await audio.store_audio(audio_id, audio_path)
         if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
             image_url = imagery.generate_image(narrator_reply)
             logger.debug(f'[MESSAGE] {image_url = }')
-            image_path = await imagery.store_image(image_url)
+            image_path = await imagery.store_image(image_url, 'story')
             logger.debug(f'[MESSAGE] {image_path = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')

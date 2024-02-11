@@ -1,0 +1,227 @@
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="static/js/newcharacter.js"></script>
+</head>
+<body>
+    <button id="start-button">Create your character...</button>
+    <div class="flex-container" id="main-content">
+        <!-- <div class="story-image" id="story-image"></div> -->
+        <div class="chat-section">
+            <div class="container fade-in" id="chat-container">
+                <!-- <audio id="audio" controls>
+                    <source id="source" src="" type="audio/wav" />
+                </audio> -->
+                <div class="card" id="chat-box">
+                    <div class="card-body">
+                        <!-- Chat messages will be appended here -->
+                    </div>
+                </div>
+                <!-- Input box for new messages -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="message-input" placeholder="Type a message">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
+                        <div id="spinner" style="display: none;">
+                            <div class="loader"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </div>
+</body>
+</html>
+<style>
+
+body {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('static/character_creation.png');
+    background-color: rgba(18, 0, 46, 0.901);
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#start-button {
+    background-color: #8b4513;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    /* display: inline-block; */
+    font-size: larger;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.finalize-button {
+    display: block;
+    width: 50%;
+    height: auto;
+    margin: 20px auto;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    font-size: large;
+}
+
+#story-image {
+    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    display: none;
+    flex: 20%;
+    animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
+    transition: background 5s ease-in-out;
+    width: 20%; /* Adjust as needed */
+    padding-top: 20%; /* This makes the height equal to the width */
+    border: 5px solid rgba(94, 57, 2, 0.901);
+    border-radius: 30px; /* Adjust as needed */
+    background-size: cover;
+    background-position: center;
+}
+
+.rounded-avatar {
+    width: 70%;        /* Responsive width */
+    height: auto;       /* Maintain aspect ratio */
+    aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
+    object-fit: cover;  /* Ensures the image covers the area */
+    border-radius: 50%; /* Fully rounded crop */
+    display: block;     /* Remove any extra space below the image */
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    /* margin-top: 20px;
+    margin-bottom: 20px; */
+    max-width: 1200px;
+    max-height: 100vh;
+}
+
+.chat-section {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.container, .container-lg, .container-md, .container-sm, .container-xl {
+    max-width: 1800px !important;
+    width: 100% !important;
+}
+.loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #db7a34; 
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.fade-in {
+    opacity: 0;
+    animation: fadeIn ease 1s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes fadeIn {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.creation-message {
+    font-size: larger; /* Adjust the font size as needed */
+    font-family: 'Almendra', serif;
+    color: #ffd4b6;
+    animation: fadeIn 2s ease-in;
+}
+
+.user-message {
+    font-size: larger; /* Adjust the font size as needed */
+    font-family: 'Merriweather', serif;
+    color: #ffd4b6;
+    animation: fadeIn 2s ease-in;
+}
+
+body {
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+    font-size: larger;
+}
+
+#chat-container {
+    /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 94vh;
+    width: 120vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    /* flex: 10%; */
+}
+
+#chat-box {
+    /* font color change */
+    color: #eaeaea; /* Dark brown text */
+    width: 90%;
+    height: 80%;
+    /* border: 1px solid #000; */
+    padding: 20px;
+    overflow-y: auto;
+    /* background-color: rgba(94, 57, 2, 0.901); Semi-transparent orange */
+    background-color: transparent;
+    flex-grow: 1;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    display: flex;        /* Use flexbox */
+    justify-content: center; /* Center horizontally */
+    align-items: center;  /* Center vertically */
+}
+
+.input-group {
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+    border: 1px solid #5D3A00; /* Dark brown */
+    border-radius: 5px; /* Rounded corners */
+    color: #5D3A00; /* Dark brown text */
+    width: 80%; /* Same as the width of the chat box */
+    max-width: 80%; /* Prevent the input from becoming wider than the chat box */
+}
+
+.input-group .form-control {
+    border: none; /* Remove default border */
+    background-color: transparent; /* Transparent background */
+}
+
+.input-group .btn-outline-secondary {
+    border-color: #5D3A00; /* Dark brown border */
+    color: #5D3A00; /* Dark brown text */
+    background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white */
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: #5D3A00; /* Dark brown background */
+    color: #fff; /* White text */
+}
+</style>
