@@ -1,13 +1,6 @@
 import { handleResponse } from './utils.js'
 
 document.addEventListener('DOMContentLoaded', function() {
-    let i = 1; // Start with 'newchar1'
-    while (document.getElementById('newchar' + i)) {
-        document.getElementById('newchar' + i).addEventListener('click', function() {
-            window.location.href = '/newcharacter';
-        });
-        i++;
-    }
     // now we requests the list of characters and populate the boxes
     getCharactersForUser().then(characters => {
         if (characters && characters.length > 0) {
@@ -21,15 +14,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     box.boxElement.querySelector('.box-footer').textContent = `Location: ${character.location}`;
                     box.storyId = character.story_id;
                     box.creator = character.username;
-                    // box.boxElement.querySelector('a[href]').removeAttribute('href');
-                    // box.storyCreated = true;
-                    // removeButtons(box);
-                    // createButtons(box);
+                    box.characterId = character.character_id;
+                    if (box.characterId) {
+                        box.boxElement.addEventListener('click', function() {
+                            localStorage.setItem('character_id', box.characterId);
+                        });
+                    } else {
+                        box.boxElement.addEventListener('click', function() {
+                            window.location.href = '/newcharacter';
+                        });
+                    }
                 }
             });
         }
     });
-
 });
 
 async function getCharactersForUser() {
@@ -69,8 +67,12 @@ function createClickHandler(box) {
 }
 
 function playOrResumeStory(box) {
-    localStorage.setItem('story_id', box.storyId);
-    window.location.href = '/story';
+    if (localStorage.getItem('character_id')) {
+        localStorage.setItem('story_id', box.storyId);
+        window.location.href = '/story';
+    } else {
+        alert('Select a character by clicking on it before playing a story!')
+    }
 }
 
 function drawCreatedStory(box, story) {

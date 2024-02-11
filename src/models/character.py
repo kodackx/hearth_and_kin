@@ -31,11 +31,10 @@ class CharacterRead(CharacterBase):
 class CharacterUpdate(Model):
     username: str = Relationship(back_populates='user.username')
     story_id: Optional[int] = None
-    user_description: Optional[str] = None
     description: Optional[str] = None
     strength: Optional[int] = None
     dexterity: Optional[int] = None
-    con: Optional[int] = None
+    constitution: Optional[int] = None
     intelligence: Optional[int] = None
     wisdom: Optional[int] = None
     charisma: Optional[int] = None

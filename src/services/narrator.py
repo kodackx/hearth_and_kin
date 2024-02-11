@@ -82,8 +82,8 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
     message_and_character_data = message.message
 
-    if character.user_description:
-        message_and_character_data += f'\n(Character Data: {character.user_description})'
+    if character.description:
+        message_and_character_data += f'\n(Character Data: {character.description})'
 
     if character.location:
         message_and_character_data += f'\n(Location: {character.location})'
