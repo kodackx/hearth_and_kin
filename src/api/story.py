@@ -77,15 +77,19 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
 
     if not db_story or not db_user:
         raise HTTPException(404, 'Story or user does not exist')
-    if db_user.story_id:
-        raise HTTPException(400, 'User already in a story.')
+    # if db_user.story_id:
+    #     raise HTTPException(400, 'User already in a story.')
     if db_story.active:
         raise HTTPException(400, 'Story is already in play.')
 
     db_user.story_id = db_story.story_id
+    if story.character_id:  # If character_id is provided in the request
+        db_story.character_id = story.character_id  # Assign the character to the story
     session.add(db_user)
+    session.add(db_story)  # Make sure to add the updated story to the session
     session.commit()
     session.refresh(db_user)
+    session.refresh(db_story)  # Refresh the story to get the updated data from the database
     return db_story
 
 

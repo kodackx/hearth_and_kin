@@ -1,4 +1,6 @@
 from sqlmodel import SQLModel as Model, Field
+from sqlmodel import Relationship
+from typing import Optional
 
 
 class StoryBase(Model):
@@ -7,6 +9,7 @@ class StoryBase(Model):
 
 class StoryJoin(StoryBase):
     username: str = Field(foreign_key='user.username')
+    character_id: int = Field(foreign_key='character.character_id')
 
 
 class StoryCreate(StoryBase):
@@ -22,4 +25,6 @@ class StoryRead(StoryCreate):
 
 
 class Story(StoryRead, table=True):  # type: ignore
-    pass
+    story_id: int = Field(primary_key=True)
+    character_id: Optional[int] = Field(default=None, foreign_key="character.character_id")
+    # character: "Character" = Relationship(back_populates="story", foreign_keys=[character_id])

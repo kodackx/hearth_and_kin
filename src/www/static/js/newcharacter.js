@@ -76,6 +76,11 @@ document.getElementById('send-button').addEventListener('click', function() {
     document.getElementById('message-input').value = '';
     // Show the spinner
     document.getElementById('spinner').style.display = 'block';
+    document.getElementById('send-button').style.display = 'none';
+    document.getElementById('input-group').classList.add('waiting-state');
+    document.getElementById('message-input').disabled = true; // Disable input
+    document.getElementById('message-input').placeholder = "The mists of creation are working...";
+    scrollToBottom();
     fetch('/charactermessage', {
         method: 'POST',
         headers: {
@@ -110,11 +115,16 @@ document.getElementById('send-button').addEventListener('click', function() {
             formattedMessage = formattedMessage.replace('Narrator: ', '');
             console.log('Received successful reply :' + formattedMessage)
             document.getElementById('spinner').style.display = 'none';
+            document.getElementById('send-button').style.display = 'block';
+            document.getElementById('input-group').classList.remove('waiting-state');
+            document.getElementById('message-input').disabled = false; // Enable input
+            document.getElementById('message-input').placeholder = "Shape your character into reality.";
             // add append message here from creator
             creatorReply(formattedMessage).then(() => { // Wait for creatorReply to finish
                 if (data.image) {
                     let imagePath = data.image;
                     appendMessagePortrait(imagePath);
+                    scrollToBottom();
                 }
             });
         } else {
@@ -124,6 +134,10 @@ document.getElementById('send-button').addEventListener('click', function() {
     .catch((error) => {
         console.error('Error:', error);
         document.getElementById('spinner').style.display = 'none';
+        document.getElementById('send-button').style.display = 'block';
+        document.getElementById('input-group').classList.remove('waiting-state');
+        document.getElementById('message-input').disabled = false; // Enable input
+        document.getElementById('message-input').placeholder = "Shape your character into reality.";
     });
 });
 
@@ -155,11 +169,15 @@ function creatorReply(message) {
     return new Promise((resolve, reject) => {
         var lines = message.split('<br>');
         var lineIndex = 0;
-        var intervalTime = 10000 / lines.length;
+        var intervalTime = 5000 / lines.length;
         var intervalId = setInterval(function() {
             var lineDiv = document.createElement('div');
             lineDiv.className = 'fade-in';
             appendMessage(lines[lineIndex]);
+            // Delay scrolling to the bottom to ensure the DOM has updated
+            setTimeout(() => {
+                scrollToBottom();
+            }, 0); // Adjust the delay as needed, even a 0ms timeout can help
             lineIndex++;
             if (lineIndex >= lines.length) {
                 clearInterval(intervalId);
@@ -168,6 +186,13 @@ function creatorReply(message) {
         }, intervalTime);
     });
 }
+
+// Call scrollToBottom() function right after a new 'creation-message' is appended to the chat-box
+function scrollToBottom() {
+    const chatBox = document.getElementById('chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 
 // Function to append a new message to the chat box
 function appendMessage(message) {

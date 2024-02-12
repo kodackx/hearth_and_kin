@@ -1,7 +1,8 @@
 import { handleResponse } from './utils.js'
 
 const story_id = localStorage.getItem('story_id');
-const character_id = localStorage.getItem('character_id');
+let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
+let character_id = selectedCharacter.character_id;
 const username = localStorage.getItem('username');
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
@@ -47,15 +48,20 @@ async function drawStoryPage() {
 
 function tryPlayAudio(audioPath) {
     if (audioPath) {
-        base64ToBlob(audioPath, 'audio/wav')
-        .then(audioBlob => {
-            let audioUrl = URL.createObjectURL(audioBlob);
-            let narration = new Audio(audioUrl);
-            narration.volume = 0.75; // 75% volume
-            narration.play();
-        })
-        .catch(error => {console.error('Error:', error)})
+        let audioNarration = new Audio(audioPath);
+        audioNarration.volume = 0.5; // 50% volume
+        audioNarration.play();
     }
+    // {
+    //     base64ToBlob(audioPath, 'audio/wav')
+    //     .then(audioBlob => {
+    //         let audioUrl = URL.createObjectURL(audioBlob);
+    //         let narration = new Audio(audioUrl);
+    //         narration.volume = 0.75; // 75% volume
+    //         narration.play();
+    //     })
+    //     .catch(error => {console.error('Error:', error)})
+    // }
 }
 
     
@@ -166,6 +172,6 @@ function tryChangeBackgroundImage(imagePath) {
 }
 
 // Function to convert a base64 string to a Blob object
-function base64ToBlob(base64, mime = '') {
-    return fetch(`data:${mime};base64,${base64}`).then(res => res.blob());
-}
+// function base64ToBlob(base64, mime = '') {
+//     return fetch(`data:${mime};base64,${base64}`).then(res => res.blob());
+// }

@@ -25,6 +25,7 @@ def obtain_audio(text: str) -> tuple[str, str]:
     dir_path = os.path.join('data', 'narration', audio_id)
     os.makedirs(dir_path, exist_ok=True)
     file_path = os.path.join(dir_path, 'audio.wav')
+    print(f"[GEN AUDIO] Audio file saved at: {file_path}")
     # this writes audio to storage already, no need for below
     with open(file_path, 'wb') as f:
         f.write(audio)  # type: ignore

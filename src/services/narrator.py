@@ -65,7 +65,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
         memory.chat_memory.add_ai_message(message.narrator_reply)
 
     llm = ChatOpenAI(
-        model_name='gpt-4',  # type: ignore
+        model_name='gpt-4-0125-preview',  # type: ignore
         # max_tokens=max_length,
         temperature=0.5,
     )
@@ -81,6 +81,9 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 
 def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
     message_and_character_data = message.message
+    
+    if character.character_name:
+        message_and_character_data += f'\n(Character Name: {character.character_name})'
 
     if character.description:
         message_and_character_data += f'\n(Character Data: {character.description})'

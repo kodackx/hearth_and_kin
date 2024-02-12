@@ -45,8 +45,9 @@ Let your words flow freely and paint the portrait of your character. Their story
 -
 
 If we reach a point where we have enough information we can return a character portrait description.
-Please mark that section with "FINAL CHARACTER DESCRIPTION:".
-This will be sent to an image generation service as a prompt so make sure that the prompt is detailed.
+Please mark that section with "FINAL CHARACTER DESCRIPTION:". 
+The description should always start with the character name, like this "CHARACTER NAME: [name here]."
+Please provide a detailed description of everything we know about the character. This information will be used to generate an avatar as well as for the rest of the campaign.
 
 Conversation with player so far:
 {chat_history}
@@ -87,7 +88,7 @@ def gpt_character_creator(input: str, chain: LLMChain) -> str:
     print('[Character Creator] Output is: ' + output)
     return output
 
-def initialize_character_stats(description: str, portrait_path: str):
+def initialize_character_stats(name: str, description: str, portrait_path: str):
     # Initialize and randomize character stats
     character_stats = {
         'strength': random.randint(1, 20),
@@ -97,6 +98,7 @@ def initialize_character_stats(description: str, portrait_path: str):
         'wisdom': random.randint(1, 20),
         'charisma': random.randint(1, 20),
         'description': description,
+        'character_name': name,
         'portrait_path': portrait_path,
         'location': 'The town of Hearth',
         'goal': 'Find a quest to embark on and a party to join'
@@ -120,6 +122,9 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
         character_data = None
         if final_character_creation_key in narrator_reply:
             character_description = narrator_reply.split(final_character_creation_key, 1)[1]
+            character_name_start = narrator_reply.find("CHARACTER NAME: ") + len("CHARACTER NAME: ")
+            character_name_end = narrator_reply.find("\n", character_name_start)
+            character_name = narrator_reply[character_name_start:character_name_end]
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
             portrait_url = imagery.generate_image(narrator_reply)
@@ -127,7 +132,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             logger.debug(f'[MESSAGE] {portrait_path = }')
             # portrait_image = imagery.obtain_image_from_url(portrait_path)
             # logger.debug(f'[MESSAGE] {portrait_image = }')
-            character_data = initialize_character_stats(character_description, portrait_path)
+            character_data = initialize_character_stats(character_name, character_description, portrait_path)
         response.status_code = status.HTTP_201_CREATED
         return {
             'message': 'Narrator: ' + narrator_reply,
