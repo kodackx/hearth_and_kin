@@ -57,13 +57,17 @@
 </html>
 <style>
     body {
+        height: 90%; /* Ensure they at least cover the viewport height */
+        min-height: 90vh; /* Minimum height to cover the viewport */
+        margin: 0; /* Remove default margin */
+        padding: 0; /* Remove default padding */
         font-family: 'MedievalSharp', Arial, sans-serif;
-        background-color: #8b4513ad;
-        background-image: url("static/img/login1.png");
+        background-color: #000; /* Ensures the fallback color is black */
+        background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.7) 70%, #000 100%), url("static/img/login1.png");
         background-repeat: no-repeat;
-        /* background-size: cover; */
-        background-position-x: center;
-        background-attachment: scroll; 
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
         position: relative;
     }
 
