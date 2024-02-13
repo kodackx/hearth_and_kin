@@ -1,31 +1,34 @@
 <html>
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <button id="start-button">Let the adventure begin...</button>
+    <button type="button" id="start-button">Let the adventure begin...</button>
+    <button type="button" id="toggle-chat-btn">Toggle Chat</button>
+    <div id="chat-container" class="slideOutToLeft">
+        <!-- Chatbox content -->
+        <div class="card" id="chat-box">
+            <div class="card-body">
+                <!-- Chat messages will be appended here -->
+            </div>
+        </div>
+    </div>
     <div class="flex-container" id="main-content">
-        <div class="story-image" id="story-image"></div>
+        <div class="story-image" id="story-image">
+            <div id="subtitle" class="subtitle">Subtitle placeholder...</div>
+        </div>
         <div class="chat-section">
-            <div class="container fade-in" id="chat-container">
-                <!-- <audio id="audio" controls>
-                    <source id="source" src="" type="audio/wav" />
-                </audio> -->
-                <div class="card" id="chat-box">
-                    <div class="card-body">
-                        <!-- Chat messages will be appended here -->
-                    </div>
-                </div>
-                <!-- Input box for new messages -->
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="message-input" placeholder="Type a message">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
-                        <div id="spinner" style="display: none;">
-                            <div class="loader"></div>
-                        </div>
+            <!-- Input box for new messages -->
+            <div class="input-group" id="message-input-group">
+                <input type="text" class="form-control" id="message-input" placeholder="Type a message...">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
+                    <div id="spinner" style="display: none;">
+                        <div class="loader"></div>
                     </div>
                 </div>
             </div>
@@ -35,7 +38,11 @@
 </html>
 <style>
 body {
-    background-color: black;
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+    font-size: large;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url('static/img/patrick-hendry-oaaRPhOz5Dg-unsplash.jpg');
+    background-size: cover;
+    background-position: center;
 }
 
 #start-button {
@@ -58,11 +65,12 @@ body {
 
 #story-image {
     /* background-image: url("static/login1.png"); */
+    position: relative;
     flex: 80%;
     animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
     transition: background 5s ease-in-out;
-    width: 50%; /* Adjust as needed */
-    padding-top: 50%; /* This makes the height equal to the width */
+    width: 80%; /* Adjust as needed */
+    padding-top: 69%; /* This makes the height equal to the width */
     border: 5px solid rgba(94, 57, 2, 0.901);
     border-radius: 30px; /* Adjust as needed */
     background-size: cover;
@@ -72,19 +80,17 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* This centers the children horizontally */
     margin-left: auto;
     margin-right: auto;
-    margin-top: 30px;
-    /* margin-top: 20px;
-    margin-bottom: 20px; */
-    max-width: 1200px;
-    max-height: 100vh;
+    margin-top: 80px;
+    max-width: 1000px;
 }
 
 .chat-section {
-    margin-top: 20px;
-    width: 100%;
+    width: 100%; /* Ensure it takes the full width */
+    display: flex;
+    justify-content: center; /* Center its children (the input group) */
 }
 
 .container, .container-lg, .container-md, .container-sm, .container-xl {
@@ -104,19 +110,61 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
 .fade-in {
     opacity: 0;
     animation: fadeIn ease 1s;
     animation-fill-mode: forwards;
 }
 
+.fade-out {
+    animation: fadeOut 1s forwards;
+}
+
 @keyframes fadeIn {
     0% {opacity: 0;}
     100% {opacity: 1;}
 }
-body {
-    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
-    font-size: larger;
+
+
+@keyframes slideInFromTop {
+    0% {
+        transform: translateY(-100%); /* Start above the screen */
+    }
+    100% {
+        transform: translateY(0); /* End at the original position */
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+@keyframes fadeInOut {
+    0%,100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+.slideInFromLeft {
+    animation: slideInFromLeft 0.5s ease-out forwards;
+}
+
+.slideOutToLeft {
+    animation: slideOutToLeft 0.5s ease-out forwards;
 }
 
 #chat-container {
@@ -131,13 +179,23 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    /* animation: slideInFromLeft 0.5s ease-out forwards; Apply the animation */
     /* flex: 10%; */
+    position: fixed; /* Fixed positioning */
+    left: 0; /* Align to the left */
+    top: 0; /* Align to the top */
+    height: 100%; /* Take full height */
+    width: 35%; /* Adjust width as needed */
+    max-width: 500px;
+    overflow-y: auto; /* Allow scrolling */
+    /* background-color: rgba(0,0,0,0.5);  */
+    /* border-right: 2px solid #5D3A00; Aesthetic border */
 }
 
 #chat-box {
     /* font color change */
-    color: #eaeaea; /* Dark brown text */
-    width: 80%;
+    color: #fff2d5; /* Dark brown text */
+    width: 90%;
     height: 80%;
     border: 1px solid #000;
     padding: 20px;
@@ -146,6 +204,26 @@ body {
     flex-grow: 1;
     margin-bottom: 20px;
     margin-top: 20px;
+    border-radius: 15px;
+}
+
+/* Custom scrollbar for #chat-box */
+#chat-box::-webkit-scrollbar {
+    width: 10px; /* Adjust the width of the scrollbar */
+}
+
+#chat-box::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1); /* Dark track/background */
+    border-radius: 15px; /* Optional: adds rounded corners to the track */
+}
+
+#chat-box::-webkit-scrollbar-thumb {
+    background: #fff2d5ae;; /* Scrollbar color */
+    border-radius: 20px; /* Rounded corners on the scrollbar */
+}
+
+#chat-box::-webkit-scrollbar-thumb:hover {
+    background: #bf845a; /* Darker shade for hover effect */
 }
 
 .input-group {
@@ -171,6 +249,87 @@ body {
 .input-group .btn-outline-secondary:hover {
     background-color: #5D3A00; /* Dark brown background */
     color: #fff; /* White text */
+}
+
+#message-input-group {
+    bottom: 0; /* Align to the bottom */
+    left: 0; /* Align to the left */
+    width: 100%; /* Span across the screen */
+    border-radius: 25px; /* Very rounded corners as requested */
+    width: 50%; /* Adjust this value as needed to control the input group's width */
+    margin: 20px; /* This will center the input group if its width is less than its parent */
+    animation: slideInFromTop 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+}
+
+#toggle-chat-btn {
+    position: absolute;
+    z-index: 1;
+    top: 10px; /* Adjust the distance from the top as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Almendra', serif;
+    font-size: 16px; /* Smaller font size for a more understated look */
+    background-color: #5D3A00; /* A dark brown color to blend with the app's color scheme */
+    color: #fff2d5; /* A light cream color for the text to match the app's color scheme */
+    padding: 5px 10px; /* Reduced padding for a smaller button size */
+    border-radius: 10px; /* Slightly rounded corners for a softer look */
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Subtler shadow for depth */
+    text-shadow: 1px 1px 2px #000; /* Subtler text shadow for a more refined look */
+}
+
+#toggle-chat-btn:hover {
+    background-color: #3E2C1B; /* A slightly darker shade for the hover state */
+}
+
+#send-button {
+    border-bottom-right-radius: 20px;
+    border-top-right-radius: 20px;
+    background-image: linear-gradient(45deg, #a95f2b, #aa8838); /* Gradient background */
+    color: white; /* Text color */
+    border: none; /* Removes the default border */
+    transition: background-image 0.5s ease-in-out; /* Smooth transition for the hover effect */
+}
+
+#send-button:hover {
+    background-image: linear-gradient(45deg, #aa8838, #a95f2b); /* Inverted gradient on hover */
+}
+
+.subtitle {
+    position: absolute;
+    bottom: 0; /* Adjust this value as needed to place the subtitle correctly */
+    left: 0;
+    right: 0;
+    /* bottom: 10px; Adjust as needed */
+    width: 100%;
+    text-align: center;
+    font-family: 'Almendra', serif;
+    font-size: 25px; /* Adjust size as needed */
+    padding: 30px;
+    color: #fff2d5;
+    text-shadow: 
+        2px 2px 4px #000000,  /* Primary shadow to create depth */
+        -1px -1px 4px #000000, /* Secondary shadow to enhance readability */
+        1px -1px 4px #000000,  /* Tertiary shadow for a more diffuse effect */
+        -1px 1px 4px #000000;  /* Quaternary shadow to ensure clarity in all directions */
+    /* animation: fadeInOut 10s infinite;  */
+}
+
+.user-message {
+    color: #9ecbff; /* Example: Blue */
+    /* font-family: 'Tangerine', cursive;  */
+}
+
+.narrator-message {
+    color: #fff2d5; /* Example: White */
+}
+
+.system-message {
+    color: #e2fe7d; /* Example: Orange */
+}
+
+.unknown-message {
+    color: #D0021B; /* Example: Red */
 }
 </style>
 <script type="module" src="static/js/story.js"></script>
