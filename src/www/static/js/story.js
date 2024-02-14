@@ -1,37 +1,17 @@
 import { handleResponse } from './utils.js'
 
+let currentAudio = null; // Add this at the top of your script
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = selectedCharacter.character_id;
 const username = localStorage.getItem('username');
+
+// event listeners and hiding play elements for now
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
-
 document.getElementById('start-button').addEventListener('click', drawStoryPage);
-
-// Function to send a new message
 document.getElementById('send-button').addEventListener('click', sendMessage);
-
-// document.addEventListener('DOMContentLoaded', function() {
-//     const subtitles = [
-//         "First piece of text",
-//         "Second piece of text",
-//         "Third piece of text",
-//         // Add more subtitles as needed
-//     ];
-//     let currentSubtitle = 0;
-//     const subtitleElement = document.getElementById('subtitle');
-
-//     function changeSubtitle() {
-//         subtitleElement.innerHTML = subtitles[currentSubtitle];
-//         currentSubtitle = (currentSubtitle + 1) % subtitles.length;
-//     }
-
-//     // Change subtitle every 5 seconds to match the fadeInOut animation
-//     setInterval(changeSubtitle, 5000);
-// });
-
 document.getElementById('toggle-chat-btn').addEventListener('click', function() {
     const chatContainer = document.getElementById('chat-container');
     if (chatContainer.classList.contains('slideInFromLeft')) {
@@ -45,7 +25,6 @@ document.getElementById('toggle-chat-btn').addEventListener('click', function() 
         chatContainer.style.zIndex = "1";
     }
 });
-
 document.getElementById('message-input').addEventListener('keypress', function(e) {
     var key = e.which || e.keyCode;
     if (key === 13) { // 13 is the key code for Enter
@@ -54,10 +33,14 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
+// define functions beggining with how to draw the full story page
 async function drawStoryPage() {
     document.getElementById('main-content').style.display = 'flex';
     document.getElementById('toggle-chat-btn').style.display = 'block';
+    // hide elements (button, party list, options frame)
     this.style.display = 'none';
+    document.getElementById('party-container').style.display = 'none';
+    document.getElementById('options-container').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     var ambianceAudioPath = "static/ambiance.m4a";
@@ -96,14 +79,16 @@ async function drawStoryPage() {
 }
 
 async function sendMessage() {
+    // stop audio if currently playing
+    tryPlayAudio();
+    // read and append message
     const message = document.getElementById('message-input').value;
     appendMessage('User: ' + message, 'user');
+    document.getElementById('message-input-group').classList.add('waiting-state');
+    document.getElementById('message-input').disabled = true;
+    document.getElementById('message-input').placeholder = "The story unfolds...";
     document.getElementById('message-input').value = '';
-    // Show the spinner
-    document.getElementById('spinner').style.display = 'block';
-    // changeBackgroundImage(imagePath);
-
-    // const loadingMessageId = appendMessage('Narrator is thinking...');
+    document.getElementById('spinner').style.display = 'flex';
 
     fetch('/message', {
         method: 'POST',
@@ -125,6 +110,11 @@ async function sendMessage() {
             formattedMessage = data.narrator_reply;
             console.log('Received successful reply: ' + formattedMessage);
             document.getElementById('spinner').style.display = 'none';
+            document.getElementById('message-input-group').classList.remove('waiting-state');
+            document.getElementById('message-input').disabled = false;
+            document.getElementById('message-input').placeholder = "What do you do next?";
+            document.getElementById('message-input').value = '';
+            document.getElementById('message-input').focus();
             // Split the formattedMessage into lines
             var lines = formattedMessage.split('<br>');
             var lineIndex = 0;
@@ -233,13 +223,38 @@ function tryPlaySubtitles(text) {
     }
 }
 
+// function tryPlayAudio(audioPath) {
+//     if (audioPath) {
+//         let audioNarration = new Audio(audioPath);
+//         audioNarration.volume = 0.5; // 50% volume
+//         audioNarration.play();
+//     }
+// }
+
 function tryPlayAudio(audioPath) {
-    if (audioPath) {
-        let audioNarration = new Audio(audioPath);
-        audioNarration.volume = 0.5; // 50% volume
-        audioNarration.play();
+    if (currentAudio && !currentAudio.paused) {
+        // Fade out current audio
+        let fadeOutInterval = setInterval(() => {
+            if (currentAudio.volume > 0.1) {
+                currentAudio.volume -= 0.1;
+            } else {
+                // Stop and reset the audio when the volume is low enough
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio.volume = 0.5; // Reset volume for next play
+                clearInterval(fadeOutInterval);
+            }
+        }, 100); // Adjust interval duration to control fade-out speed
     }
 
+    if (audioPath) {
+        // Wait for the current audio to fade out before starting the new one
+        setTimeout(() => {
+            currentAudio = new Audio(audioPath);
+            currentAudio.volume = 0.5; // Start with a reasonable volume
+            currentAudio.play();
+        }, currentAudio && !currentAudio.paused ? 1100 : 0); // Adjust timeout to match fade-out duration
+    }
 }
 
 // 3rd version of changing background image but this time with functioning transition

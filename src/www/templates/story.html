@@ -7,7 +7,32 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+    <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
+        <h2>Players in Party</h2>
+        <ul id="party-list">
+            <!-- Placeholder for player items -->
+            <li class="party-member">
+                <img src="/static/characters/EZmw1OxQuvccmvDl-pL4tu73WOhbL0FW2Hxgys1h/character.jpg" alt="Character Avatar" class="avatar">
+                <span class="character-name">Grom Tuskweave</span>
+            </li>
+            <li class="party-member">
+                <img src="/static/characters/FcRDE9wPB5XZ4EDfYDnK6_2h7wHkOsFUpwl5Giiv/character.jpg" alt="Character Avatar" class="avatar">
+                <span class="character-name">Alleria Windrunner</span>
+            </li>
+            <!-- Repeat <li> for each party member -->
+        </ul>
+    </div>
     <button type="button" id="start-button">Let the adventure begin...</button>
+    <div id="options-container" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div>
+            <input type="checkbox" id="enable-image-gen" name="enable-image-gen">
+            <label for="enable-image-gen">Enable Image Generation</label>
+        </div>
+        <div>
+            <input type="checkbox" id="enable-audio-gen" name="enable-audio-gen">
+            <label for="enable-audio-gen">Enable Audio Generation</label>
+        </div>
+    </div>
     <button type="button" id="toggle-chat-btn">Toggle Chat</button>
     <div id="chat-container" class="slideOutToLeft">
         <!-- Chatbox content -->
@@ -19,14 +44,14 @@
     </div>
     <div class="flex-container" id="main-content">
         <div class="story-image" id="story-image">
-            <div id="subtitle" class="subtitle">Subtitle placeholder...</div>
+            <div id="subtitle" class="subtitle">...</div>
         </div>
         <div class="chat-section">
             <!-- Input box for new messages -->
             <div class="input-group" id="message-input-group">
                 <input type="text" class="form-control" id="message-input" placeholder="Type a message...">
                 <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
+                    <button class="btn btn-outline-secondary" type="button" id="send-button">SEND</button>
                     <div id="spinner" style="display: none;">
                         <div class="loader"></div>
                     </div>
@@ -63,12 +88,28 @@ body {
     transform: translate(-50%, -50%);
 }
 
+@keyframes shimmer {
+    0% { box-shadow: 0 0 5px 5px rgba(255, 255, 0, 0.5); }
+    50% { box-shadow: 0 0 20px 20px rgba(255, 255, 0, 0); }
+    100% { box-shadow: 0 0 5px 5px rgba(255, 255, 0, 0.5); }
+}
+
+@keyframes fadeThroughColor {
+    0% { background-color: transparent; }
+    50% { background-color: #8a2be2; } /* Or any fantasy-themed color */
+    100% { background-color: transparent; }
+}
+
 #story-image {
     /* background-image: url("static/login1.png"); */
     position: relative;
     flex: 80%;
-    animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
-    transition: background 5s ease-in-out;
+    /* animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s; */
+    animation: fadeAndScale 2s ease-in-out;
+    /* transition: shimmer 3s ease-in-out infinite; */
+    transition: fadeThroughColor 4s ease-in-out;
+    /* animation: fadeThroughColor 4s ease-in-out; */
+    /* transition: background 5s ease-in-out; */
     width: 80%; /* Adjust as needed */
     padding-top: 69%; /* This makes the height equal to the width */
     border: 5px solid rgba(94, 57, 2, 0.901);
@@ -76,6 +117,11 @@ body {
     background-size: cover;
     background-position: center;
 }
+
+/* #story-image:hover {
+    transform: rotateY(180deg);
+} */
+
 .flex-container {
     display: flex;
     flex-direction: column;
@@ -97,12 +143,22 @@ body {
     max-width: 1800px !important;
     width: 100% !important;
 }
+
+#spinner {
+        display: flex; /* Use flexbox for layout */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        width: auto; /* Take full width of its parent to help with centering */
+        height: auto; /* Take full height of its parent to help with centering */
+        padding: 10px;
+    }
+
 .loader {
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #db7a34; 
+    border: 6px solid #f3f3f3; /* Slightly thinner border for a smaller loader */
+    border-top: 6px solid #db7a34; /* Slightly thinner border-top for consistency */
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
     animation: spin 2s linear infinite;
 }
 
@@ -157,6 +213,36 @@ body {
 @keyframes fadeInOut {
     0%,100% { opacity: 0; }
     50% { opacity: 1; }
+}
+
+@keyframes fadeAndScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(219, 122, 52, 0); /* Increase the spread and adjust opacity */
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0);
+        }
+    }
+
+.waiting-state {
+    animation: pulse 2s infinite;
 }
 
 .slideInFromLeft {
@@ -251,6 +337,8 @@ body {
     color: #fff; /* White text */
 }
 
+/* colors brown and purple: #db7a34, #a55eea */
+/* colors brown and purple: rgba(219, 122, 52, 0.6), rgba(165, 94, 234, 0.6) */
 #message-input-group {
     bottom: 0; /* Align to the bottom */
     left: 0; /* Align to the left */
@@ -259,6 +347,7 @@ body {
     width: 50%; /* Adjust this value as needed to control the input group's width */
     margin: 20px; /* This will center the input group if its width is less than its parent */
     animation: slideInFromTop 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px 5px rgba(219, 122, 52, 0.6); /* Subtle shadow + Glow effect */
 }
 
 #toggle-chat-btn {
@@ -285,14 +374,14 @@ body {
 #send-button {
     border-bottom-right-radius: 20px;
     border-top-right-radius: 20px;
-    background-image: linear-gradient(45deg, #a95f2b, #aa8838); /* Gradient background */
+    background-image: linear-gradient(45deg, #db7a34, #a96330); /* Gradient background */
     color: white; /* Text color */
     border: none; /* Removes the default border */
     transition: background-image 0.5s ease-in-out; /* Smooth transition for the hover effect */
 }
 
 #send-button:hover {
-    background-image: linear-gradient(45deg, #aa8838, #a95f2b); /* Inverted gradient on hover */
+    background-image: linear-gradient(45deg, #a96330, #db7a34); /* Inverted gradient on hover */
 }
 
 .subtitle {
@@ -330,6 +419,70 @@ body {
 
 .unknown-message {
     color: #D0021B; /* Example: Red */
+}
+
+/* Style for options container to match fantasy game theme */
+#options-container {
+    color: #fff2d5; /* Light cream color for text to match the theme */
+    /* font-family: 'Almendra', serif; Fantasy-themed font */
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    margin-top: 20px; /* Space from the start button or other elements */
+    font-size: small;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Custom style for checkboxes */
+#options-container input[type="checkbox"] {
+    accent-color: #aa8838; /* Custom checkbox color */
+    margin-right: 5px;
+}
+
+/* Style for labels to match the fantasy game theme */
+#options-container label {
+    margin-right: 20px; /* Space between the checkboxes */
+    cursor: pointer;
+}
+
+/* Enhance the hover effect for labels */
+#options-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+#party-container {
+    color: #fff2d5; /* Light cream color for text */
+    font-family: 'Almendra', serif; /* Fantasy-themed font */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    padding: 20px;
+    margin-bottom: 20px; /* Space from the start button */
+}
+
+#party-list {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0;
+}
+
+.party-member {
+    margin: 10px 0; /* Space between party members */
+    display: flex;
+    align-items: center; /* Align items vertically */
+    justify-content: center;
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+}
+
+.avatar {
+    width: 50px; /* Adjust based on your avatar size */
+    height: 50px; /* Adjust based on your avatar size */
+    border-radius: 50%; /* Make the avatar image round */
+    margin-right: 10px;
+}
+
+.character-name {
+    color: #fff2d5; /* Light cream color for text */
 }
 </style>
 <script type="module" src="static/js/story.js"></script>
