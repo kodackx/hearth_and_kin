@@ -12,9 +12,7 @@ from elevenlabs import generate, set_api_key
 load_dotenv('.env')
 
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-assert ELEVENLABS_API_KEY is not None
 ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-assert ELEVENLABS_VOICE_ID is not None
 set_api_key(ELEVENLABS_API_KEY)
 
 
