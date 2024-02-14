@@ -1,5 +1,5 @@
 import { handleResponse } from './utils.js'
-import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
+import { connectToWebSocket } from './websocketManager.js';
 import * as storyApi from './api/story.js'
 
 // Event listener for communication of messages
@@ -7,7 +7,7 @@ import * as storyApi from './api/story.js'
 
 connectToWebSocket(storyApi.webSocketEndpoint, handleStoryMessage);
 window.addEventListener('beforeunload', function () {
-    localStorage.setItem('story_id', story_id)
+    localStorage.setItem('joinedStoryId', story_id)
     //closeWebSocket(storyApi.webSocketEndpoint);
 });
 
@@ -26,7 +26,7 @@ function handleStoryMessage(message) {
             break;
         case 'join_story':
             if (userAction) {
-                story_id = data.story_id
+                joinedStoryId = data.story_id
                 drawJoinedStory(box, data);
             }
             box.users.push(data.username)
@@ -34,7 +34,7 @@ function handleStoryMessage(message) {
             break;
         case 'leave_story':
             if (userAction) {
-                story_id = null
+                joinedStoryId = null
                 drawLeftStory(box, data);
             }
             box.users.pop(data.username)
@@ -46,7 +46,7 @@ function handleStoryMessage(message) {
             break;
         case 'delete_story':
             box.users = []
-            story_id = null
+            joinedStoryId = null
             drawDeletedStory(box);
             break;
         case 'play_story':
@@ -118,7 +118,7 @@ function initializeDashboard(boxes) {
 
 function playOrResumeStory(box) {
     if (localStorage.getItem('character_id')) {
-        localStorage.setItem('story_id', box.storyId);
+        localStorage.setItem('joinedStoryId', box.storyId);
         window.location.href = '/story';
     } else {
         alert('Select a character by clicking on it before playing a story!')
@@ -211,8 +211,6 @@ function loadStories() {
                         box.creator = story.creator
                         box.storyActive = story.active
                         storyApi.getStoryUsers(story.story_id).then(users => {
-                            console.log(story.story_id)
-                            console.log(box)
                             if (users.length === 0) {
                                 // Handle the case where there are no users
                             } else {
@@ -221,12 +219,12 @@ function loadStories() {
                                 });
                                 box.boxElement.querySelector('.box-content').textContent = `Users in story: ${box.users.join(', ')}`
                             }
-                            if (story.active && story.story_id != story_id) {
+                            if (story.active && story.story_id != joinedStoryId) {
                                 drawActiveStory(box);
-                            } else if (story.active && story.story_id == story_id) {
+                            } else if (story.active && story.story_id == joinedStoryId) {
                                 drawResumeStory(box)
                             }
-                            else if (!story.active && story.story_id == story_id) {
+                            else if (!story.active && story.story_id == joinedStoryId) {
                                 drawJoinedStory(box);
                             } else {
                                 drawCreatedStory(box, story);
@@ -303,7 +301,7 @@ function removeButtons(box) {
 }
 
 const username = localStorage.getItem('username')
-var story_id = localStorage.getItem('story_id')
+var joinedStoryId = localStorage.getItem('joinedStoryId')
 var boxes = [
     { boxElement: document.getElementById('box1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, users: [], storyActive: false},
     { boxElement: document.getElementById('box2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, users: [], storyActive: false},

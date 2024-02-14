@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 from src.models.story import Story
 from src.models.user import User
+from unittest.mock import patch, AsyncMock
 
 
 # Test to delete a story successfully
@@ -11,14 +12,16 @@ def test_delete_story_success(session: Session, client: TestClient):
     assert response.status_code == 201
 
     # Add story
-    response = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
+    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
+        response = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
 
     # Verify story added
     assert response.status_code == 201
     assert session.get(Story, 1) is not None
 
     # Delete story
-    response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'test_user'})
+    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
+        response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'test_user'})
 
     # Verify story deleted
     assert response.status_code == 200
@@ -36,7 +39,8 @@ def test_delete_story_not_found(session: Session, client: TestClient):
     response = client.post('/user', json={'password': 'test', 'username': 'test_user'})
     assert response.status_code == 201
 
-    response = client.request('DELETE', '/story/99', json={'story_id': 99, 'username': 'test_user'})
+    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
+        response = client.request('DELETE', '/story/99', json={'story_id': 99, 'username': 'test_user'})
     assert response.status_code == 404
 
 
@@ -45,11 +49,13 @@ def test_delete_story_not_creator(session: Session, client: TestClient):
     # Prepare by creating two users, a story, and join one story
     _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
     _ = client.post('/user', json={'password': 'test', 'username': 'another_user'})
-    _ = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
-    _ = client.post('/story/1/join', json={'username': 'test_user', 'story_id': 1})
+    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
+        _ = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
+        _ = client.post('/story/1/join', json={'username': 'test_user', 'story_id': 1})
 
     # Try to delete story you did not create
-    response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'another_user'})
+    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
+        response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'another_user'})
 
     # Verify story not deleted
     assert response.status_code == 404
