@@ -58,7 +58,7 @@ async function drawStoryPage() {
     audio.volume = 0.5; // 50% volume
     audio.play();
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
-    await fetch(`/story/${storyId}/messages`)
+    await fetch(`/story/${story_id}/messages`)
         .then(response => handleResponse(response, messages => {
 
             if (messages.length === 0) {
