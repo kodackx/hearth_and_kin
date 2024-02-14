@@ -1,7 +1,7 @@
-import { handleResponse, fetchDataAsync } from "../utils.js";
+import { handleResponse } from "../utils.js";
 
 const storyId = localStorage.getItem('joinedStoryId');
-const characterId = 1; //localStorage.getItem('character_id');
+const characterId = localStorage.getItem('character_id');
 const username = localStorage.getItem('username')
 
 export function sendMessage(message) {
