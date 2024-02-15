@@ -1,6 +1,7 @@
 import { handleResponse } from './utils.js'
 
 let currentAudio = null; // Add this at the top of your script
+let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = selectedCharacter.character_id;
@@ -10,8 +11,19 @@ const username = localStorage.getItem('username');
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
+document.getElementById('character-sheet-container').style.display = 'none';
 document.getElementById('start-button').addEventListener('click', drawStoryPage);
 document.getElementById('send-button').addEventListener('click', sendMessage);
+document.getElementById('toggle-character-sheet-btn').addEventListener('click', function() {
+    const characterSheet = document.getElementById('character-sheet-container');
+    if (characterSheet.classList.contains('slideInFromRight')) {
+        characterSheet.classList.remove('slideInFromRight');
+        characterSheet.classList.add('slideOutToRight'); // Assuming you have a CSS animation for sliding out
+    } else {
+        characterSheet.classList.remove('slideOutToRight');
+        characterSheet.classList.add('slideInFromRight'); // Slide in animation
+    }
+});
 document.getElementById('toggle-chat-btn').addEventListener('click', function() {
     const chatContainer = document.getElementById('chat-container');
     if (chatContainer.classList.contains('slideInFromLeft')) {
@@ -35,6 +47,9 @@ document.getElementById('message-input').addEventListener('keypress', function(e
 
 // define functions beggining with how to draw the full story page
 async function drawStoryPage() {
+    // Call this function when you want to populate the character sheet, for example, after loading the character data
+    populateCharacterSheet();
+    document.getElementById('character-sheet-container').style.display = 'block';
     document.getElementById('main-content').style.display = 'flex';
     document.getElementById('toggle-chat-btn').style.display = 'block';
     // hide elements (button, party list, options frame)
@@ -43,10 +58,9 @@ async function drawStoryPage() {
     document.getElementById('options-container').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
-    var ambianceAudioPath = "static/ambiance.m4a";
-    let audio = new Audio(ambianceAudioPath);
-    audio.volume = 0.5; // 50% volume
-    audio.play();
+    // var ambianceAudioPath = "static/soundtrack/ambiance.m4a";
+    currentSoundtrack.volume = 0.2; // 50% volume
+    currentSoundtrack.play();
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
     await fetch(`/story/${story_id}/messages`)
     .then(response => handleResponse(response, messages => {
@@ -78,12 +92,34 @@ async function drawStoryPage() {
     })
 }
 
+function populateCharacterSheet() {
+    // Assuming selectedCharacter has portrait, description, and stats properties
+    let character = selectedCharacter;
+
+    // Update the character portrait
+    document.querySelector('.character-portrait img').src = character.portrait_path;
+    // Update the name
+    document.querySelector('#name').innerHTML = character.character_name;
+
+    // Update the character description
+    document.querySelector('.character-description p').textContent = character.description;
+
+    // Update the character stats
+    document.getElementById('stat-str').textContent = character.strength;
+    document.getElementById('stat-dex').textContent = character.dexterity;
+    document.getElementById('stat-con').textContent = character.constitution;
+    document.getElementById('stat-int').textContent = character.intelligence;
+    document.getElementById('stat-wis').textContent = character.wisdom;
+    document.getElementById('stat-cha').textContent = character.charisma;
+}
+
 async function sendMessage() {
     // stop audio if currently playing
     tryPlayAudio();
     // read and append message
     const message = document.getElementById('message-input').value;
     appendMessage('User: ' + message, 'user');
+    document.getElementById('send-button').style.display = 'none';
     document.getElementById('message-input-group').classList.add('waiting-state');
     document.getElementById('message-input').disabled = true;
     document.getElementById('message-input').placeholder = "The story unfolds...";
@@ -105,10 +141,18 @@ async function sendMessage() {
     .then(response => handleResponse(response, data => {
         // Remove the loading message
         // removeMessage(loadingMessageId);
+        if (data.soundtrack_path) {
+            tryPlaySoundtrack(data.soundtrack_path);
+        } else {
+            // If no specific soundtrack is provided, you can decide to keep playing the current soundtrack
+            // or call tryPlaySoundtrack without arguments to revert to the default ambiance
+            // tryPlaySoundtrack();
+        }
         if (data.narrator_reply) {
             // var formattedMessage = data.narrator_reply.replace(/\n/g, '<br>');
-            formattedMessage = data.narrator_reply;
+            let formattedMessage = data.narrator_reply;
             console.log('Received successful reply: ' + formattedMessage);
+            document.getElementById('send-button').style.display = 'block';
             document.getElementById('spinner').style.display = 'none';
             document.getElementById('message-input-group').classList.remove('waiting-state');
             document.getElementById('message-input').disabled = false;
@@ -151,6 +195,7 @@ async function sendMessage() {
     .catch((error) => {
         console.error(error);
         document.getElementById('spinner').style.display = 'none';
+        document.getElementById('send-button').style.display = 'block';
         alert(error);
     });
 }
@@ -186,6 +231,10 @@ function removeMessage(messageId) {
 }
 
 function tryPlaySubtitles(text) {
+    if (window.currentSubtitleTimeout) {
+        clearTimeout(window.currentSubtitleTimeout);
+        window.currentSubtitleTimeout = null;
+    }
     if (text) {
         const subtitleDiv = document.getElementById('subtitle');
         // Split the text into sentences
@@ -255,6 +304,27 @@ function tryPlayAudio(audioPath) {
             currentAudio.play();
         }, currentAudio && !currentAudio.paused ? 1100 : 0); // Adjust timeout to match fade-out duration
     }
+}
+
+function tryPlaySoundtrack(soundtrackPath) {
+    if (soundtrackPath && currentSoundtrack.src !== soundtrackPath) {
+        // If there's a new soundtrack and it's different from the current, change it
+        currentSoundtrack.pause(); // Stop the current soundtrack
+        currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
+        currentSoundtrack.volume = 0.2; // Set a reasonable volume
+        currentSoundtrack.loop = true; // Loop the soundtrack
+        currentSoundtrack.play(); // Play the new soundtrack
+    } else if (!soundtrackPath) {
+        // If no soundtrackPath is provided, revert to the default ambiance audio
+        if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
+            currentSoundtrack.pause(); // Stop the current soundtrack
+            currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
+            currentSoundtrack.volume = 0.2; // Set volume
+            currentSoundtrack.loop = true; // Ensure it loops
+            currentSoundtrack.play(); // Play the default ambiance audio
+        }
+    }
+    // If the provided soundtrackPath is the same as the current, do nothing
 }
 
 // 3rd version of changing background image but this time with functioning transition

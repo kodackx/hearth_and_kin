@@ -8,7 +8,7 @@ document.getElementById('start-button').addEventListener('click', function() {
     displayIntroText()
     var imageUrl = "";
     // changeBackgroundImage(imageUrl);
-    var ambiance = "static/ethereal.m4a";
+    var ambiance = "static/soundtrack/wilderness.m4a";
     let audio = new Audio(ambiance);
     audio.volume = 0.5; // 50% volume
     audio.play();

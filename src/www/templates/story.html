@@ -3,6 +3,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tangerine&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
@@ -34,6 +35,7 @@
         </div>
     </div>
     <button type="button" id="toggle-chat-btn">Toggle Chat</button>
+    <button type="button" id="toggle-character-sheet-btn">Character Sheet</button>
     <div id="chat-container" class="slideOutToLeft">
         <!-- Chatbox content -->
         <div class="card" id="chat-box">
@@ -58,6 +60,33 @@
                 </div>
             </div>
         </div> 
+    </div>
+    <div id="character-sheet-container" class="character-sheet slideOutToRight">
+        <div class="character-portrait">
+            <img src="/static/characters/default.jpg" alt="Character Portrait" class="portrait" id="portrait">
+        </div>
+        <div class="character-name" id="name">
+            <p>Boaty Mcboatface</p>
+        </div>
+        <div class="character-description" id="description">
+            <p>Character description goes here...</p>
+        </div>
+        <div class="character-stats">
+            <div class="stats-column">
+                <ul>
+                    <li><i class="fas fa-fist-raised icon-str"></i>Strength: <span id="stat-str">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-person-running"></i>Dexterity: <span id="stat-dex">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-dumbbell"></i>Constitution: <span id="stat-con">10</span></li>
+                </ul>
+            </div>
+            <div class="stats-column">
+                <ul>
+                    <li><i class="fas icon-str fa-solid fa-brain"></i>Intelligence: <span id="stat-int">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-book"></i>Wisdom: <span id="stat-wis">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-clover"></i>Charisma: <span id="stat-cha">10</span></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </body>
 </html>
@@ -207,6 +236,28 @@ body {
     }
     to {
         transform: translateX(-100%);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
     }
 }
 
@@ -483,6 +534,128 @@ body {
 
 .character-name {
     color: #fff2d5; /* Light cream color for text */
+    text-align: center; /* Center the name text */
+    font-size: 24px; /* Make the font larger */
+    font-weight: bold; /* Make the font bold */
+    font-family: 'Almendra', serif; /* Example fantasy-themed font */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Text shadow for depth */
+    margin: 20px 0; /* Add some space around the name */
 }
+
+.character-sheet {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 35%;
+    max-width: 500px;
+    overflow-y: auto;
+    background-color: rgba(0,0,0,0.5);
+    border-left: 2px solid #5D3A00;
+    color: #fff2d5;
+    padding: 20px;
+    animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.character-portrait img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: block;
+}
+
+.character-description p {
+    text-align: justify;
+    margin-top: 20px;
+}
+
+.character-stats ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.character-stats li {
+    margin-bottom: 10px;
+}
+
+#toggle-character-sheet-btn {
+    position: absolute;
+    z-index: 1;
+    top: 60px; /* Adjust based on the position of your toggle chat button */
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Almendra', serif;
+    font-size: 16px;
+    background-color: #5D3A00; /* Dark brown */
+    color: #fff2d5; /* Light cream */
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#toggle-character-sheet-btn:hover {
+    background-color: #3E2C1B; /* Slightly darker on hover */
+}
+
+.character-sheet {
+    animation-fill-mode: forwards; /* Keep the element in the state of the last animation frame */
+    animation-duration: 0.5s; /* Animation duration */
+}
+
+.slideInFromRight {
+    animation-name: slideInFromRight;
+}
+
+.slideOutToRight {
+    animation-name: slideOutToRight;
+}
+
+.character-stats {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stats-column {
+    flex: 1;
+}
+
+.stats-column ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.stats-column li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.icon-str, .icon-dex, .icon-con, .icon-int, .icon-wis, .icon-cha {
+    /* Example styling for icons */
+    margin-right: 8px;
+    width: 24px; /* Adjust size as needed */
+    height: 24px; /* Adjust size as needed */
+    background-size: cover;
+}
+
+/* .icon-str { background-image: url('https://fontawesome.com/icons/hand-fist?f=classic&s=solid'); }
+.icon-dex { background-image: url('https://fontawesome.com/icons/person-running?f=classic&s=solid'); }
+.icon-con { background-image: url('https://fontawesome.com/icons/star?f=classic&s=solid'); }
+.icon-int { background-image: url('https://fontawesome.com/icons/brain?f=classic&s=solid'); }
+.icon-wis { background-image: url('https://fontawesome.com/icons/book?f=classic&s=solid'); }
+.icon-cha { background-image: url('https://fontawesome.com/icons/clover?f=classic&s=solid'); } */
 </style>
 <script type="module" src="static/js/story.js"></script>
