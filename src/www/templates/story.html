@@ -10,6 +10,7 @@
 <body>
     <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
         <h2>Players in Party</h2>
+        <h3 class="invite-text">To invite other players, use code: <span class="invite-code">HT3MG8</span></h3>
         <ul id="party-list">
             <!-- Placeholder for player items -->
             <li class="party-member">
@@ -24,7 +25,18 @@
         </ul>
     </div>
     <button type="button" id="start-button">Let the adventure begin...</button>
-    <div id="options-container" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <span>Select Layout:</span>
+        <div>
+            <input type="radio" id="layout-a" name="layout" value="centered" checked>
+            <label for="layout-a">Layout A - Centered with subtitles</label>
+        </div>
+        <div>
+            <input type="radio" id="layout-b" name="layout" value="immersive" >
+            <label for="layout-b">Layout B - Immersive with scrolling text</label>
+        </div>
+    </div>
+    <div id="options-container" style="position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         <div>
             <input type="checkbox" id="enable-image-gen" name="enable-image-gen">
             <label for="enable-image-gen">Enable Image Generation</label>
@@ -591,6 +603,7 @@ body {
 }
 
 #toggle-character-sheet-btn {
+    display: none;
     position: absolute;
     z-index: 1;
     top: 60px; /* Adjust based on the position of your toggle chat button */
@@ -651,6 +664,50 @@ body {
     background-size: cover;
 }
 
+#layout-selection-container {
+    color: #fff2d5; /* Light cream color for text */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    padding: 20px;
+    margin-top: 20px; /* Space from the start button */
+    font-family: 'Almendra', serif; /* Fantasy-themed font */
+}
+
+#layout-selection-container div {
+    margin-top: 10px;
+}
+
+#layout-selection-container input[type="radio"] {
+    accent-color: #aa8838; /* Custom radio button color */
+    margin-right: 5px;
+}
+
+#layout-selection-container label {
+    margin-right: 20px; /* Space between the radio options */
+    cursor: pointer;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+#layout-selection-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+.invite-text {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 18px;
+}
+
+.invite-code {
+    font-weight: bold;
+    color: #f4d9c5;
+    background-color: #8b4513;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
 /* .icon-str { background-image: url('https://fontawesome.com/icons/hand-fist?f=classic&s=solid'); }
 .icon-dex { background-image: url('https://fontawesome.com/icons/person-running?f=classic&s=solid'); }
 .icon-con { background-image: url('https://fontawesome.com/icons/star?f=classic&s=solid'); }

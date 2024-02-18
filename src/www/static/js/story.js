@@ -52,6 +52,7 @@ async function drawStoryPage() {
     document.getElementById('character-sheet-container').style.display = 'block';
     document.getElementById('main-content').style.display = 'flex';
     document.getElementById('toggle-chat-btn').style.display = 'block';
+    document.getElementById('toggle-character-sheet-btn').style.display = 'block';
     // hide elements (button, party list, options frame)
     this.style.display = 'none';
     document.getElementById('party-container').style.display = 'none';
