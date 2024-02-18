@@ -7,11 +7,14 @@ let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = selectedCharacter.character_id;
 const username = localStorage.getItem('username');
 
-// event listeners and hiding play elements for now
+//hiding play elements for now
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
 document.getElementById('character-sheet-container').style.display = 'none';
+document.getElementById('toggle-character-sheet-btn').style.display = 'none';
+
+//adding event listeners
 document.getElementById('start-button').addEventListener('click', drawStoryPage);
 document.getElementById('send-button').addEventListener('click', sendMessage);
 document.getElementById('toggle-character-sheet-btn').addEventListener('click', function() {
@@ -60,7 +63,7 @@ async function drawStoryPage() {
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     // var ambianceAudioPath = "static/soundtrack/ambiance.m4a";
-    currentSoundtrack.volume = 0.2; // 50% volume
+    currentSoundtrack.volume = 0.3; // 50% volume
     currentSoundtrack.play();
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
     await fetch(`/story/${story_id}/messages`)
@@ -312,7 +315,7 @@ function tryPlaySoundtrack(soundtrackPath) {
         // If there's a new soundtrack and it's different from the current, change it
         currentSoundtrack.pause(); // Stop the current soundtrack
         currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
-        currentSoundtrack.volume = 0.2; // Set a reasonable volume
+        currentSoundtrack.volume = 0.3; // Set a reasonable volume
         currentSoundtrack.loop = true; // Loop the soundtrack
         currentSoundtrack.play(); // Play the new soundtrack
     } else if (!soundtrackPath) {
@@ -320,7 +323,7 @@ function tryPlaySoundtrack(soundtrackPath) {
         if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
             currentSoundtrack.pause(); // Stop the current soundtrack
             currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
-            currentSoundtrack.volume = 0.2; // Set volume
+            currentSoundtrack.volume = 0.3; // Set volume
             currentSoundtrack.loop = true; // Ensure it loops
             currentSoundtrack.play(); // Play the default ambiance audio
         }

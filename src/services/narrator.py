@@ -66,6 +66,9 @@ Let the narrative unfold like a grand tapestry, weaving together intricate plotl
 Above all, channel the spirit of storytelling maestro Matthew Mercer, where every word resonates with depth, emotion, and the timeless allure of adventure. 
 Show, don't tell, as you transport the audience into a realm where dragons soar, heroes rise, and legends are born.
 
+Notes for API response:
+Limit your answers to two paragraphs. Be concise and direct about the narrative.
+
 Story so far:
 {chat_history}
 User input: {input}
@@ -93,7 +96,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 
     llm = ChatOpenAI(
         model_name='gpt-4-0125-preview',  # type: ignore
-        # max_tokens=max_length,
+        max_tokens=300,
         temperature=0.5,
     )
     chat_llm_chain = LLMChain(

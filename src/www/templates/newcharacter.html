@@ -10,6 +10,10 @@
 </head>
 <body>
     <button id="start-button">Create your character...</button>
+    <video autoplay muted loop playsinline id="background-video">
+        <source src="static/img/char_create_video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
     <div class="flex-container" id="main-content">
         <!-- <div class="story-image" id="story-image"></div> -->
         <div class="chat-section">
@@ -39,7 +43,7 @@
 </html>
 <style>
     body {
-        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('static/character_creation.png');
+        /* background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('static/character_creation.png'); */
         background-color: rgba(18, 0, 46, 0.901);
         background-repeat: no-repeat;
         background-size: cover;
@@ -176,14 +180,14 @@
     .creation-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Almendra', serif;
-        color: #ffd4b6;
+        color: #72421f;
         animation: fadeIn 3s ease-in;
     }
 
     .user-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Merriweather', serif;
-        color: #ffd4b6;
+        color: #dd6712;
         animation: fadeIn 3s ease-in;
     }
 
@@ -260,7 +264,7 @@
     .creation-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Almendra', serif;
-        color: #ffd4b6; /* Keeping the original color for system messages */
+        color: #62320f; /* Keeping the original color for system messages */
         animation: fadeIn 1s ease-in;
     }
 
@@ -268,7 +272,7 @@
     .user-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Merriweather', serif;
-        color: #4CAF50; /* Example: Green text for user messages */
+        color: #09420b; /* Example: Green text for user messages */
         animation: fadeIn 2s ease-in;
     }
     /* Hide scrollbar for Chrome, Safari and Opera */
@@ -302,5 +306,17 @@
     }
     #chat-box {
         scroll-behavior: smooth;
+    }
+    #background-video {
+        position: fixed; /* Use fixed or absolute positioning */
+        right: 0;
+        bottom: 0;
+        min-width: 100%; /* These two lines ensure that the video covers the screen */
+        min-height: 100%;
+        width: auto; /* Scale up to cover the whole screen */
+        height: auto;
+        z-index: -100; /* Keep the video behind other content */
+        background-size: cover;
+        overflow: hidden;
     }
 </style>
