@@ -13,11 +13,16 @@ const username = localStorage.getItem('username');
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
+document.getElementById('dev-button').style.display = 'block';
+// document.getElementById('play-dev-button').style.display = 'block';
 document.getElementById('character-sheet-container').style.display = 'none';
 document.getElementById('toggle-character-sheet-btn').style.display = 'none';
 
 //adding event listeners
 document.getElementById('start-button').addEventListener('click', drawStoryPage);
+document.getElementById('dev-button').addEventListener('click', toggleDevPane);
+// add slide in from bottom class for developer pane
+document.getElementById('developer-options-container').classList.add('slideInFromBottom');
 document.getElementById('send-button').addEventListener('click', sendMessage);
 document.getElementById('toggle-character-sheet-btn').addEventListener('click', function() {
     const characterSheet = document.getElementById('character-sheet-container');
@@ -50,6 +55,17 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
+
+async function toggleDevPane() {
+    const devPane = document.getElementById('developer-options-container');
+    if (devPane.classList.contains('slideInFromBottom')) {
+        devPane.classList.remove('slideInFromBottom');
+        devPane.classList.add('slideOutToBottom'); // Assuming you have a CSS animation for sliding out
+    } else {
+        devPane.classList.remove('slideOutToBottom');
+        devPane.classList.add('slideInFromBottom'); // Slide in animation
+    }
+}
 // define functions beggining with how to draw the full story page
 async function drawStoryPage() {
     // Call this function when you want to populate the character sheet, for example, after loading the character data
@@ -60,10 +76,13 @@ async function drawStoryPage() {
     document.getElementById('toggle-character-sheet-btn').style.display = 'block';
     // hide elements (button, party list, options frame)
     this.style.display = 'none';
+    // document.getElementById('party-container').style.display = 'none';
+    // document.getElementById('options-container').style.display = 'none';
     document.getElementById('party-container').style.display = 'none';
-    document.getElementById('options-container').style.display = 'none';
-    document.getElementById('party-container').style.display = 'none';
-    document.getElementById('options-container').style.display = 'none';
+    // document.getElementById('options-container').style.display = 'none';
+    // document.getElementById('layout-selection-container').style.display = 'none';
+    document.getElementById('developer-options-container').style.display = 'none';
+    document.getElementById('dev-button').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     // var ambianceAudioPath = "static/soundtrack/ambiance.m4a";

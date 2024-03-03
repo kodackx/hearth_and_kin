@@ -25,7 +25,7 @@
         </ul>
     </div>
     <button type="button" id="start-button">Let the adventure begin...</button>
-    <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <!-- <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         <span>Select Layout:</span>
         <div>
             <input type="radio" id="layout-a" name="layout" value="centered" checked>
@@ -35,8 +35,8 @@
             <input type="radio" id="layout-b" name="layout" value="immersive" >
             <label for="layout-b">Layout B - Immersive with scrolling text</label>
         </div>
-    </div>
-    <div id="options-container" style="position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    </div> -->
+    <!-- <div id="options-container" style="position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         <div>
             <input type="checkbox" id="enable-image-gen" name="enable-image-gen">
             <label for="enable-image-gen">Enable Image Generation</label>
@@ -45,9 +45,48 @@
             <input type="checkbox" id="enable-audio-gen" name="enable-audio-gen">
             <label for="enable-audio-gen">Enable Audio Generation</label>
         </div>
+    </div> -->
+    <button type="button" id="dev-button">[Toggle Dev Pane]</button>
+    <div id="developer-options-container" class="developer-options slideInFromBottom">
+        <h3>Developer Options</h3>
+        <div class="option">
+            <label for="llm-model-selector">LLM Model Selector:</label>
+            <select id="llm-model-selector">
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div class="option">
+            <label for="audio-generation-model">Audio Generation Model:</label>
+            <select id="audio-generation-model">
+                <option value="none">NONE</option>
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div class="option">
+            <label for="image-generation-model">Image Generation Model:</label>
+            <select id="image-generation-model">
+                <option value="none">NONE</option>
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div>
+            <input type="radio" id="layout-a" name="layout" value="centered" checked>
+            <label for="layout-a">Layout A - Centered with subtitles</label>
+        </div>
+        <div>
+            <input type="radio" id="layout-b" name="layout" value="immersive" >
+            <label for="layout-b">Layout B - Immersive with scrolling text</label>
+        </div>
     </div>
     <button type="button" id="toggle-chat-btn">Toggle Chat</button>
     <button type="button" id="toggle-character-sheet-btn">Character Sheet</button>
+    <!-- <button type="button" id="play-dev-button" onclick="toggleDevPane">[Dev Options]</button> -->
     <div id="chat-container" class="slideOutToLeft">
         <!-- Chatbox content -->
         <div class="card" id="chat-box">
@@ -119,6 +158,24 @@ body {
     text-align: center;
     text-decoration: none;
     /* display: inline-block; */
+    font-size: 20px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#dev-button {
+    background-color: #664a37;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-family:'Courier New', Courier, monospace;
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
@@ -221,99 +278,6 @@ body {
 @keyframes fadeIn {
     0% {opacity: 0;}
     100% {opacity: 1;}
-}
-
-
-@keyframes slideInFromTop {
-    0% {
-        transform: translateY(-100%); /* Start above the screen */
-    }
-    100% {
-        transform: translateY(0); /* End at the original position */
-    }
-}
-
-@keyframes slideInFromLeft {
-    from {
-        transform: translateX(-100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
-@keyframes slideOutToLeft {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-100%);
-    }
-}
-
-@keyframes slideInFromRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOutToRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-@keyframes fadeInOut {
-    0%,100% { opacity: 0; }
-    50% { opacity: 1; }
-}
-
-@keyframes fadeAndScale {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    50% {
-        opacity: 0.5;
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0.7);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(219, 122, 52, 0); /* Increase the spread and adjust opacity */
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0);
-        }
-    }
-
-.waiting-state {
-    animation: pulse 2s infinite;
-}
-
-.slideInFromLeft {
-    animation: slideInFromLeft 0.5s ease-out forwards;
-}
-
-.slideOutToLeft {
-    animation: slideOutToLeft 0.5s ease-out forwards;
 }
 
 #chat-container {
@@ -569,15 +533,6 @@ body {
     animation: slideInFromRight 0.5s ease-out forwards;
 }
 
-@keyframes slideInFromRight {
-    from {
-        transform: translateX(100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
 .character-portrait img {
     width: 100%;
     max-width: 250px;
@@ -622,17 +577,29 @@ body {
     background-color: #3E2C1B; /* Slightly darker on hover */
 }
 
+#play-dev-button {
+    position: absolute;
+    z-index: 1;
+    top: 95%; /* Adjust based on the position of your toggle chat button */
+    left: 50%;
+    transform: translateX(-50%);
+    font-family:'Courier New', Courier, monospace;
+    font-size: 16px;
+    background-color: #403421; /* Dark brown */
+    color: #fff2d5; /* Light cream */
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#play-dev-button:hover {
+    background-color: #3E2C1B; /* Slightly darker on hover */
+}
+
 .character-sheet {
     animation-fill-mode: forwards; /* Keep the element in the state of the last animation frame */
     animation-duration: 0.5s; /* Animation duration */
-}
-
-.slideInFromRight {
-    animation-name: slideInFromRight;
-}
-
-.slideOutToRight {
-    animation-name: slideOutToRight;
 }
 
 .character-stats {
@@ -706,6 +673,163 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+.developer-options {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff2d5;
+    border-top: 2px solid #5D3A00;
+    padding: 20px;
+    box-sizing: border-box;
+    transform: translateY(100%);
+    animation: slideInFromBottom 0.5s ease-out forwards;
+}
+
+.option {
+    margin-bottom: 15px;
+}
+
+.option label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.option select {
+    width: 100%;
+    padding: 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid #5D3A00;
+    color: #5D3A00;
+    border-radius: 5px;
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToBottom {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInOut {
+    0%,100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeAndScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(219, 122, 52, 0); /* Increase the spread and adjust opacity */
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0);
+        }
+    }
+
+.waiting-state {
+    animation: pulse 2s infinite;
+}
+
+.slideInFromLeft {
+    animation: slideInFromLeft 0.5s ease-out forwards;
+}
+
+.slideOutToLeft {
+    animation: slideOutToLeft 0.5s ease-out forwards;
+}
+
+.slideInFromRight {
+    animation-name: slideInFromRight;
+}
+
+.slideOutToRight {
+    animation-name: slideOutToRight;
+}
+
+.slideOutToBottom {
+    animation: slideOutToBottom 0.5s ease-out forwards;
+}
+
+.slideInFromBottom {
+    animation: slideInFromBottom 0.5s ease-out forwards;
 }
 /* .icon-str { background-image: url('https://fontawesome.com/icons/hand-fist?f=classic&s=solid'); }
 .icon-dex { background-image: url('https://fontawesome.com/icons/person-running?f=classic&s=solid'); }
