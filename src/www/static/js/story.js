@@ -8,6 +8,8 @@ let character_id = selectedCharacter.character_id;
 const username = localStorage.getItem('username');
 
 //hiding play elements for now
+
+// event listeners and hiding play elements for now
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
@@ -58,6 +60,8 @@ async function drawStoryPage() {
     document.getElementById('toggle-character-sheet-btn').style.display = 'block';
     // hide elements (button, party list, options frame)
     this.style.display = 'none';
+    document.getElementById('party-container').style.display = 'none';
+    document.getElementById('options-container').style.display = 'none';
     document.getElementById('party-container').style.display = 'none';
     document.getElementById('options-container').style.display = 'none';
     var imagePath = "static/img/login1.png";
