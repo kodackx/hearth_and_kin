@@ -7,10 +7,10 @@ from langchain.prompts import (
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
-from src.models.character import Character
+from ..models.character import Character
 
-from src.models.message import MessageBase, MessageRead
-from src.core.config import logger
+from ..models.message import MessageBase, MessageRead
+from ..core.config import logger
 
 ################
 # OpenAI stuff #
@@ -92,6 +92,24 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) ->
         message_and_character_data += f'\n(Current Goal: {character.goal})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
-    output = chain.predict(input=message_and_character_data)
+    output = chain.astream(input=message_and_character_data, stream=False)
     logger.debug(f'[GPT Narrator] {output = }')
     return output
+
+if __name__ == '__main__':
+    chain = initialize_chain(prompt, [])
+
+    char = Character(
+        username='t',
+        story_id=1,
+        character_id=1
+    )
+    mes = MessageBase(
+        username=char.username,
+        story_id=char.story_id,
+        character_id=char.character_id,
+        message='Hi!'
+    )
+    reply = gpt_narrator(char, mes, chain)
+
+    print(reply)
