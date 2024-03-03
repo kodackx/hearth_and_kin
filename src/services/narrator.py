@@ -96,7 +96,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 
     llm = ChatOpenAI(
         model_name='gpt-4-0125-preview',  # type: ignore
-        max_tokens=300,
+        # max_tokens=300,
         temperature=0.5,
     )
     chat_llm_chain = LLMChain(

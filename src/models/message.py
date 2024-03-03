@@ -19,7 +19,7 @@ class MessageRead(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)
     audio_path: Optional[str]
     image_path: Optional[str]
-    soundtrack_path: Optional[str]
+    # soundtrack_path: Optional[str]
     narrator_reply: str
 
 
