@@ -7,21 +7,17 @@ let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = selectedCharacter.character_id;
 const username = localStorage.getItem('username');
 
-//hiding play elements for now
-
 // event listeners and hiding play elements for now
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('toggle-chat-btn').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
 document.getElementById('dev-button').style.display = 'block';
-// document.getElementById('play-dev-button').style.display = 'block';
 document.getElementById('character-sheet-container').style.display = 'none';
 document.getElementById('toggle-character-sheet-btn').style.display = 'none';
 
 //adding event listeners
 document.getElementById('start-button').addEventListener('click', drawStoryPage);
 document.getElementById('dev-button').addEventListener('click', toggleDevPane);
-// add slide in from bottom class for developer pane
 document.getElementById('developer-options-container').classList.add('slideInFromBottom');
 document.getElementById('send-button').addEventListener('click', sendMessage);
 document.getElementById('toggle-character-sheet-btn').addEventListener('click', function() {
@@ -66,7 +62,7 @@ async function toggleDevPane() {
         devPane.classList.add('slideInFromBottom'); // Slide in animation
     }
 }
-// define functions beggining with how to draw the full story page
+
 async function drawStoryPage() {
     // Call this function when you want to populate the character sheet, for example, after loading the character data
     populateCharacterSheet();
@@ -76,18 +72,14 @@ async function drawStoryPage() {
     document.getElementById('toggle-character-sheet-btn').style.display = 'block';
     // hide elements (button, party list, options frame)
     this.style.display = 'none';
-    // document.getElementById('party-container').style.display = 'none';
-    // document.getElementById('options-container').style.display = 'none';
     document.getElementById('party-container').style.display = 'none';
-    // document.getElementById('options-container').style.display = 'none';
-    // document.getElementById('layout-selection-container').style.display = 'none';
     document.getElementById('developer-options-container').style.display = 'none';
     document.getElementById('dev-button').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
-    // var ambianceAudioPath = "static/soundtrack/ambiance.m4a";
-    currentSoundtrack.volume = 0.3; // 50% volume
+    currentSoundtrack.volume = 0.3;
     currentSoundtrack.play();
+
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
     await fetch(`/story/${story_id}/messages`)
     .then(response => handleResponse(response, messages => {
@@ -122,15 +114,12 @@ async function drawStoryPage() {
 function populateCharacterSheet() {
     // Assuming selectedCharacter has portrait, description, and stats properties
     let character = selectedCharacter;
-
     // Update the character portrait
     document.querySelector('.character-portrait img').src = character.portrait_path;
     // Update the name
     document.querySelector('#name').innerHTML = character.character_name;
-
     // Update the character description
     document.querySelector('.character-description p').textContent = character.description;
-
     // Update the character stats
     document.getElementById('stat-str').textContent = character.strength;
     document.getElementById('stat-dex').textContent = character.dexterity;
@@ -166,14 +155,10 @@ async function sendMessage() {
         }),
     })
     .then(response => handleResponse(response, data => {
-        // Remove the loading message
-        // removeMessage(loadingMessageId);
         if (data.soundtrack_path) {
             tryPlaySoundtrack(data.soundtrack_path);
         } else {
-            // If no specific soundtrack is provided, you can decide to keep playing the current soundtrack
-            // or call tryPlaySoundtrack without arguments to revert to the default ambiance
-            // tryPlaySoundtrack();
+            tryPlaySoundtrack();
         }
         if (data.narrator_reply) {
             // var formattedMessage = data.narrator_reply.replace(/\n/g, '<br>');
@@ -299,14 +284,6 @@ function tryPlaySubtitles(text) {
     }
 }
 
-// function tryPlayAudio(audioPath) {
-//     if (audioPath) {
-//         let audioNarration = new Audio(audioPath);
-//         audioNarration.volume = 0.5; // 50% volume
-//         audioNarration.play();
-//     }
-// }
-
 function tryPlayAudio(audioPath) {
     if (currentAudio && !currentAudio.paused) {
         // Fade out current audio
@@ -338,7 +315,7 @@ function tryPlaySoundtrack(soundtrackPath) {
         // If there's a new soundtrack and it's different from the current, change it
         currentSoundtrack.pause(); // Stop the current soundtrack
         currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
-        currentSoundtrack.volume = 0.3; // Set a reasonable volume
+        currentSoundtrack.volume = 0.2; // Set a reasonable volume
         currentSoundtrack.loop = true; // Loop the soundtrack
         currentSoundtrack.play(); // Play the new soundtrack
     } else if (!soundtrackPath) {
@@ -346,7 +323,7 @@ function tryPlaySoundtrack(soundtrackPath) {
         if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
             currentSoundtrack.pause(); // Stop the current soundtrack
             currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
-            currentSoundtrack.volume = 0.3; // Set volume
+            currentSoundtrack.volume = 0.2; // Set volume
             currentSoundtrack.loop = true; // Ensure it loops
             currentSoundtrack.play(); // Play the default ambiance audio
         }
@@ -358,7 +335,6 @@ function tryPlaySoundtrack(soundtrackPath) {
 function tryChangeBackgroundImage(imagePath) {
     if (imagePath) {
         let newBackground = document.getElementById('story-image');
-
         // Set the new background image and fade it in
         newBackground.style.backgroundImage = `url('${imagePath}')`;
         newBackground.style.opacity = 1;
