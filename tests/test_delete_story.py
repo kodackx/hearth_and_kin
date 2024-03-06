@@ -18,7 +18,7 @@ def test_delete_story_success(session: Session, client: TestClient):
     assert session.get(Story, 1) is not None
 
     # Delete story
-    response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'test_user'})
+    response = client.request('DELETE', '/story/1', json={'story_id': 1})
 
     # Verify story deleted
     assert response.status_code == 200

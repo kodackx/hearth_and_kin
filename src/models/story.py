@@ -16,7 +16,10 @@ class StoryCreate(StoryBase):
     creator: str = Field(foreign_key='user.username')
 
 
-class StoryDelete(StoryJoin):
+# story delete should not be based on storyJoin. instead, based on storyBase
+# hoping this fixes the tests
+class StoryDelete(StoryBase):
+    username: str = Field(foreign_key='user.username')
     pass
 
 
