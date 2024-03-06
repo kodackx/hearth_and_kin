@@ -18,7 +18,7 @@ def test_delete_story_success(session: Session, client: TestClient):
     assert session.get(Story, 1) is not None
 
     # Delete story
-    response = client.request('DELETE', '/story/1', json={'story_id': 1})
+    response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'test_user'})
 
     # Verify story deleted
     assert response.status_code == 200
@@ -46,7 +46,23 @@ def test_delete_story_not_creator(session: Session, client: TestClient):
     _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
     _ = client.post('/user', json={'password': 'test', 'username': 'another_user'})
     _ = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
-    _ = client.post('/story/1/join', json={'username': 'test_user', 'story_id': 1})
+    # need to create character before joining a story
+    character_data = {
+        "character_id": 1,
+        "username": "hero123",
+        "character_name": "Gallant Knight",
+        "description": "A brave knight seeking adventure.",
+        "strength": 5,
+        "dexterity": 4,
+        "constitution": 5,
+        "intelligence": 3,
+        "wisdom": 2,
+        "charisma": 4,
+        "location": "The kingdom of Farland",
+        "goal": "To save the kingdom from the dragon"
+    }
+    _ = client.post('/createcharacter', json=character_data)    
+    _ = client.post('/story/1/join', json={'username': 'another_user', 'story_id': 1, 'character_id': 1})
 
     # Try to delete story you did not create
     response = client.request('DELETE', '/story/1', json={'story_id': 1, 'username': 'another_user'})
