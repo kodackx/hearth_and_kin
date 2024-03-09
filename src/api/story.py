@@ -30,7 +30,7 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
     db_story = session.exec(statement).first()
 
     if not db_story:
-        raise HTTPException(404, 'Story created by user not found')
+        raise HTTPException(404, 'This user was not the creator, therefore they cannot delete.')
 
     users = session.exec(select(User).where(User.story_id == story.story_id)).all()
     # Kick out any users in story

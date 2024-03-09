@@ -72,6 +72,8 @@ def test_delete_story_not_creator(session: Session, client: TestClient):
     assert session.get(Story, 1) is not None
 
     # Verify user still in story
-    user = session.get(User, 'test_user')
-    assert user is not None
-    assert user.story_id == 1
+    # story_id no longer backpopulates to the user, because a user can be part of multiple stories
+    # test no longer needed
+    # user = session.get(User, 'test_user')
+    # assert user is not None
+    # assert user.story_id == 1
