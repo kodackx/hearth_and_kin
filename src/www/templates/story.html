@@ -1,41 +1,153 @@
 <html>
 <head>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <button id="start-button">Let the adventure begin...</button>
+    <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
+        <h2>Players in Party</h2>
+        <h3 class="invite-text">To invite other players, use code: <span class="invite-code">HT3MG8</span></h3>
+        <ul id="party-list">
+            <!-- Placeholder for player items -->
+            <li class="party-member">
+                <img src="/static/characters/EZmw1OxQuvccmvDl-pL4tu73WOhbL0FW2Hxgys1h/character.jpg" alt="Character Avatar" class="avatar">
+                <span class="character-name">Grom Tuskweave</span>
+            </li>
+            <li class="party-member">
+                <img src="/static/characters/FcRDE9wPB5XZ4EDfYDnK6_2h7wHkOsFUpwl5Giiv/character.jpg" alt="Character Avatar" class="avatar">
+                <span class="character-name">Alleria Windrunner</span>
+            </li>
+            <!-- Repeat <li> for each party member -->
+        </ul>
+    </div>
+    <button type="button" id="start-button">Let the adventure begin...</button>
+    <!-- <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <span>Select Layout:</span>
+        <div>
+            <input type="radio" id="layout-a" name="layout" value="centered" checked>
+            <label for="layout-a">Layout A - Centered with subtitles</label>
+        </div>
+        <div>
+            <input type="radio" id="layout-b" name="layout" value="immersive" >
+            <label for="layout-b">Layout B - Immersive with scrolling text</label>
+        </div>
+    </div> -->
+    <!-- <div id="options-container" style="position: absolute; top: 80%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        <div>
+            <input type="checkbox" id="enable-image-gen" name="enable-image-gen">
+            <label for="enable-image-gen">Enable Image Generation</label>
+        </div>
+        <div>
+            <input type="checkbox" id="enable-audio-gen" name="enable-audio-gen">
+            <label for="enable-audio-gen">Enable Audio Generation</label>
+        </div>
+    </div> -->
+    <button type="button" id="dev-button">[Toggle Dev Pane]</button>
+    <div id="developer-options-container" class="developer-options slideInFromBottom">
+        <h3>Developer Options</h3>
+        <div class="option">
+            <label for="llm-model-selector">LLM Model Selector:</label>
+            <select id="llm-model-selector">
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div class="option">
+            <label for="audio-generation-model">Audio Generation Model:</label>
+            <select id="audio-generation-model">
+                <option value="none">NONE</option>
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div class="option">
+            <label for="image-generation-model">Image Generation Model:</label>
+            <select id="image-generation-model">
+                <option value="none">NONE</option>
+                <option value="placeholder1">Placeholder 1</option>
+                <option value="placeholder2">Placeholder 2</option>
+                <option value="placeholder3">Placeholder 3</option>
+            </select>
+        </div>
+        <div>
+            <input type="radio" id="layout-a" name="layout" value="centered" checked>
+            <label for="layout-a">Layout A - Centered with subtitles</label>
+        </div>
+        <div>
+            <input type="radio" id="layout-b" name="layout" value="immersive" >
+            <label for="layout-b">Layout B - Immersive with scrolling text</label>
+        </div>
+    </div>
+    <button type="button" id="toggle-chat-btn">Toggle Chat</button>
+    <button type="button" id="toggle-character-sheet-btn">Character Sheet</button>
+    <!-- <button type="button" id="play-dev-button" onclick="toggleDevPane">[Dev Options]</button> -->
+    <div id="chat-container" class="slideOutToLeft">
+        <!-- Chatbox content -->
+        <div class="card" id="chat-box">
+            <div class="card-body">
+                <!-- Chat messages will be appended here -->
+            </div>
+        </div>
+    </div>
     <div class="flex-container" id="main-content">
-        <div class="story-image" id="story-image"></div>
+        <div class="story-image" id="story-image">
+            <div id="subtitle" class="subtitle">...</div>
+        </div>
         <div class="chat-section">
-            <div class="container fade-in" id="chat-container">
-                <!-- <audio id="audio" controls>
-                    <source id="source" src="" type="audio/wav" />
-                </audio> -->
-                <div class="card" id="chat-box">
-                    <div class="card-body">
-                        <!-- Chat messages will be appended here -->
-                    </div>
-                </div>
-                <!-- Input box for new messages -->
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" id="message-input" placeholder="Type a message">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" id="send-button">Send</button>
-                        <div id="spinner" style="display: none;">
-                            <div class="loader"></div>
-                        </div>
+            <!-- Input box for new messages -->
+            <div class="input-group" id="message-input-group">
+                <input type="text" class="form-control" id="message-input" placeholder="Type a message...">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="send-button">SEND</button>
+                    <div id="spinner" style="display: none;">
+                        <div class="loader"></div>
                     </div>
                 </div>
             </div>
         </div> 
     </div>
+    <div id="character-sheet-container" class="character-sheet slideOutToRight">
+        <div class="character-portrait">
+            <img src="/static/characters/default.jpg" alt="Character Portrait" class="portrait" id="portrait">
+        </div>
+        <div class="character-name" id="name">
+            <p>Boaty Mcboatface</p>
+        </div>
+        <div class="character-description" id="description">
+            <p>Character description goes here...</p>
+        </div>
+        <div class="character-stats">
+            <div class="stats-column">
+                <ul>
+                    <li><i class="fas fa-fist-raised icon-str"></i>Strength: <span id="stat-str">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-person-running"></i>Dexterity: <span id="stat-dex">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-dumbbell"></i>Constitution: <span id="stat-con">10</span></li>
+                </ul>
+            </div>
+            <div class="stats-column">
+                <ul>
+                    <li><i class="fas icon-str fa-solid fa-brain"></i>Intelligence: <span id="stat-int">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-book"></i>Wisdom: <span id="stat-wis">10</span></li>
+                    <li><i class="fas icon-str fa-solid fa-clover"></i>Charisma: <span id="stat-cha">10</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 <style>
 body {
-    background-color: black;
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+    font-size: large;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url('static/img/patrick-hendry-oaaRPhOz5Dg-unsplash.jpg');
+    background-size: cover;
+    background-position: center;
 }
 
 #start-button {
@@ -46,6 +158,24 @@ body {
     text-align: center;
     text-decoration: none;
     /* display: inline-block; */
+    font-size: 20px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#dev-button {
+    background-color: #664a37;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-family:'Courier New', Courier, monospace;
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
@@ -56,47 +186,77 @@ body {
     transform: translate(-50%, -50%);
 }
 
+@keyframes shimmer {
+    0% { box-shadow: 0 0 5px 5px rgba(255, 255, 0, 0.5); }
+    50% { box-shadow: 0 0 20px 20px rgba(255, 255, 0, 0); }
+    100% { box-shadow: 0 0 5px 5px rgba(255, 255, 0, 0.5); }
+}
+
+@keyframes fadeThroughColor {
+    0% { background-color: transparent; }
+    50% { background-color: #8a2be2; } /* Or any fantasy-themed color */
+    100% { background-color: transparent; }
+}
+
 #story-image {
     /* background-image: url("static/login1.png"); */
+    position: relative;
     flex: 80%;
-    animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
-    transition: background 5s ease-in-out;
-    width: 50%; /* Adjust as needed */
-    padding-top: 50%; /* This makes the height equal to the width */
+    /* animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s; */
+    animation: fadeAndScale 2s ease-in-out;
+    /* transition: shimmer 3s ease-in-out infinite; */
+    transition: fadeThroughColor 4s ease-in-out;
+    /* animation: fadeThroughColor 4s ease-in-out; */
+    /* transition: background 5s ease-in-out; */
+    width: 80%; /* Adjust as needed */
+    padding-top: 69%; /* This makes the height equal to the width */
     border: 5px solid rgba(94, 57, 2, 0.901);
     border-radius: 30px; /* Adjust as needed */
     background-size: cover;
     background-position: center;
 }
+
+/* #story-image:hover {
+    transform: rotateY(180deg);
+} */
+
 .flex-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* This centers the children horizontally */
     margin-left: auto;
     margin-right: auto;
-    margin-top: 30px;
-    /* margin-top: 20px;
-    margin-bottom: 20px; */
-    max-width: 1200px;
-    max-height: 100vh;
+    margin-top: 80px;
+    max-width: 1000px;
 }
 
 .chat-section {
-    margin-top: 20px;
-    width: 100%;
+    width: 100%; /* Ensure it takes the full width */
+    display: flex;
+    justify-content: center; /* Center its children (the input group) */
 }
 
 .container, .container-lg, .container-md, .container-sm, .container-xl {
     max-width: 1800px !important;
     width: 100% !important;
 }
+
+#spinner {
+        display: flex; /* Use flexbox for layout */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+        width: auto; /* Take full width of its parent to help with centering */
+        height: auto; /* Take full height of its parent to help with centering */
+        padding: 10px;
+    }
+
 .loader {
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #db7a34; 
+    border: 6px solid #f3f3f3; /* Slightly thinner border for a smaller loader */
+    border-top: 6px solid #db7a34; /* Slightly thinner border-top for consistency */
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 20px; /* Smaller width */
+    height: 20px; /* Smaller height */
     animation: spin 2s linear infinite;
 }
 
@@ -104,19 +264,20 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
 .fade-in {
     opacity: 0;
     animation: fadeIn ease 1s;
     animation-fill-mode: forwards;
 }
 
+.fade-out {
+    animation: fadeOut 1s forwards;
+}
+
 @keyframes fadeIn {
     0% {opacity: 0;}
     100% {opacity: 1;}
-}
-body {
-    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
-    font-size: larger;
 }
 
 #chat-container {
@@ -131,13 +292,23 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    /* animation: slideInFromLeft 0.5s ease-out forwards; Apply the animation */
     /* flex: 10%; */
+    position: fixed; /* Fixed positioning */
+    left: 0; /* Align to the left */
+    top: 0; /* Align to the top */
+    height: 100%; /* Take full height */
+    width: 35%; /* Adjust width as needed */
+    max-width: 500px;
+    overflow-y: auto; /* Allow scrolling */
+    /* background-color: rgba(0,0,0,0.5);  */
+    /* border-right: 2px solid #5D3A00; Aesthetic border */
 }
 
 #chat-box {
     /* font color change */
-    color: #eaeaea; /* Dark brown text */
-    width: 80%;
+    color: #fff2d5; /* Dark brown text */
+    width: 90%;
     height: 80%;
     border: 1px solid #000;
     padding: 20px;
@@ -146,6 +317,26 @@ body {
     flex-grow: 1;
     margin-bottom: 20px;
     margin-top: 20px;
+    border-radius: 15px;
+}
+
+/* Custom scrollbar for #chat-box */
+#chat-box::-webkit-scrollbar {
+    width: 10px; /* Adjust the width of the scrollbar */
+}
+
+#chat-box::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1); /* Dark track/background */
+    border-radius: 15px; /* Optional: adds rounded corners to the track */
+}
+
+#chat-box::-webkit-scrollbar-thumb {
+    background: #fff2d5ae;; /* Scrollbar color */
+    border-radius: 20px; /* Rounded corners on the scrollbar */
+}
+
+#chat-box::-webkit-scrollbar-thumb:hover {
+    background: #bf845a; /* Darker shade for hover effect */
 }
 
 .input-group {
@@ -172,5 +363,479 @@ body {
     background-color: #5D3A00; /* Dark brown background */
     color: #fff; /* White text */
 }
+
+/* colors brown and purple: #db7a34, #a55eea */
+/* colors brown and purple: rgba(219, 122, 52, 0.6), rgba(165, 94, 234, 0.6) */
+#message-input-group {
+    bottom: 0; /* Align to the bottom */
+    left: 0; /* Align to the left */
+    width: 100%; /* Span across the screen */
+    border-radius: 25px; /* Very rounded corners as requested */
+    width: 50%; /* Adjust this value as needed to control the input group's width */
+    margin: 20px; /* This will center the input group if its width is less than its parent */
+    animation: slideInFromTop 0.5s ease-out forwards; /* Adjust duration and easing as needed */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 15px 5px rgba(219, 122, 52, 0.6); /* Subtle shadow + Glow effect */
+}
+
+#toggle-chat-btn {
+    position: absolute;
+    z-index: 1;
+    top: 10px; /* Adjust the distance from the top as needed */
+    left: 45%;
+    transform: translateX(-50%);
+    font-family: 'Almendra', serif;
+    font-size: 16px; /* Smaller font size for a more understated look */
+    background-color: #5D3A00; /* A dark brown color to blend with the app's color scheme */
+    color: #fff2d5; /* A light cream color for the text to match the app's color scheme */
+    padding: 5px 10px; /* Reduced padding for a smaller button size */
+    border-radius: 10px; /* Slightly rounded corners for a softer look */
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Subtler shadow for depth */
+    text-shadow: 1px 1px 2px #000; /* Subtler text shadow for a more refined look */
+}
+
+#toggle-chat-btn:hover {
+    background-color: #3E2C1B; /* A slightly darker shade for the hover state */
+}
+
+#send-button {
+    border-bottom-right-radius: 20px;
+    border-top-right-radius: 20px;
+    background-image: linear-gradient(45deg, #db7a34, #a96330); /* Gradient background */
+    color: white; /* Text color */
+    border: none; /* Removes the default border */
+    transition: background-image 0.5s ease-in-out; /* Smooth transition for the hover effect */
+}
+
+#send-button:hover {
+    background-image: linear-gradient(45deg, #a96330, #db7a34); /* Inverted gradient on hover */
+}
+
+.subtitle {
+    position: absolute;
+    bottom: 0; /* Adjust this value as needed to place the subtitle correctly */
+    left: 0;
+    right: 0;
+    /* bottom: 10px; Adjust as needed */
+    width: 100%;
+    text-align: center;
+    font-family: 'Almendra', serif;
+    font-size: 25px; /* Adjust size as needed */
+    padding: 30px;
+    color: #fff2d5;
+    text-shadow: 
+        2px 2px 4px #000000,  /* Primary shadow to create depth */
+        -1px -1px 4px #000000, /* Secondary shadow to enhance readability */
+        1px -1px 4px #000000,  /* Tertiary shadow for a more diffuse effect */
+        -1px 1px 4px #000000;  /* Quaternary shadow to ensure clarity in all directions */
+    /* animation: fadeInOut 10s infinite;  */
+}
+
+.user-message {
+    color: #9ecbff; /* Example: Blue */
+    /* font-family: 'Tangerine', cursive;  */
+}
+
+.narrator-message {
+    color: #fff2d5; /* Example: White */
+}
+
+.system-message {
+    color: #e2fe7d; /* Example: Orange */
+}
+
+.unknown-message {
+    color: #D0021B; /* Example: Red */
+}
+
+/* Style for options container to match fantasy game theme */
+#options-container {
+    color: #fff2d5; /* Light cream color for text to match the theme */
+    /* font-family: 'Almendra', serif; Fantasy-themed font */
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    margin-top: 20px; /* Space from the start button or other elements */
+    font-size: small;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Custom style for checkboxes */
+#options-container input[type="checkbox"] {
+    accent-color: #aa8838; /* Custom checkbox color */
+    margin-right: 5px;
+}
+
+/* Style for labels to match the fantasy game theme */
+#options-container label {
+    margin-right: 20px; /* Space between the checkboxes */
+    cursor: pointer;
+}
+
+/* Enhance the hover effect for labels */
+#options-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+#party-container {
+    color: #fff2d5; /* Light cream color for text */
+    font-family: 'Almendra', serif; /* Fantasy-themed font */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    padding: 20px;
+    margin-bottom: 20px; /* Space from the start button */
+}
+
+#party-list {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0;
+}
+
+.party-member {
+    margin: 10px 0; /* Space between party members */
+    display: flex;
+    align-items: center; /* Align items vertically */
+    justify-content: center;
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+}
+
+.avatar {
+    width: 50px; /* Adjust based on your avatar size */
+    height: 50px; /* Adjust based on your avatar size */
+    border-radius: 50%; /* Make the avatar image round */
+    margin-right: 10px;
+}
+
+.character-name {
+    color: #fff2d5; /* Light cream color for text */
+    text-align: center; /* Center the name text */
+    font-size: 24px; /* Make the font larger */
+    font-weight: bold; /* Make the font bold */
+    font-family: 'Almendra', serif; /* Example fantasy-themed font */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Text shadow for depth */
+    margin: 20px 0; /* Add some space around the name */
+}
+
+.character-sheet {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 35%;
+    max-width: 500px;
+    overflow-y: auto;
+    background-color: rgba(0,0,0,0.5);
+    border-left: 2px solid #5D3A00;
+    color: #fff2d5;
+    padding: 20px;
+    animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+.character-portrait img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: block;
+}
+
+.character-description p {
+    text-align: justify;
+    margin-top: 20px;
+}
+
+.character-stats ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.character-stats li {
+    margin-bottom: 10px;
+}
+
+#toggle-character-sheet-btn {
+    position: absolute;
+    z-index: 1;
+    top: 10px; /* Adjust based on the position of your toggle chat button */
+    left: 55%;
+    transform: translateX(-50%);
+    font-family: 'Almendra', serif;
+    font-size: 16px;
+    background-color: #5D3A00; /* Dark brown */
+    color: #fff2d5; /* Light cream */
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#toggle-character-sheet-btn:hover {
+    background-color: #3E2C1B; /* Slightly darker on hover */
+}
+
+#play-dev-button {
+    position: absolute;
+    z-index: 1;
+    top: 95%; /* Adjust based on the position of your toggle chat button */
+    left: 50%;
+    transform: translateX(-50%);
+    font-family:'Courier New', Courier, monospace;
+    font-size: 16px;
+    background-color: #403421; /* Dark brown */
+    color: #fff2d5; /* Light cream */
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#play-dev-button:hover {
+    background-color: #3E2C1B; /* Slightly darker on hover */
+}
+
+.character-sheet {
+    animation-fill-mode: forwards; /* Keep the element in the state of the last animation frame */
+    animation-duration: 0.5s; /* Animation duration */
+}
+
+.character-stats {
+    display: flex;
+    justify-content: space-between;
+}
+
+.stats-column {
+    flex: 1;
+}
+
+.stats-column ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.stats-column li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.icon-str, .icon-dex, .icon-con, .icon-int, .icon-wis, .icon-cha {
+    /* Example styling for icons */
+    margin-right: 8px;
+    width: 24px; /* Adjust size as needed */
+    height: 24px; /* Adjust size as needed */
+    background-size: cover;
+}
+
+#layout-selection-container {
+    color: #fff2d5; /* Light cream color for text */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    padding: 20px;
+    margin-top: 20px; /* Space from the start button */
+    font-family: 'Almendra', serif; /* Fantasy-themed font */
+}
+
+#layout-selection-container div {
+    margin-top: 10px;
+}
+
+#layout-selection-container input[type="radio"] {
+    accent-color: #aa8838; /* Custom radio button color */
+    margin-right: 5px;
+}
+
+#layout-selection-container label {
+    margin-right: 20px; /* Space between the radio options */
+    cursor: pointer;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+#layout-selection-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+.invite-text {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 18px;
+}
+
+.invite-code {
+    font-weight: bold;
+    color: #f4d9c5;
+    background-color: #8b4513;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.developer-options {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff2d5;
+    border-top: 2px solid #5D3A00;
+    padding: 20px;
+    box-sizing: border-box;
+    transform: translateY(100%);
+    animation: slideInFromBottom 0.5s ease-out forwards;
+}
+
+.option {
+    margin-bottom: 15px;
+}
+
+.option label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.option select {
+    width: 100%;
+    padding: 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid #5D3A00;
+    color: #5D3A00;
+    border-radius: 5px;
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToBottom {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInOut {
+    0%,100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeAndScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(219, 122, 52, 0); /* Increase the spread and adjust opacity */
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0);
+        }
+    }
+
+.waiting-state {
+    animation: pulse 2s infinite;
+}
+
+.slideInFromLeft {
+    animation: slideInFromLeft 0.5s ease-out forwards;
+}
+
+.slideOutToLeft {
+    animation: slideOutToLeft 0.5s ease-out forwards;
+}
+
+.slideInFromRight {
+    animation-name: slideInFromRight;
+}
+
+.slideOutToRight {
+    animation-name: slideOutToRight;
+}
+
+.slideOutToBottom {
+    animation: slideOutToBottom 0.5s ease-out forwards;
+}
+
+.slideInFromBottom {
+    animation: slideInFromBottom 0.5s ease-out forwards;
+}
+/* .icon-str { background-image: url('https://fontawesome.com/icons/hand-fist?f=classic&s=solid'); }
+.icon-dex { background-image: url('https://fontawesome.com/icons/person-running?f=classic&s=solid'); }
+.icon-con { background-image: url('https://fontawesome.com/icons/star?f=classic&s=solid'); }
+.icon-int { background-image: url('https://fontawesome.com/icons/brain?f=classic&s=solid'); }
+.icon-wis { background-image: url('https://fontawesome.com/icons/book?f=classic&s=solid'); }
+.icon-cha { background-image: url('https://fontawesome.com/icons/clover?f=classic&s=solid'); } */
 </style>
 <script type="module" src="static/js/story.js"></script>
