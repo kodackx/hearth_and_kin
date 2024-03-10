@@ -2,6 +2,7 @@
 [![Hearth and Kin](https://github.com/kodackx/hearth_and_kin/actions/workflows/build.yml/badge.svg)](https://github.com/kodackx/hearth_and_kin/actions/workflows/build.yml)
 
 This is a FastAPI application that uses several libraries and APIs to provide a chat interface with various features.
+MIRO Board: https://miro.com/app/board/uXjVNDj7Uxc=/
 
 ## Libraries and APIs Used
 

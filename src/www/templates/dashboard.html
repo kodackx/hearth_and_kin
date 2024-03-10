@@ -4,182 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
-    <title>Dashboard</title>
-    <style>
-
-        body {
-            font-family: 'MedievalSharp', Arial, sans-serif;
-            background-color: #8b4513ad;
-            background-image: url("static/img/login1.png");
-            background-repeat: no-repeat;
-            /* background-size: cover; */
-            background-position-x: center;
-            background-attachment: scroll; 
-            position: relative;
-        }
-        body::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            /* background-color: rgba(0, 0, 0, 0.5); */
-        }
-        .box, .banner, .container {
-            position: relative;
-            z-index: 2;
-        }
-        .box, .character-box {
-            width: 200px;
-            height: 200px;
-            border: 2px solid #8b4513;
-            border-radius: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 10px;
-            background-color: rgba(139, 69, 19, 0.8); 
-            font-size: 2em;
-            color: #f4d9c5;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .box:hover, .character-box:hover {
-            background-color: rgba(255, 255, 255, 0.8); /* Add a hover effect with a semi-transparent white background */
-            cursor: pointer; /* Change the cursor to indicate it's clickable */
-            color: #000; /* Change text color to black for visibility */
-        }
-        .container {
-            display: flex;
-            justify-content: space-around;
-        }
-        .banner {
-            background-color: rgba(139, 69, 19, 0.8); 
-            border-radius: 10px;
-            padding: 20px;
-            margin: 20px;
-            text-align: center;
-            color: #fff;
-        }
-        .box-content {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .box-footer {
-            text-align: center;
-            padding: 10px;
-            font-size: 0.5em;
-        }
-        #username {
-            font-weight: bold;
-            color: #f4d9c5;
-            background-color: #8b4513;
-            padding: 2px 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .container-title {
-            font-family: 'MedievalSharp', Arial, sans-serif; /* Use the MedievalSharp font for thematic consistency */
-            color: #f4d9c5; /* A light, parchment-like color for readability */
-            text-shadow: 2px 2px 4px #000; /* Add a subtle shadow for depth */
-            text-align: center; /* Center-align the titles */
-            margin-bottom: 20px; /* Add some space below the titles */
-            /* border-bottom: 2px solid #8b4513; A thematic underline to separate sections */
-            padding-bottom: 10px; /* Space between text and underline */
-        }
-        .rounded-avatar {
-            width: 70%;        /* Responsive width */
-            height: auto;       /* Maintain aspect ratio */
-            aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
-            object-fit: cover;  /* Ensures the image covers the area */
-            border-radius: 50%; /* Fully rounded crop */
-            display: block;     /* Remove any extra space below the image */
-        }
-        .character-box .character-description {
-            visibility: hidden;
-            position: absolute;
-            background-color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 100;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto;
-            max-width: 200px;
-            text-align: center;
-            opacity: 0;
-            transition: visibility 0s, opacity 0.5s linear;
-        }
-
-        .character-box:hover .character-description {
-            visibility: visible;
-            opacity: 1;
-        }
-    </style>
+    <script type="module" src="static/js/dashboard.js"></script>
+    <title>Heart & Kin: Dashboard</title>
 </head>
-<!-- <body>
-    <div class="banner">
-        <h1>Welcome to the Dashboard</h1>
-        <p>Logged in as <span id="username"></span></p>
-    </div>
-
-    <div class="container">
-        <div class="box" id="newchar">
-            <div class="box-content">+</div>
-            <div class="box-footer">New Character Flow</div>
-        </div>
-        <div class="box" id="newstory">
-            <div class="box-content">+</div>
-            <div class="box-footer">New Story Flow</div>
-        </div>
-    </div>
-
-    <script>
-    window.onload = function() {
-        // Replace 'username' with the actual username
-        document.getElementById('username').textContent = 'admin';
-
-        // Add event listeners to the boxes
-        document.getElementById('newstory').addEventListener('click', function() {
-            var description = prompt('[NOT WORKING!] Describe your character in a few words. Mention race, class, and any other important details.');
-            if (description) {
-                fetch('/game', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        description: description,
-                    }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Handle the response
-                    // alert(data.message)
-                    if (confirm(data.description)) {
-                        window.location.href = '/story';
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-            }
-        });
-
-        document.getElementById('newchar').addEventListener('click', function() {
-            window.location.href = '/newcharacter';
-        });
-    }
-    </script>
-</body> -->
 
 <!-- martin's architecture for stories and rooms + tweaks from old setup -->
 <body>
@@ -187,37 +14,198 @@
         <h1>Welcome to the world of Hearth & Kin</h1>
         <p>You are logged in as <span id="username"></span></p>
     </div>
-    <div class="container">
-        <h1 class="container-title">CHARACTERS</h1><br><br>
-        <div class="character-box" id="newchar1">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Character</div>
+    <div class="main-container">
+        <div class="characters-container">
+            <h1 class="container-title">CHARACTERS</h1>
+            <!-- Character Boxes Here -->
+            <div class="character-box" id="char1">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Character</div>
+            </div>
+            <!-- Add more character boxes as needed -->
+            <div class="character-box" id="char2">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Character</div>
+            </div>
+            <!-- Add more character boxes as needed -->
+            <div class="character-box" id="char3">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Character</div>
+            </div>
         </div>
-        <div class="character-box" id="newchar2">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Character</div>
-        </div>
-        <div class="character-box" id="newchar3">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Character</div>
+        <div class="stories-container">
+            <h1 class="container-title">STORIES</h1>
+            <!-- Story Boxes Here -->
+            <div class="story-box" id="story1">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story2">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story3">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
         </div>
     </div>
-    <hr style="border: 3px solid #8b4513d5; background-color: #8b4513ad;">
-    <div class="container">
-        <h1 class="container-title">STORIES</h1>
-        <div class="box" id="box1">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
-        </div>
-        <div class="box" id="box2">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
-        </div>
-        <div class="box" id="box3">
-            <div class="box-content">+</div>
-            <div class="box-footer">Create New Story</div>
-        </div>
-    </div>
-    <script type="module" src="static/js/dashboard.js"></script>
 </body>
 </html>
+<style>
+    body {
+        height: 90%; /* Ensure they at least cover the viewport height */
+        min-height: 90vh; /* Minimum height to cover the viewport */
+        margin: 0; /* Remove default margin */
+        padding: 0; /* Remove default padding */
+        font-family: 'MedievalSharp', Arial, sans-serif;
+        background-color: #000; /* Ensures the fallback color is black */
+        background-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.7) 70%, #000 100%), url("static/img/login1.png");
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
+        position: relative;
+    }
+
+    body::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        /* background-color: rgba(0, 0, 0, 0.5); */
+    }
+
+    .banner {
+        background-color: rgba(139, 69, 19, 0.8); 
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px;
+        text-align: center;
+        color: #fff;
+    }
+
+    #username {
+        font-weight: bold;
+        color: #f4d9c5;
+        background-color: #8b4513;
+        padding: 2px 8px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .main-container {
+        display: flex;
+        justify-content: center;
+        /* background-color: rgba(0, 0, 0, 0.9); 90% transparent black background */
+        border-radius: 20px; /* Rounded corners */
+        /* padding: 20px; Add padding for spacing */
+    }
+
+    .characters-container, .stories-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        flex: 1;
+        margin: 10px;
+        max-width: 400px;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.7); /* 90% transparent black background */
+        border-radius: 20px; /* Rounded corners */
+        /* padding: 20px; Add padding for spacing */
+        padding-block-end: 20px;
+        /* animation: slideInFromRight 0.5s ease-out forwards; this breaks clicking somehow!!! */
+    }
+
+    .stories-container {
+        display: none;
+    }
+
+    .container-title {
+        font-family: 'MedievalSharp', Arial, sans-serif; /* Use the MedievalSharp font for thematic consistency */
+        color: #f4d9c5; /* A light, parchment-like color for readability */
+        text-shadow: 2px 2px 4px #000; /* Add a subtle shadow for depth */
+        text-align: center; /* Center-align the titles */
+        margin-bottom: 10px;
+        margin-top: 20px;
+    }
+
+    .box-content {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .box-footer {
+        text-align: center;
+        padding: 10px;
+        font-size: 0.5em;
+    }
+
+    .rounded-avatar {
+        width: 60%;        /* Responsive width */
+        height: auto;       /* Maintain aspect ratio */
+        aspect-ratio: 1 / 1; /* Ensures a 1:1 aspect ratio */
+        object-fit: cover;  /* Ensures the image covers the area */
+        border-radius: 50%; /* Fully rounded crop */
+        display: block;     /* Remove any extra space below the image */
+    }
+    
+    .story-box, .character-box {
+        z-index: 2;
+        width: 240px;
+        height: 180px;
+        border: 2px solid #8b4513;
+        border-radius: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 10px;
+        background-color: rgba(139, 69, 19, 0.8); 
+        font-size: 2.5em;
+        color: #f4d9c5;
+        flex-direction: column;
+        justify-content: space-between;
+        padding-block-start: 10px;
+    }
+    
+    .story-box:hover, .character-box:hover {
+        background-color: rgba(255, 255, 255, 0.8) !important; /* Add a hover effect with a semi-transparent white background */
+        cursor: pointer !important; /* Change the cursor to indicate it's clickable */
+        color: #000 !important; /* Change text color to black for visibility */
+    }
+
+    .selected {
+        border: 5px solid #406f41; /* Example: Green border for selected character */
+        background-color: rgba(255, 255, 255, 0.8) !important; /* Add a hover effect with a semi-transparent white background */
+        cursor: pointer !important; /* Change the cursor to indicate it's clickable */
+        color: #000 !important; /* Change text color to black for visibility */
+    }
+
+    @keyframes slideInFromRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+
+    .stories-container.visible {
+        display: flex; /* or block, depending on your layout */
+        animation: slideInFromRight 0.5s ease-out forwards;
+    }
+
+</style>
