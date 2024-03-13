@@ -303,6 +303,8 @@ function deleteStory(box) {
 
 
 function leaveStory(box) {
+    let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
+    let character_id = selectedCharacter.character_id;
     fetch('/story/' + box.storyId + '/leave', {
         method: 'POST',
         headers: {
@@ -311,6 +313,7 @@ function leaveStory(box) {
         body: JSON.stringify({
             story_id: box.storyId,
             username: username,
+            character_id: character_id
         }),
     })
     .then(response => handleResponse(response, data => {
