@@ -7,7 +7,8 @@ from ..core.config import logger
 from ..services import audio, imagery
 from ..core.database import engine
 from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import OpenAI
+from langchain_groq import ChatGroq
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -18,6 +19,11 @@ from langchain.schema import SystemMessage
 from sqlmodel import Session
 import random
 from pydantic import ValidationError
+from dotenv import load_dotenv
+import os
+
+load_dotenv('.env')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 router = APIRouter()
 
@@ -68,11 +74,21 @@ prompt = ChatPromptTemplate.from_messages(
 
 memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-llm = ChatOpenAI(
+llm_openai = OpenAI(
     model_name='gpt-4',
     # max_tokens=max_length,
     temperature=0.5,
 )
+
+llm_groq = ChatGroq(
+    temperature=0.5,
+    groq_api_key=GROQ_API_KEY, 
+    model_name="mixtral-8x7b-32768"
+)
+
+# decide here which model to use
+llm = llm_groq
+
 chat_llm_chain = LLMChain(
     llm=llm,
     prompt=prompt,
@@ -127,8 +143,9 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             character_name = narrator_reply[character_name_start:character_name_end]
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
-            portrait_url = imagery.generate_image(narrator_reply)
-            portrait_path = await imagery.store_image(portrait_url, type='character')
+            # choose model between dalle3 and stability
+            portrait_url = await imagery.generate_image(narrator_reply, model='stability')
+            portrait_path = await imagery.store_image(portrait_url, type='character', model='stability')
             logger.debug(f'[MESSAGE] {portrait_path = }')
             # portrait_image = imagery.obtain_image_from_url(portrait_path)
             # logger.debug(f'[MESSAGE] {portrait_image = }')

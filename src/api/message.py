@@ -14,7 +14,8 @@ router = APIRouter()
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # TODO: do we have to recreate the chain at every call? Possible to cache this?
     messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
+    chain_openai = narrator.initialize_chain(narrator.prompt, messages) 
+    chain_groq = narrator.initialize_chain_groq(narrator.prompt, messages)
 
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_id = audio_path = image_url = image_path = soundtrack_path = None
@@ -24,7 +25,8 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         character = session.get(Character, message.character_id)
         if character is None:
             raise HTTPException(404, 'Character not found')
-        # Will send to openai and obtain reply
+        # Choose chain
+        chain = chain_groq
         narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
         soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
         for directive in soundtrack_directives:
@@ -42,11 +44,13 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
                 break  # Assuming only one soundtrack directive per reply, break after handling the first one found
 
         if GENERATE_AUDIO:  # Will send to narrator and obtain audio
-            audio_id, audio_path = audio.obtain_audio(narrator_reply)
+            audio_id, audio_path = await audio.obtain_audio(narrator_reply)
         if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
-            image_url = imagery.generate_image(narrator_reply)
+            # choose model between dalle3 and stability
+            model = 'stability'
+            image_url = await imagery.generate_image(narrator_reply, model)
             logger.debug(f'[MESSAGE] {image_url = }')
-            image_path = await imagery.store_image(image_url, 'story')
+            image_path = await imagery.store_image(image_url, 'story', model)
             logger.debug(f'[MESSAGE] {image_path = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')

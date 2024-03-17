@@ -1,18 +1,23 @@
 from langchain.chains import LLMChain
 from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
     MessagesPlaceholder,
 )
 from langchain.schema import SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from src.models.character import Character
-
 from src.models.message import MessageBase, MessageRead
 from src.core.config import logger
+from dotenv import load_dotenv
+import os
 
-################
+load_dotenv('.env')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
 # OpenAI stuff #
 ################
 # """Generates a story based on the input string.
@@ -108,6 +113,34 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 
     return chat_llm_chain
 
+def initialize_chain_groq(prompt, message_history):
+    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+
+    for message in message_history:
+        memory.chat_memory.add_user_message(message.message)
+        memory.chat_memory.add_ai_message(message.narrator_reply)
+
+    llm = ChatGroq(
+        temperature=0.5,
+        groq_api_key=GROQ_API_KEY, 
+        model_name="mixtral-8x7b-32768"
+    )
+    
+    chat_llm_chain = LLMChain(
+        llm=llm,
+        prompt=prompt,
+        verbose=True,
+        memory=memory,
+    )
+
+    # chain_groq = prompt | llm | memory
+    # system = "You are a helpful assistant."
+    # human = "{text}"
+    # prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
+    # chain = prompt | chat
+    # chain.invoke({"text": "Explain the importance of low latency LLMs."})
+
+    return chat_llm_chain
 
 def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
     message_and_character_data = message.message
@@ -125,6 +158,6 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) ->
         message_and_character_data += f'\n(Current Goal: {character.goal})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
-    output = chain.predict(input=message_and_character_data)
+    output = chain.run(input=message_and_character_data)
     logger.debug(f'[GPT Narrator] {output = }')
     return output
