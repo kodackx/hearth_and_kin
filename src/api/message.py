@@ -19,6 +19,9 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
+
+    messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
+    chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
     
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_id = audio_path = image_url = image_path = soundtrack_path = None
@@ -29,6 +32,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         if character is None:
             raise HTTPException(404, 'Character not found')
         # Will send to openai and obtain reply
+    
         narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
         soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
         for directive in soundtrack_directives:

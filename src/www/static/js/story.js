@@ -4,11 +4,10 @@ import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
-const joinedStoryId = localStorage.getItem('joinedStoryId');
+const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-let character_id = selectedCharacter.character_id;
-const username = localStorage.getItem('username');
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + joinedStoryId
+
+export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
@@ -70,36 +69,6 @@ async function toggleDevPane() {
     } else {
         devPane.classList.remove('slideOutToBottom');
         devPane.classList.add('slideInFromBottom'); // Slide in animation
-    }
-}
-
-document.getElementById('message-input').addEventListener('keypress', function (e) {
-    var key = e.which || e.keyCode;
-    if (key === 13) { // 13 is the key code for Enter
-        e.preventDefault(); // Prevent the default action to stop the form from submitting
-        document.getElementById('send-button').click(); // Trigger the click event on the send button
-    }
-});
-
-
-function handleMessage(message) {
-    let parsedMessage = JSON.parse(message.data);
-    let action = parsedMessage.action;
-    let data = parsedMessage.data;
-    let userAction = data.username == username
-    console.log('client received: ', parsedMessage);
-    switch (action) {
-        case 'message':
-            appendMessage(`${data.username}: ${data.message}`);
-            break;
-        case 'reply':
-            processMessage('Narrator: ' + data.narrator_reply)
-            tryPlayAudio(data.audio_path)
-            tryChangeBackgroundImage(data.image_path)
-            break;
-        default:
-            alert('Got action ', action, ' from websocket. NYI')
-            break
     }
 }
 
@@ -186,7 +155,7 @@ async function sendMessage() {
     messageApi.sendMessage(message)
 }
 
-function processMessage(narratorMessage) {
+function processMessage(data) {
     try {
         if (data.soundtrack_path) {
             tryPlaySoundtrack(data.soundtrack_path);
@@ -194,15 +163,15 @@ function processMessage(narratorMessage) {
             tryPlaySoundtrack();
         }
         // var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
-            let formattedMessage = data.narrator_reply;
+        let formattedMessage = data.narrator_reply;
         console.log('Received successful reply: ' + formattedMessage);
-            document.getElementById('send-button').style.display = 'block';
+        document.getElementById('send-button').style.display = 'block';
         document.getElementById('spinner').style.display = 'none';
-            document.getElementById('message-input-group').classList.remove('waiting-state');
-            document.getElementById('message-input').disabled = false;
-            document.getElementById('message-input').placeholder = "What do you do next?";
-            document.getElementById('message-input').value = '';
-            document.getElementById('message-input').focus();
+        document.getElementById('message-input-group').classList.remove('waiting-state');
+        document.getElementById('message-input').disabled = false;
+        document.getElementById('message-input').placeholder = "What do you do next?";
+        document.getElementById('message-input').value = '';
+        document.getElementById('message-input').focus();
         // Split the formattedMessage into lines
         var lines = formattedMessage.split('<br>');
         var lineIndex = 0;
@@ -228,19 +197,35 @@ function processMessage(narratorMessage) {
                     clearInterval(intervalId);
                 }
             }, intervalTime);
-        } else {
-            appendMessage('Failed to send message.', 'system');
-        }
 
         tryPlayAudio(data.audio_path);
         tryChangeBackgroundImage(data.image_path);
         tryPlaySubtitles(data.narrator_reply);
-    }))
-    .catch((error) => {
-        console.error(error);
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('send-button').style.display = 'block';
-        alert(error);
+    } catch {(error) => {
+            console.error(error);
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('send-button').style.display = 'block';
+            alert(error)
+        }
+    }
+}
+
+function handleMessage(message) {
+    let parsedMessage = JSON.parse(message.data);
+    let action = parsedMessage.action;
+    let data = parsedMessage.data;
+    let userAction = data.username == username
+    console.log('client received: ', parsedMessage);
+    switch (action) {
+        case 'message':
+            processMessage(`${data.username}: ${data.message}`);
+            break;
+        case 'reply':
+            processMessage('Narrator: ' + data.narrator_reply)
+            break;
+        default:
+            alert('Got action ', action, ' from websocket. NYI')
+            break
     }
 }
 

@@ -10,22 +10,22 @@ def test_join_story(session: Session, client: TestClient):
     _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
     with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
         _ = client.post('/story', json={'creator': 'test_user', 'story_id': 1})
-    # this now needs a character to be created
-    character_data = {
-        "character_id": 1,
-        "username": "hero123",
-        "character_name": "Gallant Knight",
-        "description": "A brave knight seeking adventure.",
-        "strength": 5,
-        "dexterity": 4,
-        "constitution": 5,
-        "intelligence": 3,
-        "wisdom": 2,
-        "charisma": 4,
-        "location": "The kingdom of Farland",
-        "goal": "To save the kingdom from the dragon"
-    }
-    _ = client.post('/createcharacter', json=character_data)
+        # this now needs a character to be created
+        character_data = {
+            "character_id": 1,
+            "username": "hero123",
+            "character_name": "Gallant Knight",
+            "description": "A brave knight seeking adventure.",
+            "strength": 5,
+            "dexterity": 4,
+            "constitution": 5,
+            "intelligence": 3,
+            "wisdom": 2,
+            "charisma": 4,
+            "location": "The kingdom of Farland",
+            "goal": "To save the kingdom from the dragon"
+        }
+        _ = client.post('/createcharacter', json=character_data)
 
     # Join story
     response = client.post('/story/1/join', json={'username': 'test_user', 'story_id': 1, 'character_id': 1})

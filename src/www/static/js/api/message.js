@@ -1,6 +1,6 @@
 import { handleResponse } from "../utils.js";
 
-const storyId = localStorage.getItem('joinedStoryId');
+const storyId = localStorage.getItem('story_id');
 const characterId = localStorage.getItem('character_id');
 const username = localStorage.getItem('username')
 
