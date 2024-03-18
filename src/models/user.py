@@ -11,11 +11,6 @@ class UserBase(Model):
 
 class UserRead(Model):
     username: str = Field(min_length=1, max_length=50, primary_key=True)
-    # character_id: list[int] = Field(nullable=True, default=None, foreign_key='character.character_id')
-    story_id: Optional[int] = Field(default=None, foreign_key='story.story_id')
-    # story_id: Optional[int] = Relationship(back_populates='users')
-    # story: Optional[Story] = Relationship(back_populates='users')
-    # characters: list[Character] = Relationship(back_populates='users')
 
 
 class User(UserBase, UserRead, table=True):  # type: ignore

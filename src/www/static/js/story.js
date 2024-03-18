@@ -6,6 +6,8 @@ let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
+let character_id = parseInt(selectedCharacter.character_id);
+let character_name = selectedCharacter.character_name;
 
 export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
 
@@ -103,7 +105,7 @@ async function drawStoryPage() {
             } else {
                 // Iterate through the array of messages and append them to the main-content
                 messages.forEach(message => {
-                    appendMessage(`${message.username}: ${message.message, 'user'}`);
+                    appendMessage(`${message.character_name}: ${message.message}`, 'user');
                     appendMessage('Narrator: ' + message.narrator_reply, 'narrator');
                 });
 
@@ -143,7 +145,7 @@ async function sendMessage() {
     tryPlayAudio();
     // read and append message
     const message = document.getElementById('message-input').value;
-    appendMessage('User: ' + message, 'user');
+
     document.getElementById('send-button').style.display = 'none';
     document.getElementById('message-input-group').classList.add('waiting-state');
     document.getElementById('message-input').disabled = true;
@@ -152,7 +154,7 @@ async function sendMessage() {
     document.getElementById('spinner').style.display = 'flex';
 
     // Send data to the server
-    messageApi.sendMessage(message)
+    messageApi.sendMessage(message, story_id, character_id, character_name)
 }
 
 function processMessage(data) {
@@ -214,14 +216,13 @@ function handleMessage(message) {
     let parsedMessage = JSON.parse(message.data);
     let action = parsedMessage.action;
     let data = parsedMessage.data;
-    let userAction = data.username == username
     console.log('client received: ', parsedMessage);
     switch (action) {
         case 'message':
-            processMessage(`${data.username}: ${data.message}`);
+            appendMessage(`${data.character_name}: ${data.message}`, 'user');
             break;
         case 'reply':
-            processMessage('Narrator: ' + data.narrator_reply)
+            appendMessage('Narrator: ' + data.narrator_reply, 'reply')
             break;
         default:
             alert('Got action ', action, ' from websocket. NYI')

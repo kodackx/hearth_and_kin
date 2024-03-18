@@ -5,7 +5,7 @@ from typing import Optional
 class CharacterBase(Model):
     character_id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Relationship(back_populates='user.username')
-    story_id: Optional[int] = Field(default=None)
+    story_id: Optional[int] = Field(default=None, foreign_key="story.story_id")
     character_name: Optional[str] = Field(nullable=True, default=None)
     description: Optional[str] = Field(nullable=True, default=None)
     portrait_path: Optional[str] = Field(default=None)
@@ -47,6 +47,5 @@ class CharacterUpdate(Model):
 class Character(CharacterBase, table=True):  # type: ignore
     character_id: Optional[int] = Field(primary_key=True)
     # Other fields for Character
-    story_id: Optional[int] = Field(default=None, foreign_key="story.story_id")
     # Optional: Establish a back-reference to Story
     # story: "Story" = Relationship(back_populates="character")

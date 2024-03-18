@@ -7,7 +7,7 @@ class MessageBase(Model):
     message: str
     story_id: int = Field(foreign_key='story.story_id')
     character_id: int = Field(foreign_key='character.character_id')
-    username: str = Field(foreign_key='user.username')
+    character_name: str = Field(foreign_key='character.character_name')
     timestamp: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
 

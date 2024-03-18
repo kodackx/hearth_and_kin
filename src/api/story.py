@@ -1,11 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, WebSocket
 from sqlmodel import Session, select
 
+from src.models.character import Character
+
 from ..core.websocket import WebsocketManager
 from ..models.message import Message, MessageRead
-from ..models.user import User, UserRead
+from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead
+from ..core.config import logger
 
 router = APIRouter()
 socket_manager = WebsocketManager()
@@ -31,13 +34,13 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
 
 @router.delete('/story/{story_id}', status_code=200, response_model=StoryDelete)
 async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)):
-    statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.username)
+    statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.character_id)
     db_story = session.exec(statement).first()
 
     if not db_story:
-        raise HTTPException(404, 'This user was not the creator, therefore they cannot delete.')
+        raise HTTPException(404, 'This character was not the creator, therefore they cannot delete.')
 
-    users = session.exec(select(User).where(User.story_id == story.story_id)).all()
+    users = session.exec(select(Character).where(Character.story_id == story.story_id)).all()
     # Kick out any users in story
     for user in users:
         user.story_id = None
@@ -46,7 +49,7 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
     session.delete(db_story)
     session.commit()
     # TODO: Story has no username field so cant implicitly cast to StoryDelete
-    deleted_story = StoryDelete(story_id=story.story_id, username=story.username)
+    deleted_story = StoryDelete(story_id=story.story_id, character_id=story.character_id)
     await socket_manager.broadcast('delete_story', deleted_story, 0)
     return deleted_story
 
@@ -76,7 +79,7 @@ async def get_story_messages(*, story_id: int, session: Session = Depends(get_se
 async def get_story_users(*, session: Session = Depends(get_session), story_id: int):
     story = session.get(Story, story_id)
     if story:
-        statement = select(User).where(User.story_id == story_id)
+        statement = select(Character).where(Character.story_id == story_id)
         return session.exec(statement).all()
     raise HTTPException(status_code=404, detail='Story not found')
 
@@ -84,22 +87,18 @@ async def get_story_users(*, session: Session = Depends(get_session), story_id: 
 @router.post('/story/{story_id}/join')
 async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
     db_story = session.get(Story, story.story_id)
-    db_user = session.get(User, story.username)
+    db_character = session.get(Character, story.character_id)
 
-    if not db_story or not db_user:
-        raise HTTPException(404, 'Story or user does not exist')
-    # if db_user.story_id:
-    #     raise HTTPException(400, 'User already in a story.')
+    if not db_story or not db_character:
+        raise HTTPException(404, 'Story or character does not exist')
     if db_story.active:
         raise HTTPException(400, 'Story is already in play.')
 
-    db_user.story_id = db_story.story_id
-    if story.character_id:  # If character_id is provided in the request
-        db_story.character_id = story.character_id  # Assign the character to the story
-    session.add(db_user)
+    db_character.story_id = db_story.story_id
+    session.add(db_character)
     session.add(db_story)  # Make sure to add the updated story to the session
     session.commit()
-    session.refresh(db_user)
+    session.refresh(db_character)
     await socket_manager.broadcast('join_story', story, 0)
     return story
 
@@ -107,28 +106,32 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
 @router.post('/story/{story_id}/play')
 async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
     db_story = session.get(Story, story.story_id)
-    db_user = session.get(User, story.username)
-
-    if not db_story or not db_user:
-        raise HTTPException(404, 'Story or user does not exist')
-    if db_user.story_id != db_story.story_id:
-        raise HTTPException(400, 'User in different story.')
+    db_character = session.get(Character, story.character_id)
+    logger.debug(f'[STORY]: {db_story}')
+    logger.debug(f'[CHARACTER]: {db_character}')
+    if not db_story or not db_character:
+        raise HTTPException(404, 'Story or character does not exist')
+    if db_character.story_id != db_story.story_id:
+        raise HTTPException(400, 'Character in different story.')
     # if db_story.active:
     #    raise HTTPException(400, 'Story is already in play.')
 
-    if not db_story.creator == db_user.username:
+    if not db_story.creator == db_character.character_id:
         raise HTTPException(400, 'Only story creator can play story.')
     db_story.active = True
+    db_character.story_id = db_story.story_id
     session.add(db_story)
+    session.add(db_character)
     session.commit()
     session.refresh(db_story)
+    session.refresh(db_character)
     await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), 0)
     return db_story
 
 
 @router.post('/story/{story_id}/leave')
 async def leave_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
-    statement = select(User).where(User.username == story.username).where(User.story_id == story.story_id)
+    statement = select(Character).where(Character.character_id == story.character_id).where(Character.character_id == story.character_id)
     user = session.exec(statement).first()
     if not user:
         raise HTTPException(404, 'User does not exist in that story, or story does not exist')

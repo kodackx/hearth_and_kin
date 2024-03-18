@@ -35,7 +35,6 @@ function login() {
     })
     .then(response => handleApiResponse(response, data => {
         localStorage.setItem('username', data.username);
-        localStorage.setItem('joinedStoryId', data.story_id); 
         window.location.href = '/dashboard';
     }))
     .catch((error) => {
