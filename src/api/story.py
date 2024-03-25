@@ -36,7 +36,6 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
 async def delete_story(*, story: StoryDelete, session: Session = Depends(get_session)):
     statement = select(Story).where(Story.story_id == story.story_id).where(Story.creator == story.character_id)
     db_story = session.exec(statement).first()
-
     if not db_story:
         raise HTTPException(404, 'This character was not the creator, therefore they cannot delete.')
 
@@ -48,10 +47,8 @@ async def delete_story(*, story: StoryDelete, session: Session = Depends(get_ses
 
     session.delete(db_story)
     session.commit()
-    # TODO: Story has no username field so cant implicitly cast to StoryDelete
-    deleted_story = StoryDelete(story_id=story.story_id, character_id=story.character_id)
-    await socket_manager.broadcast('delete_story', deleted_story, 0)
-    return deleted_story
+    await socket_manager.broadcast('delete_story', story, story.story_id)
+    return story
 
 
 
@@ -131,14 +128,14 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
 
 @router.post('/story/{story_id}/leave')
 async def leave_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
-    statement = select(Character).where(Character.character_id == story.character_id).where(Character.character_id == story.character_id)
-    user = session.exec(statement).first()
-    if not user:
+    statement = select(Character).where(Character.character_id == story.character_id).where(Character.story_id == story.story_id)
+    character = session.exec(statement).first()
+    if not character:
         raise HTTPException(404, 'User does not exist in that story, or story does not exist')
 
-    user.story_id = None
-    session.add(user)
+    character.story_id = None
+    session.add(character)
     session.commit()
-    session.refresh(user)
-    await socket_manager.broadcast('leave_story', StoryJoin.model_validate(story), 0)
+    session.refresh(character)
+    await socket_manager.broadcast('leave_story', story, story.story_id)
     return story

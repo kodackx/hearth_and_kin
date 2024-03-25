@@ -1,6 +1,4 @@
 from sqlmodel import SQLModel as Model, Field
-from sqlmodel import Relationship
-from typing import Optional
 
 
 class StoryBase(Model):
