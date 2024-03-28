@@ -158,12 +158,11 @@ async function sendMessage() {
 }
 
 function processMessage(data) {
+    console.log('Processing message...')
     try {
         if (data.soundtrack_path) {
             tryPlaySoundtrack(data.soundtrack_path);
-        } else {
-            tryPlaySoundtrack();
-        }
+        } 
         // var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
         let formattedMessage = data.narrator_reply;
         console.log('Received successful reply: ' + formattedMessage);
@@ -182,23 +181,23 @@ function processMessage(data) {
         var intervalTime = 1 / lines.length;
 
         // Set up the interval
-        var intervalId = setInterval(function () {
-            // Create a new div for the line
-            var lineDiv = document.createElement('div');
-            lineDiv.className = 'fade-in';
-            lineDiv.innerHTML = lines[lineIndex];
+        // var intervalId = setInterval(function () {
+        //     // Create a new div for the line
+        //     var lineDiv = document.createElement('div');
+        //     lineDiv.className = 'fade-in';
+        //     lineDiv.innerHTML = lines[lineIndex];
 
-            // Append the div to the message container
-            document.getElementById('chat-box').appendChild(lineDiv);
+        //     // Append the div to the message container
+        //     document.getElementById('chat-box').appendChild(lineDiv);
 
-            // Increment the line index
-            lineIndex++;
+        //     // Increment the line index
+        //     lineIndex++;
 
-                // If we've gone through all the lines, clear the interval
-                if (lineIndex >= lines.length) {
-                    clearInterval(intervalId);
-                }
-            }, intervalTime);
+        //         // If we've gone through all the lines, clear the interval
+        //         if (lineIndex >= lines.length) {
+        //             clearInterval(intervalId);
+        //         }
+        //     }, intervalTime);
 
         tryPlayAudio(data.audio_path);
         tryChangeBackgroundImage(data.image_path);
@@ -222,7 +221,9 @@ function handleMessage(message) {
             appendMessage(`${data.character_name}: ${data.message}`, 'user');
             break;
         case 'reply':
-            appendMessage('Narrator: ' + data.narrator_reply, 'reply')
+            processMessage(data);
+            console.log('processed message: ', data)
+            appendMessage('Narrator: ' + data.narrator_reply, 'narrator');
             break;
         default:
             alert('Got action ', action, ' from websocket. NYI')
@@ -249,7 +250,7 @@ function appendMessage(message, entity) {
     }
     const messageDiv = document.createElement('div');
     messageDiv.className = divClass;
-    messageDiv.textContent = message;
+    messageDiv.innerHTML = message;
     chatBox.appendChild(messageDiv);
     return messageDiv.id;
 }
@@ -329,7 +330,7 @@ function tryPlayAudio(audioPath) {
 }
 
 function tryPlaySoundtrack(soundtrackPath) {
-    if (soundtrackPath && currentSoundtrack.src !== soundtrackPath) {
+    if (soundtrackPath && currentSoundtrack.src !== new Audio(soundtrackPath).src)  {
         // If there's a new soundtrack and it's different from the current, change it
         currentSoundtrack.pause(); // Stop the current soundtrack
         currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
@@ -338,15 +339,17 @@ function tryPlaySoundtrack(soundtrackPath) {
         currentSoundtrack.play(); // Play the new soundtrack
     } else if (!soundtrackPath) {
         // If no soundtrackPath is provided, revert to the default ambiance audio
-        if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
-            currentSoundtrack.pause(); // Stop the current soundtrack
-            currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
-            currentSoundtrack.volume = 0.2; // Set volume
-            currentSoundtrack.loop = true; // Ensure it loops
-            currentSoundtrack.play(); // Play the default ambiance audio
-        }
+        // if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
+        //     currentSoundtrack.pause(); // Stop the current soundtrack
+        //     currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
+        //     currentSoundtrack.volume = 0.2; // Set volume
+        //     currentSoundtrack.loop = true; // Ensure it loops
+        //     currentSoundtrack.play(); // Play the default ambiance audio
+        // }
+    } else if (currentSoundtrack.src == new Audio(soundtrackPath).src) {
+        // If the provided soundtrackPath is the same as the current, do nothing
     }
-    // If the provided soundtrackPath is the same as the current, do nothing
+
 }
 
 // 3rd version of changing background image but this time with functioning transition

@@ -23,30 +23,23 @@ router = APIRouter()
 
 prompt_narrator = """
 The player is starting a new journey in Hearth and Kin, a game inspired from Dungeons and Dragons.
-You must act like a primordial being that exists in the mists of space, and guide them in creating a new character for a story.
+You must act like a primordial being that exists in the mists of an ancient forest, and whispers to the player to guide them in creating a new character for a story.
 
 Take them step by step and guide them as noted below:
 -
 From the mists of primordial space, where the planets dance in a celestial waltz, your character emerges. Begin to weave the tapestry of their existence.
-
 Envision them in the vastness of this universe. Who are they? What race do they belong to – are they a stoic Dwarf, a mystical Elf, a resourceful Human, or perhaps something more arcane? Let the stars whisper their race to your mind.
-
 Now, think of their class. Are they a brave Warrior, a cunning Rogue, or a wise Wizard? Each class carries its own destiny. What path does your character tread upon?
-
 Delve deeper into their essence. What is their name – a name that echoes in the halls of time? What are their most striking features? Do they bear scars of ancient battles, or eyes that glimmer with untold knowledge?
-
 Imagine their attire and armor. Is it a suit of unbreakable mail, robes woven with the threads of magic, or leathers as silent as the night?
-
 Consider their personality. Are they driven by honor, thirst for adventure, a quest for knowledge, or the shadows of their past?
-
 Finally, picture them holding an item of great significance. Is it a weapon engraved with runes, a mystical amulet, or an ancient tome? This item will be a companion in their journey.
-
 Let your words flow freely and paint the portrait of your character. Their story begins with your imagination. Here, in the realm of Hearth and Kin, every detail you conjure breathes life into their existence.
 -
 
 If we reach a point where we have enough information we can return a character portrait description.
-Please mark that section with "FINAL CHARACTER DESCRIPTION:". 
-The description should always start with the character name, like this "CHARACTER NAME: [name here]."
+Please mark that section with "FINAL CHARACTER DESCRIPTION:\n". 
+The description should always start with the character name, like this "CHARACTER NAME: [name here].\n"
 Please provide a detailed description of everything we know about the character. This information will be used to generate an avatar as well as for the rest of the campaign.
 
 Conversation with player so far:
@@ -104,7 +97,6 @@ def initialize_character_stats(name: str, description: str, portrait_path: str):
         'goal': 'Find a quest to embark on and a party to join'
     }
     return character_stats
-
 
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response):

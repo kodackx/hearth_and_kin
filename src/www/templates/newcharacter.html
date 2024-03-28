@@ -2,7 +2,7 @@
 <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
@@ -27,7 +27,8 @@
                     </div>
                 </div>
                 <!-- Input box for new messages -->
-                <div class="input-group mb-3" id="input-group">
+                <div class="input-group mb-3 first-time-button" id="input-group">
+                    <span id="first-time-text">I listen to the mists of creation...</span>
                     <input type="text" class="form-control" id="message-input" placeholder="Type a message">
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary" type="button" id="send-button">SEND</button>
@@ -180,15 +181,23 @@
     .creation-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Almendra', serif;
-        color: #72421f;
+        font-weight: 800;
+        font-size: 21px;
+        font-style: regular;
+        color: rgb(71 0 141);
         animation: fadeIn 3s ease-in;
+        text-shadow: 1px 1px 40px rgba(255, 255, 255, 0.8), -1px -1px 60px rgba(255, 255, 255, 0.8);
+        /* text-shadow: 2px 2px 4px #ffffff, -2px -2px 4px #ffffff, 2px -2px 4px #ffffff, -2px 2px 4px #ffffff; White shadow in all directions */
     }
 
     .user-message {
         font-size: larger; /* Adjust the font size as needed */
         font-family: 'Merriweather', serif;
-        color: #dd6712;
+        font-size: 28px;
+        color: #ffc973;
         animation: fadeIn 3s ease-in;
+        text-shadow:1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 15px rgba(0, 0, 0, 0.8);
+        /* text-shadow: 2px 2px 4px #ffffff, -2px -2px 4px #ffffff, 2px -2px 4px #ffffff, -2px 2px 4px #ffffff; White shadow in all directions */
     }
 
     body {
@@ -227,6 +236,7 @@
         display: flex;        /* Use flexbox */
         justify-content: center; /* Center horizontally */
         align-items: center;  /* Center vertically */
+        border: none;
     }
 
     .input-group {
@@ -260,21 +270,6 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
     }
 
-    /* Adjusted style for system messages (assuming .creation-message is for system messages) */
-    .creation-message {
-        font-size: larger; /* Adjust the font size as needed */
-        font-family: 'Almendra', serif;
-        color: #62320f; /* Keeping the original color for system messages */
-        animation: fadeIn 1s ease-in;
-    }
-
-    /* New style for user messages */
-    .user-message {
-        font-size: larger; /* Adjust the font size as needed */
-        font-family: 'Merriweather', serif;
-        color: #09420b; /* Example: Green text for user messages */
-        animation: fadeIn 2s ease-in;
-    }
     /* Hide scrollbar for Chrome, Safari and Opera */
     ::-webkit-scrollbar {
         width: 0px; /* Remove scrollbar space */
@@ -319,4 +314,38 @@
         background-size: cover;
         overflow: hidden;
     }
+
+     /* Define a one-time use class for the input box */
+     .first-time-button {
+        display: block;
+        width: 100%; /* Take full width */
+        padding: 15px 32px; /* Padding similar to a button */
+        margin: 4px 2px; /* Margin for spacing */
+        background-color: rgba(59, 3, 114, 0.8); /* Button color */
+        color: white; /* Text color */
+        border: none; /* No border */
+        border-radius: 85px; /* Rounded corners */
+        text-align: center; /* Center the text */
+        cursor: pointer; /* Change mouse cursor to pointer */
+        text-decoration: none; /* No underline */
+        font-size: larger; /* Larger font size */
+    }
+
+    /* Add this for the hover effect */
+    .first-time-button:hover {
+        background-color: rgba(83, 0, 166, 0.8); /* Button color */
+        box-shadow: 0 0 15px 5px rgba(165, 94, 234, 0.6); /* Glowing effect */
+        transition: box-shadow 0.3s ease-in-out; /* Smooth transition for the glow effect */
+    }
+    
+    #first-time-text {
+        display: block; /* Make the span behave like a block element */
+        text-align: center; /* Center the text horizontally */
+        width: 100%; /* Full width of the parent */
+        position: relative; /* Position relative to the parent */
+        top: 50%; /* Push down from the top half the height of the parent */
+        transform: translateY(-50%); /* Pull back up 50% of its own height to center vertically */
+        pointer-events: none; /* Ensures clicks go through to the button element */
+    }
 </style>
+
