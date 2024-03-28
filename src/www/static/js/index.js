@@ -34,11 +34,7 @@ function login() {
         }),
     })
     .then(response => handleApiResponse(response, data => {
-        console.log(data)
         localStorage.setItem('username', data.username);
-        if (data.story_id) {
-            localStorage.setItem('story_id', data.story_id);
-        }
         window.location.href = '/dashboard';
     }))
     .catch((error) => {

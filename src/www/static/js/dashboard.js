@@ -2,6 +2,7 @@ import { handleResponse } from './utils.js'
 document.getElementById('username').textContent = localStorage.getItem('username');
 let username = localStorage.getItem('username');
 let story_id = localStorage.getItem('story_id');
+
 var boxes = [
     { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
     { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
@@ -108,53 +109,70 @@ function selectCharacter(box, character) {
         console.log('Selected character:', character);
         // Save selected character data to localstorage
         localStorage.setItem('selectedCharacter', JSON.stringify(character));
+        localStorage.setItem('character_id', parseInt(character.character_id));
+        localStorage.setItem('story_id', character.story_id)
+        loadStories();
     }
 
 }
 
+function updateEventListener(box, func) {
+    box.boxElement.removeEventListener('click', box.clickHandler);
+    box.clickHandler = func(box);
+    box.boxElement.addEventListener('click', box.clickHandler);
+}
 
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
-    loadStories();
+    
 
 
     // Add event listeners to the boxes
     boxes.forEach(box => {
         // box.boxElement.addEventListener('click', createClickHandler(box));
-        box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
+        //box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
+        updateEventListener(box, createClickHandler)
     });
 }
 
 
 function createClickHandler(box) {
+    //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
     return function() {
         createStory(box);
     };
 }
 
+function joinClickHandler(box) {
+    return function() {
+        joinStory(box);
+    };
+}
+
 
 function playOrResumeStory(box) {
-    localStorage.setItem('story_id', box.storyId);
-    window.location.href = '/story';
+    return function() {
+        localStorage.setItem('story_id', box.storyId);
+        window.location.href = '/story';
+    }
 }
 
 
 function drawCreatedStory(box, story) {
-    // refreshBox(box);
     box.boxElement.style.backgroundColor = 'blue';
     box.storyCreated = true;
     box.creator = story.creator;
     box.storyId = story.story_id;
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    //box.boxElement.removeEventListener('click', createClickHandler(box));
-    box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
+    updateEventListener(box, joinClickHandler)
 }
 
 
 function drawActiveStory(box) {
+    box.storyActive = true;
     box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
     box.boxElement.style.backgroundColor = 'purple';
-    box.boxElement.addEventListener('click', () => playOrResumeStory(box), { 'once': true});
+    box.boxElement.removeEventListener('click', box.clickHandler);
     createButtons(box);
 }
 
@@ -162,6 +180,7 @@ function drawActiveStory(box) {
 function drawJoinedStory(box) {
     box.boxElement.querySelector('.box-footer').textContent = undefined;
     box.boxElement.style.backgroundColor = 'green';
+    box.boxElement.removeEventListener('click', box.clickHandler);
     createButtons(box);
 }
 
@@ -169,7 +188,7 @@ function drawJoinedStory(box) {
 function drawLeftStory(box) {
     box.boxElement.style.backgroundColor = 'blue';
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    box.boxElement.addEventListener('click', () => joinStory(box), { 'once': true});
+    updateEventListener(box, joinClickHandler)
     removeButtons(box);
 }
 
@@ -180,7 +199,7 @@ function drawDeletedStory(box) {
     box.storyId = undefined;
     box.storyCreated = false;
     box.creator = undefined;
-    box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
+    updateEventListener(box, createClickHandler)
     removeButtons(box);
 }
 
@@ -190,15 +209,20 @@ function loadStories() {
         method: 'GET',
     })
     .then(response => handleResponse(response, stories => {
+        const character = JSON.parse(localStorage.getItem('selectedCharacter'))
         // Draw created storys
         stories.forEach(story => {
             var box = boxes.find(box => box.boxId === story.story_id);
             box.storyId = story.story_id;
+            box.storyCreated = true
+            box.storyActive = story.active
+            box.creator = story.creator
+            console.log('Drawing story:', story);
             // Join any previously joined story
-            if (story.active && story_id == story.story_id) {
+            if (story.active && story.story_id == character.story_id) {
                 drawActiveStory(box)
             }
-            else if (!story.active && story_id == story.story_id) {
+            else if (!story.active && story.story_id == character.story_id) {
                 drawJoinedStory(box);
             } else {
                 drawCreatedStory(box, story);
@@ -215,6 +239,7 @@ function loadStories() {
 
 
 function createStory(box) {
+    const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story', {
         method: 'POST',
         headers: {
@@ -222,7 +247,7 @@ function createStory(box) {
         },
         body: JSON.stringify({
             story_id: box.boxId,
-            creator: username,
+            creator: character_id,
         }),
     })
     .then(response => handleResponse(response, data => {
@@ -236,8 +261,7 @@ function createStory(box) {
 
 
 function joinStory(box) {
-    let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-    let character_id = selectedCharacter.character_id;
+    const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story/' + box.storyId + '/join', {
         method: 'POST',
         headers: {
@@ -245,14 +269,13 @@ function joinStory(box) {
         },
         body: JSON.stringify({
             story_id: box.storyId,
-            username: username,
             character_id: character_id
         }),
     })
     .then(response => handleResponse(response, data => {
-            localStorage.setItem('story_id', data.storyId);
-            drawJoinedStory(box);
-            alert('Story joined!')
+        localStorage.setItem('story_id', data.story_id);
+        drawJoinedStory(box);
+        alert('Story joined!')
     }))
     .catch((error) => {
         alert(error);
@@ -261,8 +284,7 @@ function joinStory(box) {
 
 
 function playStory(box) {
-    let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-    let character_id = selectedCharacter.character_id;
+    const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story/' + box.storyId + '/play', {
         method: 'POST',
         headers: {
@@ -270,12 +292,12 @@ function playStory(box) {
         },
         body: JSON.stringify({
             story_id: box.storyId,
-            username: username,
             character_id: character_id
         }),
     })
     .then(response => handleResponse(response, data => {
-        playOrResumeStory(box)
+        localStorage.setItem('story_id', box.storyId);
+        window.location.href = '/story';
     }))
     .catch((error) => {
         alert(error);
@@ -284,13 +306,14 @@ function playStory(box) {
 
 
 function deleteStory(box) {
+    const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story/' + box.storyId, {
         method: 'DELETE',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            username: username,
+            character_id: character_id,
             story_id: box.storyId
         }),
     })
@@ -303,8 +326,7 @@ function deleteStory(box) {
 
 
 function leaveStory(box) {
-    let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-    let character_id = selectedCharacter.character_id;
+    const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story/' + box.storyId + '/leave', {
         method: 'POST',
         headers: {
@@ -312,7 +334,6 @@ function leaveStory(box) {
         },
         body: JSON.stringify({
             story_id: box.storyId,
-            username: username,
             character_id: character_id
         }),
     })
@@ -329,8 +350,10 @@ function leaveStory(box) {
 
 
 function createButtons(box) {
-    box.boxElement.removeEventListener('click', createClickHandler(box));
-    if (box.creator === username) {
+    const character_id = localStorage.getItem('character_id')
+    const story_id = localStorage.getItem('story_id')
+
+    if (box.creator === parseInt(character_id)) {
         var playButton = document.createElement('button');
         if (box.storyId === story_id) {
             playButton.innerHTML = 'Resume Story';
@@ -349,7 +372,7 @@ function createButtons(box) {
     box.boxElement.appendChild(leaveButton);
 
 
-    if (box.creator === username) {
+    if (box.creator === parseInt(character_id)) {
         var thirdButton = document.createElement('button');
         thirdButton.innerHTML = 'Delete Story';
         thirdButton.id = 'deleteButton' + box.boxId;  // Add a unique id
@@ -359,11 +382,6 @@ function createButtons(box) {
 }
 
 
-function refreshBox(box) {
-    var parent = box.parentNode;
-    var newBox = box.cloneNode(true);
-    parent.replaceChild(newBox, box);
-}
 function removeButtons(box) {
     // Find the left and right buttons within the boxElement
     var playButton = document.getElementById('playButton' + box.boxId);
@@ -389,4 +407,3 @@ function removeButtons(box) {
 
     }
 }
-

@@ -2,7 +2,8 @@ import logging
 
 DEBUG = True
 GENERATE_IMAGE = True
-GENERATE_AUDIO = True  # True
+GENERATE_AUDIO = True
+GENERATE_REPLY = True
 logger = logging.getLogger(__name__)
 
 if DEBUG:

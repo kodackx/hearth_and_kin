@@ -22,7 +22,6 @@ app = FastAPI()
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
 app.mount('/data', StaticFiles(directory=Path('data')), name='data')
 
-
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()

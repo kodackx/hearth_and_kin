@@ -1,11 +1,22 @@
 import { handleResponse } from './utils.js'
+import * as messageApi from './api/message.js'
+import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-let character_id = selectedCharacter.character_id;
-const username = localStorage.getItem('username');
+let character_id = parseInt(selectedCharacter.character_id);
+let character_name = selectedCharacter.character_name;
+
+export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
+
+connectToWebSocket(webSocketEndpoint, handleMessage);
+window.addEventListener('beforeunload', function () {
+    closeWebSocket(webSocketEndpoint);
+});
+
+// Set up elements
 
 // event listeners and hiding play elements for now
 document.getElementById('main-content').style.display = 'none';
@@ -82,21 +93,21 @@ async function drawStoryPage() {
 
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
     await fetch(`/story/${story_id}/messages`)
-    .then(response => handleResponse(response, messages => {
+        .then(response => handleResponse(response, messages => {
 
-        if (messages.length === 0) {
-            // If no history is found, display the current introduction message
-            appendMessage(`
+            if (messages.length === 0) {
+                // If no history is found, display the current introduction message
+                appendMessage(`
                 Welcome to the beginning of your adventure! Type a message to get started. 
                 You can also press the Enter key to send a message.
                 Suggestion: You can type 'I open my eyes' or 'Describe the world, its lore and my character'.
             `, 'system');
-        } else {
-            // Iterate through the array of messages and append them to the main-content
-            messages.forEach(message => {
-                appendMessage('User: ' + message.message, 'user');
-                appendMessage('Narrator: ' + message.narrator_reply, 'narrator');
-            });
+            } else {
+                // Iterate through the array of messages and append them to the main-content
+                messages.forEach(message => {
+                    appendMessage(`${message.character_name}: ${message.message}`, 'user');
+                    appendMessage('Narrator: ' + message.narrator_reply, 'narrator');
+                });
 
             const lastMessage = messages[messages.length - 1]
             // print lastMessage to check object for debugging
@@ -134,7 +145,7 @@ async function sendMessage() {
     tryPlayAudio();
     // read and append message
     const message = document.getElementById('message-input').value;
-    appendMessage('User: ' + message, 'user');
+
     document.getElementById('send-button').style.display = 'none';
     document.getElementById('message-input-group').classList.add('waiting-state');
     document.getElementById('message-input').disabled = true;
@@ -142,74 +153,81 @@ async function sendMessage() {
     document.getElementById('message-input').value = '';
     document.getElementById('spinner').style.display = 'flex';
 
-    fetch('/message', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            message: message, 
-            username: username,
-            character_id: character_id,
-            story_id: story_id
-        }),
-    })
-    .then(response => handleResponse(response, data => {
+    // Send data to the server
+    messageApi.sendMessage(message, story_id, character_id, character_name)
+}
+
+function processMessage(data) {
+    try {
         if (data.soundtrack_path) {
             tryPlaySoundtrack(data.soundtrack_path);
         } else {
             tryPlaySoundtrack();
         }
-        if (data.narrator_reply) {
-            // var formattedMessage = data.narrator_reply.replace(/\n/g, '<br>');
-            let formattedMessage = data.narrator_reply;
-            console.log('Received successful reply: ' + formattedMessage);
-            document.getElementById('send-button').style.display = 'block';
-            document.getElementById('spinner').style.display = 'none';
-            document.getElementById('message-input-group').classList.remove('waiting-state');
-            document.getElementById('message-input').disabled = false;
-            document.getElementById('message-input').placeholder = "What do you do next?";
-            document.getElementById('message-input').value = '';
-            document.getElementById('message-input').focus();
-            // Split the formattedMessage into lines
-            var lines = formattedMessage.split('<br>');
-            var lineIndex = 0;
+        // var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
+        let formattedMessage = data.narrator_reply;
+        console.log('Received successful reply: ' + formattedMessage);
+        document.getElementById('send-button').style.display = 'block';
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('message-input-group').classList.remove('waiting-state');
+        document.getElementById('message-input').disabled = false;
+        document.getElementById('message-input').placeholder = "What do you do next?";
+        document.getElementById('message-input').value = '';
+        document.getElementById('message-input').focus();
+        // Split the formattedMessage into lines
+        var lines = formattedMessage.split('<br>');
+        var lineIndex = 0;
 
-            // Calculate the interval time
-            var intervalTime = 1 / lines.length;
+        // Calculate the interval time
+        var intervalTime = 1 / lines.length;
 
-            // Set up the interval
-            var intervalId = setInterval(function() {
-                // Create a new div for the line
-                var lineDiv = document.createElement('div');
-                lineDiv.className = 'fade-in';
-                lineDiv.innerHTML = lines[lineIndex];
+        // Set up the interval
+        var intervalId = setInterval(function () {
+            // Create a new div for the line
+            var lineDiv = document.createElement('div');
+            lineDiv.className = 'fade-in';
+            lineDiv.innerHTML = lines[lineIndex];
 
-                // Append the div to the message container
-                document.getElementById('chat-box').appendChild(lineDiv);
+            // Append the div to the message container
+            document.getElementById('chat-box').appendChild(lineDiv);
 
-                // Increment the line index
-                lineIndex++;
+            // Increment the line index
+            lineIndex++;
 
                 // If we've gone through all the lines, clear the interval
                 if (lineIndex >= lines.length) {
                     clearInterval(intervalId);
                 }
             }, intervalTime);
-        } else {
-            appendMessage('Failed to send message.', 'system');
-        }
 
         tryPlayAudio(data.audio_path);
         tryChangeBackgroundImage(data.image_path);
         tryPlaySubtitles(data.narrator_reply);
-    }))
-    .catch((error) => {
-        console.error(error);
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('send-button').style.display = 'block';
-        alert(error);
-    });
+    } catch {(error) => {
+            console.error(error);
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('send-button').style.display = 'block';
+            alert(error)
+        }
+    }
+}
+
+function handleMessage(message) {
+    let parsedMessage = JSON.parse(message.data);
+    let action = parsedMessage.action;
+    let data = parsedMessage.data;
+    console.log('client received: ', parsedMessage);
+    switch (action) {
+        case 'message':
+            appendMessage(`${data.character_name}: ${data.message}`, 'user');
+            break;
+        case 'reply':
+            appendMessage('Narrator: ' + data.narrator_reply, 'reply')
+            break;
+        default:
+            alert('Got action ', action, ' from websocket. NYI')
+            break
+    }
 }
 
 // Function to append a new message to the chat box
