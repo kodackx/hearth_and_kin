@@ -3,14 +3,12 @@ import os
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-import httpx
-from PIL import Image
-from io import BytesIO
 import base64
 from ..core.config import logger
+from ..core import azure
 
 
-def generate_image(prompt_text):
+def generate(prompt_text):
     llm = ChatOpenAI(model_name='gpt-3.5-turbo')  # type: ignore
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
@@ -45,34 +43,11 @@ def generate_image(prompt_text):
     return image_url
 
 
-async def store_image(image_url: str, type: str) -> str:
-    if type == 'story':
-        # obtain image from url
-        async with httpx.AsyncClient() as client:
-            response = await client.get(image_url)
-        img = Image.open(BytesIO(response.content))
-        # define path to save image
-        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-        dir_path = os.path.join('data', 'visuals', visual_id)
-        os.makedirs(dir_path, exist_ok=True)
-        file_path = os.path.join(dir_path, 'image.jpg')
-        img.save(file_path)
-        return file_path
-    elif type== 'character':
-        # obtain image from url
-        async with httpx.AsyncClient() as client:
-            response = await client.get(image_url)
-        img = Image.open(BytesIO(response.content))
-        # define path to save image
-        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-        # dir_path = os.path.join('data', 'characters', visual_id)
-        dir_path = os.path.join('src', 'www', 'static', 'characters', visual_id)
-        os.makedirs(dir_path, exist_ok=True)
-        file_path = os.path.join(dir_path, 'character.jpg')
-        img.save(file_path)
-        serve_image_path = file_path.replace('src/www/', '')
-        return serve_image_path 
-    else:
-        error = 'Invalid store image type. Can only store `character` or `story` images'
-        return error
-    
+async def store(image_url: str, type: str) -> tuple[str,str]:
+    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+    if type == 'character':
+        path = f'img/characters/{unique_id}.jpg'
+    elif type == 'story':
+        path = f'img/stories/{unique_id}.jpg'
+    azure_url = azure.store_public(remote_path=path, url = image_url)
+    return unique_id, azure_url

@@ -3,7 +3,7 @@ import * as messageApi from './api/message.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 let currentAudio = null; // Add this at the top of your script
-let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
+let currentSoundtrack = new Audio("azure/public/audio/soundtracks/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = parseInt(selectedCharacter.character_id);
@@ -86,7 +86,7 @@ async function drawStoryPage() {
     document.getElementById('party-container').style.display = 'none';
     document.getElementById('developer-options-container').style.display = 'none';
     document.getElementById('dev-button').style.display = 'none';
-    var imagePath = "static/img/login1.png";
+    var imagePath = "static/public/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     currentSoundtrack.volume = 0.3;
     currentSoundtrack.play();
