@@ -44,7 +44,7 @@ def generate(prompt_text):
     return image_url
 
 
-def store(image_url: str, filename: Optional[str], type: str) -> tuple[str,str]:
+def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
     """
     Store an image from an URL in Azure Blob Storage and return the url to the stored file
     """

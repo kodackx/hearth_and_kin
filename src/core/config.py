@@ -20,8 +20,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 load_dotenv('.env')
-AZURE_KEYVAULT_URL = 'https://hearthandkin.vault.azure.net/'
-AZURE_BLOB_URL = 'https://hearthandkin.blob.core.windows.net/'
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY') or get_secret('OPENAI-API-KEY')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY') or get_secret('ELEVENLABS-API-KEY')
 ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID') or get_secret('ELEVENLABS-VOICE-ID')

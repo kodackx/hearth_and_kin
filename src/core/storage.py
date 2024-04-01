@@ -1,8 +1,9 @@
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-from .config import AZURE_BLOB_URL, AZURE_KEYVAULT_URL
 
+AZURE_KEYVAULT_URL = 'https://hearthandkin.vault.azure.net/'
+AZURE_BLOB_URL = 'https://hearthandkin.blob.core.windows.net/'
 # Create an instance of the DefaultAzureCredential class to authenticate with Azure using managed identity
 credential = DefaultAzureCredential()
 

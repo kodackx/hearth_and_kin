@@ -10,7 +10,7 @@ def generate(text: str) -> bytes | Iterator[bytes]:
 
     return audio
 
-def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str]) -> tuple[str, str]:
+def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
     if not filename:
         filename = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
     
