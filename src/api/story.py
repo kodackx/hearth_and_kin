@@ -28,7 +28,6 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
-    await socket_manager.broadcast('create_story', StoryCreate.model_validate(new_story), story.story_id)
     return new_story
 
 

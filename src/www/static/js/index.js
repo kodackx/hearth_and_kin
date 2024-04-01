@@ -64,4 +64,3 @@ function handleApiResponse(response, successCallback) {
     }
     return response.json().then(successCallback)
 }
-

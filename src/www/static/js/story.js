@@ -86,7 +86,7 @@ async function drawStoryPage() {
     document.getElementById('party-container').style.display = 'none';
     document.getElementById('developer-options-container').style.display = 'none';
     document.getElementById('dev-button').style.display = 'none';
-    var imagePath = "static/public/img/login1.png";
+    var imagePath = "azure/public/img/www/login1.png";
     tryChangeBackgroundImage(imagePath);
     currentSoundtrack.volume = 0.3;
     currentSoundtrack.play();
