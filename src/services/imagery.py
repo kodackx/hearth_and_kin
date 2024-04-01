@@ -1,3 +1,4 @@
+from typing import Optional
 from langchain.utilities.dalle_image_generator import DallEAPIWrapper
 import os
 from langchain.chat_models import ChatOpenAI
@@ -43,11 +44,15 @@ def generate(prompt_text):
     return image_url
 
 
-def store(image_url: str, type: str) -> tuple[str,str]:
-    unique_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+def store(image_url: str, filename: Optional[str], type: str) -> tuple[str,str]:
+    """
+    Store an image from an URL in Azure Blob Storage and return the url to the stored file
+    """
+    if not filename:
+        filename = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
     if type == 'character':
-        path = f'img/characters/{unique_id}.jpg'
+        path = f'img/characters/{filename}.jpg'
     elif type == 'story':
-        path = f'img/stories/{unique_id}.jpg'
+        path = f'img/stories/{filename}.jpg'
     azure_url = storage.store_public(remote_path=path, url = image_url)
-    return unique_id, azure_url
+    return filename, azure_url

@@ -25,6 +25,9 @@ async def on_startup():
 
 @app.get("/azure/{file_path:path}")
 async def get_azure_file(file_path: str):
+    """
+    All requests to /azure/* will be redirected to the Azure CDN URL.
+    """
     return RedirectResponse(url=f"{AZURE_CDN_URL}/{file_path}")
 
 @app.get('/')

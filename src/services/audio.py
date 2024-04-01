@@ -1,6 +1,6 @@
 import base64
 import os
-from typing import Iterator
+from typing import Iterator, Optional
 
 # client = OpenAI()
 # Obtain your API key from elevenlabs.ai
@@ -23,12 +23,13 @@ def generate(text: str) -> bytes | Iterator[bytes]:
 
     return audio
 
-def store(audio_bytes: bytes | Iterator[bytes]) -> tuple[str, str]:
-    audio_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str]) -> tuple[str, str]:
+    if not filename:
+        filename = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
     
-    audio_url = storage.store_public(remote_path=f'audio/{audio_id}.mp3', file=audio_bytes)
+    audio_url = storage.store_public(remote_path=f'audio/{filename}.mp3', file=audio_bytes)
 
-    return audio_id, audio_url
+    return filename, audio_url
 
 # def generate_new_line(base64_image):
 #     return [
