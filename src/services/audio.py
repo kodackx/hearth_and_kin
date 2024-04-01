@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # import simpleaudio as sa
 import elevenlabs
-from ..core import storage
+from ..core import azure
 
 load_dotenv('.env')
 
@@ -26,7 +26,7 @@ def generate(text: str) -> bytes | Iterator[bytes]:
 def store(audio_bytes: bytes | Iterator[bytes]) -> tuple[str, str]:
     audio_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
     
-    audio_url = storage.store_public(remote_path=f'audio/{audio_id}.mp3', file=audio_bytes)
+    audio_url = azure.store_public(remote_path=f'audio/{audio_id}.mp3', file=audio_bytes)
 
     return audio_id, audio_url
 

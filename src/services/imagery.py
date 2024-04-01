@@ -5,7 +5,7 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 import base64
 from ..core.config import logger
-from ..core import storage
+from ..core import azure
 
 
 def generate(prompt_text):
@@ -49,5 +49,5 @@ async def store(image_url: str, type: str) -> tuple[str,str]:
         path = f'img/characters/{unique_id}.jpg'
     elif type == 'story':
         path = f'img/stories/{unique_id}.jpg'
-    azure_url = storage.store_public(remote_path=path, url = image_url)
+    azure_url = azure.store_public(remote_path=path, url = image_url)
     return unique_id, azure_url
