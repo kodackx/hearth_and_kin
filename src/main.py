@@ -1,7 +1,5 @@
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -9,15 +7,9 @@ from fastapi.responses import RedirectResponse
 from .api import character, message, story, user, newcharacter
 from .core.database import create_db_and_tables, get_session
 
-load_dotenv('.env')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-AZURE_CDN_URL = os.getenv('AZURE_CDN_URL')
-AZURE_CONNECTION_STRING = os.getenv('AZURE_CONNECTION_STRING')
-
 app = FastAPI()
 app.mount('/js', StaticFiles(directory=Path('src/www/static/js')), name='js')
+AZURE_CDN_URL = 'https://cdn-fjgyffdwahaegmgb.z01.azurefd.net/'
 
 @app.router.on_startup.append
 async def on_startup():

@@ -1,22 +1,9 @@
 import base64
 import os
 from typing import Iterator, Optional
-
-# client = OpenAI()
-# Obtain your API key from elevenlabs.ai
-# Using .env file to store API key
-from dotenv import load_dotenv
-
-# import simpleaudio as sa
 import elevenlabs
 from ..core import storage
-
-load_dotenv('.env')
-
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-assert ELEVENLABS_VOICE_ID is not None
-elevenlabs.set_api_key(ELEVENLABS_API_KEY)
+from ..core.config import ELEVENLABS_VOICE_ID
 
 def generate(text: str) -> bytes | Iterator[bytes]:
     audio = elevenlabs.generate(text, voice=ELEVENLABS_VOICE_ID)
