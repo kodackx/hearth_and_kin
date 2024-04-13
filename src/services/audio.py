@@ -1,35 +1,22 @@
 import base64
 import os
+from typing import Iterator, Optional
+import elevenlabs
+from ..core import storage
+from ..core.config import ELEVENLABS_VOICE_ID
 
-# client = OpenAI()
-# Obtain your API key from elevenlabs.ai
-# Using .env file to store API key
-from dotenv import load_dotenv
+def generate(text: str) -> bytes | Iterator[bytes]:
+    audio = elevenlabs.generate(text, voice=ELEVENLABS_VOICE_ID)
 
-# import simpleaudio as sa
-from elevenlabs import generate, set_api_key
+    return audio
 
-load_dotenv('.env')
+def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
+    if not filename:
+        filename = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+    
+    audio_url = storage.store_public(remote_path=f'audio/{filename}.mp3', file=audio_bytes)
 
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-set_api_key(ELEVENLABS_API_KEY)
-
-
-def obtain_audio(text: str) -> tuple[str, str]:
-    audio = generate(text, voice=ELEVENLABS_VOICE_ID)
-
-    audio_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    dir_path = os.path.join('data', 'narration', audio_id)
-    os.makedirs(dir_path, exist_ok=True)
-    file_path = os.path.join(dir_path, 'audio.wav')
-    print(f"[GEN AUDIO] Audio file saved at: {file_path}")
-    # this writes audio to storage already, no need for below
-    with open(file_path, 'wb') as f:
-        f.write(audio)  # type: ignore
-
-    return audio_id, file_path
-    # play(audio)
+    return filename, audio_url
 
 # def generate_new_line(base64_image):
 #     return [

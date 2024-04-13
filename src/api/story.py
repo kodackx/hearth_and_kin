@@ -28,7 +28,6 @@ async def create_story(*,story: StoryCreate, session: Session = Depends(get_sess
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
-    await socket_manager.broadcast('create_story', StoryCreate.model_validate(new_story), 0)
     return new_story
 
 
@@ -96,7 +95,7 @@ async def join_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.add(db_story)  # Make sure to add the updated story to the session
     session.commit()
     session.refresh(db_character)
-    await socket_manager.broadcast('join_story', story, 0)
+    await socket_manager.broadcast('join_story', story, story.story_id)
     return story
 
 
@@ -122,7 +121,7 @@ async def play_story(*, story: StoryJoin, session: Session = Depends(get_session
     session.commit()
     session.refresh(db_story)
     session.refresh(db_character)
-    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), 0)
+    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), story.story_id)
     return db_story
 
 

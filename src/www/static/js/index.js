@@ -1,6 +1,7 @@
 document.getElementById('registerBtn').addEventListener('click', register);
 document.getElementById('loginBtn').addEventListener('click', login);
 
+
 function register() {
     var username = document.getElementById('username').value;
     var password = document.getElementById('password').value;

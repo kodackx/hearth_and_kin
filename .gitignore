@@ -10,5 +10,4 @@ src/www/static/ethereal.m4a
 *.wav
 *.txt
 .DS_Store
-src/www/.DS_Store
-src/.DS_Store
+poetry.lock

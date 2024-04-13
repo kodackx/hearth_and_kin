@@ -13,7 +13,7 @@ document.getElementById('start-button').addEventListener('click', function() {
     // displayIntroText()
     var imageUrl = "";
     // changeBackgroundImage(imageUrl);
-    var ambiance = "static/soundtrack/wilderness.m4a";
+    var ambiance = "azure/public/audio/soundtracks/wilderness.m4a";
     let audio = new Audio(ambiance);
     audio.volume = 0.5; // 50% volume
     audio.play();

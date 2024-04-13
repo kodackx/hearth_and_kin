@@ -1,32 +1,26 @@
-import os
 from pathlib import Path
 
-# from .core.database import create_db_and_tables
-# import os
-# from .api import user, room, game, character, message
-
-# read OPENAI_API_KEY from .env file
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 
 from .api import character, message, story, user, newcharacter
 from .core.database import create_db_and_tables, get_session
 
-load_dotenv('.env')
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
-ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-
 app = FastAPI()
-app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
-app.mount('/data', StaticFiles(directory=Path('data')), name='data')
+app.mount('/js', StaticFiles(directory=Path('src/www/static/js')), name='js')
+AZURE_CDN_URL = 'https://cdn-fjgyffdwahaegmgb.z01.azurefd.net/'
 
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
-    
 
+@app.get("/azure/{file_path:path}")
+async def get_azure_file(file_path: str):
+    """
+    All requests to /azure/* will be redirected to the Azure CDN URL.
+    """
+    return RedirectResponse(url=f"{AZURE_CDN_URL}/{file_path}")
 
 @app.get('/')
 async def home(request: Request):
@@ -53,19 +47,5 @@ async def story_page(request: Request):
 async def characterflow(request: Request):
     return Response(content=open('src/www/templates/newcharacter.html', 'r').read(), media_type='text/html')
 
-
-# TODO: figure out how this works in fastapi
-"""
-@socketio.on('join_game')
-def handle_join_game(data):
-    story_id = data.get('story_id')
-    username = session.get('username')
-    
-    if story_id not in game_storys:
-        return {'error': 'Story does not exist'}
-    
-    game_storys[story_id]['players'].append(username)
-    socketio.emit('player_joined', {'username': username}, story=story_id)
-"""
 if __name__ == '__main__':
     pass

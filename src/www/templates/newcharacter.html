@@ -6,12 +6,12 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="static/js/newcharacter.js"></script>
+    <script type="module" src="js/newcharacter.js"></script>
 </head>
 <body>
     <button id="start-button">Create your character...</button>
     <video autoplay muted loop playsinline id="background-video">
-        <source src="static/img/char_create_video.mp4" type="video/mp4">
+        <source src="azure/public/videos/www/char_create_video.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
     <div class="flex-container" id="main-content">
@@ -44,7 +44,7 @@
 </html>
 <style>
     body {
-        /* background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('static/character_creation.png'); */
+        /* background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('azure/public/img/www/character_creation.png'); */
         background-color: rgba(18, 0, 46, 0.901);
         background-repeat: no-repeat;
         background-size: cover;
@@ -83,7 +83,7 @@
     }
 
     #story-image {
-        /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+        /* background-image: url("{{ url_for('azure', filename='login1.png') }}"); */
         display: none;
         flex: 20%;
         animation: fadeIn cubic-bezier(0.65, 0.05, 0.36, 1) 5s;
@@ -206,7 +206,7 @@
     }
 
     #chat-container {
-        /* background-image: url("{{ url_for('static', filename='login1.png') }}"); */
+        /* background-image: url("{{ url_for('azure', filename='login1.png') }}"); */
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
