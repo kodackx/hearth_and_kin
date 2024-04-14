@@ -2,9 +2,13 @@ version: '3.4'
 
 services:
   hearthandkin:
-    image: hearthandkin.azurecr.io/hearthandkin
+    image: sjoeborg/hearthandkin:latest
     build:
       context: .
       dockerfile: ./Dockerfile
     ports:
       - 8000:8000
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID}
