@@ -56,17 +56,29 @@ poetry env use $(which python)
 Install dependencies locally
 
 ```bash
-poetry install --no-root
+make install
 ```
 
 Run tests (pytest)
 
 ```bash
-poetry run pytest
+make test
 ```
 
 Run app
 
 ```bash
-poetry run uvicorn src.main:app --reload
+make run
+```
+
+Build app (Docker)
+
+```bash
+make build
+```
+
+Run app (Docker)
+
+```bash
+make docker-run
 ```
