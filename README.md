@@ -21,6 +21,12 @@ MIRO Board: https://miro.com/app/board/uXjVNDj7Uxc=/
 - AI Integration: This application uses OpenAI's API to integrate AI capabilities.
 - Environment Variables: This application uses dotenv to manage environment variables.
 
+## AI Agent Orchestration and Models
+
+- This application uses Langgraph to orchestrate the AI agents.
+- Separate AI bots are use to handle different aspects of storytelling such as: narrating, character creation, and worldbuilding.
+- Different models can be used for each bot, options include: GPT-4, Claude 3 Opus, and Llama3 (served through Groq).
+
 ## Code Structure
 
 The main application is created as a FastAPI object. The application is configured to use a SQLite database located at 'db/test.db'.
