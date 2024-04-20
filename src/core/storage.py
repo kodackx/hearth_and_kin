@@ -1,11 +1,18 @@
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+import os
+from dotenv import load_dotenv
 
 AZURE_KEYVAULT_URL = 'https://hearthandkin.vault.azure.net/'
 AZURE_BLOB_URL = 'https://hearthandkin.blob.core.windows.net/'
 # Create an instance of the DefaultAzureCredential class to authenticate with Azure using managed identity
+load_dotenv('.env')
 credential = DefaultAzureCredential()
+# print("### testing that azure creds work below:")
+# print(os.environ.get('AZURE_CLIENT_ID'))
+# print(os.environ.get('AZURE_CLIENT_SECRET'))
+# print(os.environ.get('AZURE_TENANT_ID'))
 
 # Initialize a connection to the Azure storage account
 blob_service_client = BlobServiceClient(account_url=AZURE_BLOB_URL, credential=credential)
