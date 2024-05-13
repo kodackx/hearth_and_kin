@@ -120,7 +120,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
             portrait_url = imagery.generate(narrator_reply)
-            _, portrait_path = imagery.store(portrait_url, type='character')
+            _, portrait_path = await imagery.store(portrait_url, type='character')
             logger.debug(f'[MESSAGE] {portrait_path = }')
             # portrait_image = imagery.obtain_image_from_url(portrait_path)
             # logger.debug(f'[MESSAGE] {portrait_image = }')
