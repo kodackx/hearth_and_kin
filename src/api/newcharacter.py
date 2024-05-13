@@ -62,7 +62,7 @@ prompt = ChatPromptTemplate.from_messages(
 memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
 llm = ChatOpenAI(
-    model_name='gpt-4',
+    model_name='gpt-4o',
     # max_tokens=max_length,
     temperature=0.5,
 )
