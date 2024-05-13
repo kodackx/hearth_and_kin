@@ -26,6 +26,12 @@ favicon_path = 'src/www/static/img/favicon.ico'
 def favicon():
     return FileResponse(favicon_path)
 
+# router = APIRouter(prefix="/favicon.ico")
+favicon_path = 'src/www/static/img/favicon.ico'
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(favicon_path)
+
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
