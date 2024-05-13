@@ -8,6 +8,8 @@ from .api import character, message, story, user, newcharacter
 from .core.database import create_db_and_tables, get_session
 
 app = FastAPI()
+app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
+app.mount('/data', StaticFiles(directory=Path('data')), name='data')
 app.mount('/js', StaticFiles(directory=Path('src/www/static/js')), name='js')
 AZURE_CDN_URL = 'https://cdn-fjgyffdwahaegmgb.z01.azurefd.net/'
 

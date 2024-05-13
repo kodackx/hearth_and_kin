@@ -57,7 +57,6 @@ Don't blabber on. Keep your responses to a reasonable length and get to the poin
 MOST IMPORTANTLY: 
 Respect your audience. Show, don't tell. 
 Come up with unique plot twists that build on character backstories.
-Return the narrator replies as HTML as they will be displayed in the browser. Feel free to bold words where necessary.
 
 Additional notes for guidance:
 Craft an epic tale set in a fantastical world where magic intertwines with destiny. 
@@ -68,7 +67,8 @@ Above all, channel the spirit of storytelling maestro Matthew Mercer, where ever
 Show, don't tell, as you transport the audience into a realm where dragons soar, heroes rise, and legends are born.
 
 Notes for API response:
-Limit your answers to two paragraphs. Be concise and direct about the narrative.
+Limit your answers to two or three paragraphs, as you see fit. Be concise and direct about the narrative.
+Please do not use asterisks in your response, just newline characters (\n).
 
 Story so far:
 {chat_history}
@@ -96,7 +96,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
         memory.chat_memory.add_ai_message(message.narrator_reply)
 
     llm = ChatOpenAI(
-        model_name='gpt-4-0125-preview',  # type: ignore
+        model_name='gpt-4o',  # type: ignore
         # max_tokens=300,
         temperature=0.5,
     )
