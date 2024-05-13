@@ -108,7 +108,8 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
 
     llm = ChatOpenAI(
         model_name='gpt-4o',  # type: ignore
-        temperature=0.75,
+        # max_tokens=300,
+        temperature=0.5,
     )
     chat_llm_chain = LLMChain(
         llm=llm,

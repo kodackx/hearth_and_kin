@@ -3,6 +3,7 @@ import {showToast} from './utils.js'
 import * as messageApi from './api/message.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
+let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
@@ -103,6 +104,13 @@ async function drawStoryPage() {
     populateCharacterSheet();
     document.getElementById('ready-btn').style.display = 'none';
     document.getElementById('main-content').style.display = 'flex';
+    document.getElementById('toggle-chat-btn').style.display = 'block';
+    document.getElementById('toggle-character-sheet-btn').style.display = 'block';
+    // hide elements (button, party list, options frame)
+    this.style.display = 'none';
+    document.getElementById('party-container').style.display = 'none';
+    document.getElementById('developer-options-container').style.display = 'none';
+    document.getElementById('dev-button').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     currentSoundtrack.volume = 0.1;
@@ -378,9 +386,25 @@ function processNextNarration() {
 
 
 function tryPlaySoundtrack(soundtrackPath) {
-    // Extract the filename from the soundtrackPath for comparing with the current soundtrack
-    const newSoundtrackFilename = soundtrackPath ? soundtrackPath.split('/').pop() : null;
-    const currentSoundtrackFilename = currentSoundtrack.src ? currentSoundtrack.src.split('/').pop() : null;
+    if (soundtrackPath && currentSoundtrack.src !== new Audio(soundtrackPath).src)  {
+        // If there's a new soundtrack and it's different from the current, change it
+        currentSoundtrack.pause(); // Stop the current soundtrack
+        currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
+        currentSoundtrack.volume = 0.1; // Set a reasonable volume
+        currentSoundtrack.loop = true; // Loop the soundtrack
+        currentSoundtrack.play(); // Play the new soundtrack
+    } else if (!soundtrackPath) {
+        // If no soundtrackPath is provided, revert to the default ambiance audio
+        // if (currentSoundtrack.src !== "static/soundtrack/ambiance.m4a") {
+        //     currentSoundtrack.pause(); // Stop the current soundtrack
+        //     currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Revert to the default ambiance audio
+        //     currentSoundtrack.volume = 0.2; // Set volume
+        //     currentSoundtrack.loop = true; // Ensure it loops
+        //     currentSoundtrack.play(); // Play the default ambiance audio
+        // }
+    } else if (currentSoundtrack.src == new Audio(soundtrackPath).src) {
+        // If the provided soundtrackPath is the same as the current, do nothing
+    }
 
     // If the provided soundtrackPath is the same as the current, do nothing
     // If there's a new soundtrack and it's different from the current, change it

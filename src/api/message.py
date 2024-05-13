@@ -59,37 +59,39 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     ).all()
     chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id)  # type: ignore
     
-    # Retrieve the story to get character IDs
-    story = session.get(Story, message.story_id)
-    if not story:
-        raise HTTPException(404, 'Story not found')
-
-    character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
-    characters = session.exec(
-        select(Character).where(Character.character_id.in_(character_ids))
-    ).all()
-    
-    character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
-    party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
-
-    
-    logger.debug(f'[MESSAGE] {message.message = }')
-    # Not sure if we want to get this from the endpoint or just query the db here
-    character = session.get(Character, message.character_id)
-    if character is None:
-        raise HTTPException(404, 'Character not found')
-
+    # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
+    audio_url = image_url = soundtrack_path = narrator_reply = None
     try:
-        # Generate the reply first
-        narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context)
+        logger.debug(f'[MESSAGE] {message.message = }')
+        # Not sure if we want to get this from the endpoint or just query the db here
+        character = session.get(Character, message.character_id)
+        if character is None:
+            raise HTTPException(404, 'Character not found')
+        # Will send to openai and obtain reply
+        if GENERATE_REPLY:
+            narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
+            soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
+            for directive in soundtrack_directives:
+                if directive in narrator_reply:
+                    # Handle the soundtrack directive here
+                    # For example, log it or set a path to the soundtrack file
+                    logger.debug(f'[MESSAGE] Soundtrack directive found: {directive}')
+                    # Extract the soundtrack name from the directive
+                    soundtrack_name = directive.strip('[]').split(': ')[1]
+                    # Assuming you have a method to get the path of the soundtrack
+                    soundtrack_path = f'/static/soundtrack/{soundtrack_name}'
+                    logger.debug(f'[MESSAGE] Soundtrack path: {soundtrack_path}')
+                    # Remove the directive from the narrator_reply to clean up the final message
+                    narrator_reply = narrator_reply.replace(directive, '').strip()
+                    break  # Assuming only one soundtrack directive per reply, break after handling the first one found
 
-
-        # Generate narration and image concurrently and broadcast results as they complete
-        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id))
-        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id))
-
-        narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
-        subtitles, audio_paths = narration_tuple
+            if GENERATE_AUDIO:  # Will send to narrator and obtain audio
+                audio_data = audio.generate(narrator_reply)
+                _, audio_url = audio.store(audio_bytes=audio_data)
+            if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
+                image_url = imagery.generate(narrator_reply)
+                _ , image_url = await imagery.store(image_url=image_url, type='story')
+                logger.debug(f'[MESSAGE] {image_url = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
