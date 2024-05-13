@@ -26,4 +26,7 @@ ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID') or get_secret('ELEVENLABS
 assert OPENAI_API_KEY is not None, 'Add OPENAI_API_KEY to .env file or add secret to Azure Key Vault'
 assert ELEVENLABS_API_KEY is not None, 'Add ELEVENLABS_API_KEY to .env file or add secret to Azure Key Vault'
 assert ELEVENLABS_VOICE_ID is not None, 'Add ELEVENLABS_VOICE_ID to .env file or add secret to Azure Key Vault'
+os.environ['OPENAI_API_KEY'] = OPENAI_API_KEY
+os.environ['ELEVENLABS_API_KEY'] = ELEVENLABS_API_KEY
+os.environ['ELEVENLABS_VOICE_ID'] = ELEVENLABS_VOICE_ID
 set_api_key(ELEVENLABS_API_KEY)
