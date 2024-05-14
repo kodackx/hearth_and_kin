@@ -1,5 +1,3 @@
-import { handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
 document.getElementById('loginBtn').addEventListener('click', login);
 
 function register() {
