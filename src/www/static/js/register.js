@@ -1,4 +1,5 @@
-document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('registerBtn').addEventListener('click', register);
+
 
 function register() {
     var username = document.getElementById('username').value;
@@ -12,33 +13,12 @@ function register() {
         body: JSON.stringify(data)
     })
     .then(response => handleApiResponse(response, data => {
-        alert('User successfully created!')
+        alert('User successfully created!');
+        window.location.href = '/'; // Redirect to login page
     }))
     .catch((error) => {
-        alert(error)
-    })
-}
-
-function login() {
-    var username = $('#username').val();
-    var password = $('#password').val();
-    fetch('/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            username: username,
-            password: password,
-        }),
-    })
-    .then(response => handleApiResponse(response, data => {
-        localStorage.setItem('username', data.username);
-        window.location.href = '/dashboard';
-    }))
-    .catch((error) => {
-        alert(error)
-    })
+        alert(error);
+    });
 }
 
 function handleApiResponse(response, successCallback) {

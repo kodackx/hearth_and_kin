@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hearth and Kin</title>
+        <title>Register - Hearth and Kin</title>
         <style>
             body {
                 display: flex;
@@ -19,7 +19,7 @@
                 height: auto;
             }
             
-            #auth, #story {
+            #register {
                 display: flex;
                 flex-direction: column;
                 gap: 10px;
@@ -43,7 +43,7 @@
             button:active {
                 background-color: #7f571d;
             }
-            input[type="text"], input[type="password"] {
+            input[type="text"], input[type="password"], input[type="email"] {
                 padding: 10px;
                 font-size: 18px;
                 color: #f4e8c1;
@@ -53,7 +53,7 @@
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             }
 
-            input[type="text"]:focus, input[type="password"]:focus {
+            input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
                 outline: none;
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
             }
@@ -84,20 +84,23 @@
     </head>
     <body>
         <img id="logo" src="static/img/DALL.png" alt="Logo">
-
         <hr>  <!-- Line separator -->
     
-        <div id="auth">
+        <div id="register">
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
-            <button id="loginBtn">Login</button>
+            <input type="email" id="email" placeholder="Email">
+            <input type="text" id="openai_api_key" placeholder="OpenAI API Key">
+            <input type="text" id="anthropic_api_key" placeholder="Anthropic API Key">
+            <input type="text" id="groq_api_key" placeholder="Groq API Key">
+            <input type="text" id="elevenlabs_api_key" placeholder="Elevenlabs API Key">
+            <button id="registerBtn">Register</button>
         </div>
         <div id="errorContainer"></div>
+        <p class="register-text"><i>NOTE: The application was built with OpenAI and Elevenlabs services in mind. For the best experience, we recommend you register with these services and obtain API keys.</i></p>
         <hr>  <!-- Line separator -->
 
-        <p class="register-text">Don't have an account yet? <a href="/register" id="registerLink" class="register-link">Register here!</a></p>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script type="module" src="js/index.js"></script>
-</body>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script type="module" src="js/register.js"></script>
+    </body>
 </html>

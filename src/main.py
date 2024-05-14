@@ -57,5 +57,9 @@ async def story_page(request: Request):
 async def characterflow(request: Request):
     return Response(content=open('src/www/templates/newcharacter.html', 'r').read(), media_type='text/html')
 
+@app.get('/register')
+async def characterflow(request: Request):
+    return Response(content=open('src/www/templates/register.html', 'r').read(), media_type='text/html')
+
 if __name__ == '__main__':
     pass
