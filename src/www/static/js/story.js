@@ -9,7 +9,7 @@ let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
+export const webSocketEndpoint = 'ws://hearth-and-kin.com:8000/ws/story/' + story_id
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
