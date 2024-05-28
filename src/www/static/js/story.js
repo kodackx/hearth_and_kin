@@ -13,17 +13,7 @@ let narrator_portrait = 'static/img/narrator.png';
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
-const replayLastMessages = 2; // Number of last messages to replay when a player joins a story
-
-let narrationQueue = [];
-let isProcessingNarration = false;
-let fadeDuration = 1000; // Duration of the audio fade effect in milliseconds
-
-
-const hostname = window.location.hostname;
-const port = hostname === '127.0.0.1' ? ':8000' : '';
-export const webSocketEndpoint = `ws://${hostname}${port}/ws/story/${story_id}`;
-console.log('Attempting STORY websocket connection at: ' + webSocketEndpoint)
+export const webSocketEndpoint = 'ws://hearth-and-kin.com:8000/ws/story/' + story_id
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
