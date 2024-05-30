@@ -74,5 +74,5 @@ make build
 Run app
 
 ```bash
-make run
+poetry run gunicorn -c gunicorn_config.py -k uvicorn.workers.UvicornWorker src.main:app
 ```
