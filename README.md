@@ -68,5 +68,5 @@ poetry run pytest
 Run app
 
 ```bash
-poetry run uvicorn src.main:app --reload
+poetry run gunicorn -c gunicorn_config.py -k uvicorn.workers.UvicornWorker src.main:app
 ```
