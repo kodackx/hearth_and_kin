@@ -14,7 +14,7 @@ let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
 const hostname = window.location.hostname;
-export const webSocketEndpoint = `ws://${hostname}:8000/ws/story/${story_id}`;
+export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
 console.log('hostname is: ' + hostname)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
@@ -417,31 +417,4 @@ function tryChangeBackgroundImage(imagePath) {
         newBackground.style.backgroundImage = `url('${imagePath}')`;
         newBackground.style.opacity = 1;
     }
-}
-
-function fadeOut(audio, duration, callback) {
-    let step = audio.volume / (duration / 50); // Calculate the step size for each interval
-    let fadeInterval = setInterval(() => {
-        if (audio.volume > step) {
-            audio.volume -= step;
-        } else {
-            clearInterval(fadeInterval);
-            audio.pause();
-            if (callback) callback();
-        }
-    }, 50); // Adjust the volume every 50ms
-}
-
-function fadeIn(audio, duration) {
-    audio.volume = 0;
-    audio.play();
-    let step = 0.1 / (duration / 50); // Calculate the step size for each interval
-    let fadeInterval = setInterval(() => {
-        if (audio.volume < 0.1) {
-            audio.volume += step;
-        } else {
-            clearInterval(fadeInterval);
-            audio.volume = 0.1; // Ensure the volume is set to the desired level
-        }
-    }, 50); // Adjust the volume every 50ms
 }
