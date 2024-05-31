@@ -10,7 +10,7 @@ let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
 const hostname = window.location.hostname;
-export const webSocketEndpoint = `ws://${hostname}:8000/ws/story/${story_id}`;
+export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
 console.log('hostname is: ' + hostname)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);

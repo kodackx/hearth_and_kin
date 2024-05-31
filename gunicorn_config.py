@@ -1,3 +1,3 @@
-timeout = 120
-bind = "0.0.0.0:8000"
-workers = 4  # Adjust the number of workers based on your server's CPU cores
+timeout = 3600
+bind = "127.0.0.1:8000"
+workers = 1  # Adjust the number of workers based on your server's CPU cores
