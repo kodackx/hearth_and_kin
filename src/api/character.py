@@ -45,9 +45,8 @@ async def update_character(*, character: CharacterUpdate, character_id: int, ses
 #     return user
 
 @router.get('/characters', response_model=List[CharacterRead])
-async def list_characters_for_user(current_user_id: int, session: Session = Depends(get_session)):
-    statement = select(Character).where(Character.user_id == current_user_id)
-    characters = session.exec(statement).all()
+async def list_characters_for_user(current_user: str, session: Session = Depends(get_session)):
+    characters = session.exec(Character).filter(Character.user_id == current_user).all()
     return characters
 
 @router.get('/story/{story_id}/characters', response_model=List[CharacterDetails])

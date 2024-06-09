@@ -1,8 +1,5 @@
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
-import random
-import string
-import uuid
 
 def generate_invite_code(length=5):
     invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -27,7 +24,7 @@ class StoryBase(Model):
     party_objective: Optional[str]
 
 
-class StoryCreate(Model):
+class StoryCreate(StoryBase):
     party_lead: int = Field(foreign_key='character.character_id')
 
 
@@ -37,15 +34,11 @@ class StoryJoin(Model):
 
 
 class StoryDelete(StoryJoin):
-    pass
+    character_id: int = Field(foreign_key='character.character_id')
 
 
-class StoryRead(Model):
-    story_id: int
+class StoryRead(StoryCreate):
     has_started: bool = Field(default=False)
-    party_lead: int
-    party_member_1: Optional[int] = Field(default=None)
-    party_member_2: Optional[int] = Field(default=None)
 
 
 class Story(StoryBase, table=True):  # type: ignore

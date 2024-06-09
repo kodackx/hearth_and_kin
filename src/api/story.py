@@ -8,7 +8,6 @@ from ..models.message import Message, MessageRead
 from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
-from ..models.story import Invite
 from ..core.config import logger
 
 router = APIRouter()
@@ -43,8 +42,10 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 
 # POST /story: Creates a new story and generates an invite code.
 @router.post('/story', status_code=201)
-async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
-    logger.debug(f"Received story data: {story}")
+async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)) -> StoryCreate:
+    db_story = session.get(Story, story.story_id)
+    if db_story is not None:
+        raise HTTPException(400, 'Story already exists')
     new_story = Story(party_lead=story.party_lead)
 
     session.add(new_story)
@@ -65,10 +66,12 @@ async def delete_story(story_id: int, story: StoryDelete, session: Session = Dep
     statement = select(Story).where(Story.story_id == story_id).where(Story.party_lead == story.character_id)
     db_story = session.exec(statement).first()
     if not db_story:
-        raise HTTPException(404, 'This character is not the party lead, therefore they cannot delete.')
+        raise HTTPException(404, 'This character was not the creator, therefore they cannot delete.')
+
     # Remove the story
     session.delete(db_story)
     session.commit()
+    
     await socket_manager.broadcast('delete_story', story, story_id)
     return story
 
@@ -90,6 +93,7 @@ async def get_stories(character_id: int = Query(None), session: Session = Depend
     logger.debug(f'Returning stories for character_id={character_id}: {stories}')
     
     return stories
+
 
 # GET /story/{story_id}: Retrieves details of a specific story by its ID.
 @router.get('/story/{story_id}', response_model=StoryRead)
@@ -115,18 +119,10 @@ async def get_invite_code(story_id: int, session: Session = Depends(get_session)
     print(invite.invite_code)
     return invite.invite_code
 
-# POST /join_by_invite: Joins a story using an invite code.
-@router.post('/join_by_invite', status_code=200)
-async def join_by_invite(*, invite_code: str, session: Session = Depends(get_session)) -> StoryRead:
-    print("This is the invite_code the API received:")
-    print(invite_code)
-    invite = session.exec(select(Invite).where(Invite.invite_code == invite_code)).first()
-    if not invite:
-        raise HTTPException(404, 'Invalid invite code')
-    db_story = session.get(Story, invite.story_id)
-    if not db_story:
-        raise HTTPException(404, 'Story not found')
-    return StoryRead.model_validate(db_story)
+@router.post('/story/{story_id}/join')
+async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
+    db_story = session.get(Story, story.story_id)
+    db_character = session.get(Character, story.character_id)
 
 # POST /story/{story_id}/add_player: Adds a player to a story.
 @router.post('/story/{story_id}/add_player')
@@ -136,25 +132,41 @@ async def add_player_to_story(*, story_join_data: StoryJoin, session: Session = 
     logger.debug(f'[STORY ID]: {db_story}')
     logger.debug(f'[CHARACTER ID]: {db_character}')
     if not db_story or not db_character:
+        raise HTTPException(404, 'Story or character does not exist.')
+
+    # Check for available member slots
+    if db_story.party_member_1 is None:
+        db_story.party_member_1 = db_character.character_id
+    elif db_story.party_member_2 is None:
+        db_story.party_member_2 = db_character.character_id
+    else:
+        raise HTTPException(400, 'No available slots in the story.')
+
+    session.add(db_story)  # Make sure to add the updated story to the session
+    session.commit()
+    session.refresh(db_story)
+    await socket_manager.broadcast('join_story', story, story.story_id)
+    return story
+
+
+@router.post('/story/{story_id}/play')
+async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
+    db_story = session.get(Story, story.story_id)
+    db_character = session.get(Character, story.character_id)
+    logger.debug(f'[STORY]: {db_story}')
+    logger.debug(f'[CHARACTER]: {db_character}')
+    if not db_story or not db_character:
         raise HTTPException(404, 'Story or character does not exist')
 
-    if db_story.party_lead == db_character.character_id:
-        db_story.has_started = True
-    elif db_story.party_member_1 == db_character.character_id or db_story.party_member_2 == db_character.character_id:
-        raise HTTPException(400, 'Character is already part of this adventure!')
-    else:
-        if db_story.party_member_1 is None:
-            db_story.party_member_1 = db_character.character_id
-        elif db_story.party_member_2 is None:
-            db_story.party_member_2 = db_character.character_id
-        else:
-            raise HTTPException(400, 'Party is full!')
+    if db_story.party_lead != db_character.character_id:
+        raise HTTPException(400, 'Only the party lead can initiate play.')
 
+    db_story.active = True
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
-    # await socket_manager.broadcast('new_player', StoryRead.model_validate(db_story), story_join_data.story_id)
-    return StoryRead.model_validate(db_story)
+    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), story.story_id)
+    return db_story
 
 # COSTI: I don't think this should exist. We either add players to a story party OR we manage the lobby
 # POST /story/{story_id}/play: Allows a character to join the story lobby if they are part of the story.
@@ -189,10 +201,10 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
         raise HTTPException(400, 'Party lead cannot leave the story. They must delete it.')
 
     # Check if the character is part of the story and remove them
-    if db_story.party_member_1 == db_character.character_id:
-        db_story.party_member_1 = None
-    elif db_story.party_member_2 == db_character.character_id:
-        db_story.party_member_2 = None
+    if db_story.member_1 == db_character.character_id:
+        db_story.member_1 = None
+    elif db_story.member_2 == db_character.character_id:
+        db_story.member_2 = None
     else:
         raise HTTPException(400, 'Character is not part of the story.')
 
@@ -202,7 +214,6 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
     await socket_manager.broadcast('leave_story', story, story.story_id)
     return story
 
-# POST /story/{story_id}/transfer_ownership: Transfers story ownership from the current lead to another member.
 @router.post('/story/{story_id}/transfer_ownership')
 async def transfer_ownership(*, story: StoryTransferOwnership, session: Session = Depends(get_session)) -> StoryRead:
     db_story = session.get(Story, story.story_id)
@@ -215,7 +226,7 @@ async def transfer_ownership(*, story: StoryTransferOwnership, session: Session 
     if db_story.party_lead != current_lead.character_id:
         raise HTTPException(400, 'Only the current party lead can transfer ownership.')
 
-    if new_lead.character_id not in [db_story.party_member_1, db_story.party_member_2]:
+    if new_lead.character_id not in [db_story.member_1, db_story.member_2]:
         raise HTTPException(400, 'The new lead must be a member of the story.')
 
     db_story.party_lead = new_lead.character_id

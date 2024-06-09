@@ -96,11 +96,12 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
     
+    # Create the human message entry
     human_message = Message(
         story_id=message.story_id,
         character_id=message.character_id,
         character_name=message.character_name,
-        character=message.character, #could be NARRATOR, PC or SYSTEM
+        character=message.character,
         message=message.message,
         narrator_reply=None,
         audio_path=None,
@@ -108,23 +109,27 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         soundtrack_path=None
     )
     session.add(human_message)
-    for i in range(len(subtitles)):
-        # Create the narrator message entry
-        narrator_message = Message(
-            story_id=message.story_id,
-            character_id=None,  # Assuming narrator doesn't have a character_id
-            character_name="NARRATOR",
-            character="NARRATOR", #could be NARRATOR, PC or SYSTEM
-            message=subtitles[i],
-            narrator_reply=None,
-            audio_path=audio_paths[i],
-            image_path=image_path,
-            soundtrack_path=soundtrack_path
-        )
-        session.add(narrator_message)
-        
     session.commit()
     session.refresh(human_message)
 
+    # Create the narrator message entry
+    narrator_message = Message(
+        story_id=message.story_id,
+        character_id=None,  # Assuming narrator doesn't have a character_id
+        character_name="NARRATOR",
+        character="NARRATOR",
+        message=narrator_reply or 'Narrator says hi',
+        narrator_reply=None,
+        audio_path=audio_url,
+        image_path=image_url,
+        soundtrack_path=soundtrack_path
+    )
+    session.add(narrator_message)
+    session.commit()
+    session.refresh(narrator_message)
+
+    # Broadcast the narrator's reply
+    websocket_message = MessageRead.model_validate(narrator_message).model_dump(exclude='timestamp')
+    await socket_manager.broadcast('reply', websocket_message, message.story_id)
 
     return human_message

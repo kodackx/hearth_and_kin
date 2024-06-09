@@ -14,9 +14,8 @@ class MessageBase(Model):
     story_id: int = Field(foreign_key="story.story_id")
     character: CharacterType
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    soundtrack_path: Optional[str] = Field(default=None)
-    audio_path: Optional[str] = Field(default=None)
-    image_path: Optional[str] = Field(default=None)
+    audio_path: Optional[str]
+    image_path: Optional[str]
     character_id: Optional[int] = Field(default=None, foreign_key="character.character_id")
     character_name: str = Field(foreign_key='character.character_name')
     
@@ -27,24 +26,6 @@ class MessageCreate(MessageBase):
 class MessagePC(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)
     message: str
-    story_id: int
-    character: CharacterType
-    character_id: int
-    character_name: str
-    portrait_path: Optional[str]
-
-class MessageNARRATORorSYSTEM(MessageBase):
-    message_id: Optional[int] = Field(default=None, primary_key=True)
-    message: str
-    character: CharacterType
-    audio_path: Optional[str]
-    image_path: Optional[str]
-    soundtrack_path: Optional[str]
-
-class MessageRead(Model):
-    message: str
-    character: str
-    character_name: str
     audio_path: Optional[str]
     image_path: Optional[str]
     

@@ -4,13 +4,13 @@ from typing import Optional
 
 class UserBase(Model):
     user_id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(min_length=1, max_length=50, index=True)
-    password: str = Field(min_length=1)
+    username: str = Field(index=True)
+    password: str
 
 
 class UserRead(UserBase):
     username: str = Field(min_length=1, max_length=50, primary_key=True)
 
 
-class User(UserBase, table=True):  # type: ignore
+class User(UserBase, UserRead, table=True):  # type: ignore
     pass

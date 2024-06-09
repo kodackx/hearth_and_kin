@@ -102,6 +102,36 @@
                 <div class="box-footer">Create New Story</div>
             </div>
             <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story4" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story5" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story6" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story7" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story8" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story9" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
             <div class="invite-code-container">
                 <button id="use-invite-code-btn">
                     <img src="static/img/HAK_story_icons_2.png" alt="Join Adventure" class="story-icon-join">
@@ -273,7 +303,7 @@
 
     .active-story {
         /* Styles for active story boxes */
-        background-color: #1f853f;
+        background-color: #8b4513;
         color: #f4d9c5;
     }
 
@@ -295,158 +325,4 @@
         color: #f4d9c5;
     }
 
-    .popup {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 3; /* Sit on top */
-        left: 0;
-        top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgb(0,0,0); /* Fallback color */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    }
-
-    .popup-content {
-        background-color: #ffeaea;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        border-radius: 10px;
-        max-width: 300px;
-        text-align: center;
-        font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif
-    }
-
-    .close-btn {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-
-    .close-btn:hover,
-    .close-btn:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
-    .signature {
-        margin-top: 20px;
-        font-family: 'Dancing Script', cursive; /* Use a cursive font for a handwritten effect */
-        font-size: 1.2em;
-        color: #8b4513; /* Match the theme color */
-    }
-
-    .signature p {
-        margin: 0;
-    }
-
-    /* Toast container */
-    #toastContainer {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        width: 80%;
-        max-width: 600px;
-        pointer-events: none; /* Allows clicks to pass through */
-    }
-
-    /* Toast message */
-    .toast {
-        background-color: #f8d7da; /* Light red background for error */
-        color: #721c24; /* Dark red text for error */
-        border: 1px solid #f5c6cb; /* Border color for error */
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        pointer-events: auto; /* Allows interaction with the toast */
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-    }
-
-    /* Show toast */
-    .toast.show {
-        opacity: 1;
-    }
-
-    .story-box {
-        position: relative; /* Ensure the delete button is positioned relative to the story box */
-    }
-
-    .delete-button {
-        background-color: #ff4d4d; /* Red background */
-        color: white; /* White text */
-        border: none; /* No border */
-        border-radius: 5px; /* Rounded corners */
-        padding: 5px 10px; /* Padding */
-        font-size: 12px; /* Font size */
-        cursor: pointer; /* Pointer cursor on hover */
-        position: absolute; /* Absolute positioning */
-        top: 10px; /* Position from the top */
-        right: 10px; /* Position from the right */
-        z-index: 10; /* Ensure it is above other elements */
-    }
-
-    .delete-button:hover {
-        background-color: #ff1a1a; /* Darker red on hover */
-    }
-
-    .story-icon {
-        width: 100px; /* Adjust the width as needed */
-        height: auto; /* Maintain aspect ratio */
-        max-width: 100%; /* Ensure it doesn't exceed the container's width */
-    }
-
-    .story-icon-join {
-        width: 50px; /* Adjust the width as needed */
-        height: auto; /* Maintain aspect ratio */
-        max-width: 100%; /* Ensure it doesn't exceed the container's width */
-    }
-
-    /* Add this to your CSS file */
-    .invite-code-container {
-        display: flex;
-        justify-content: center; /* Center horizontally */
-        align-items: center; /* Center vertically */
-        height: 100%; /* Full viewport height, adjust as needed */
-    }
-
-    #use-invite-code-btn {
-        display: flex;
-        align-items: center; /* Center items vertically */
-        justify-content: center; /* Center items horizontally */
-        background-color: rgba(139, 69, 19, 0.8); /* Match the theme color */
-        color: #f4d9c5; /* Light, parchment-like color */
-        border: 2px solid #8b4513; /* Border color */
-        border-radius: 10px; /* Rounded corners */
-        padding: 10px 20px; /* Padding for the button */
-        font-size: 1em; /* Font size */
-        cursor: pointer; /* Pointer cursor on hover */
-        text-transform: uppercase; /* Uppercase text */
-        letter-spacing: 1px; /* Spacing between letters */
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-        transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
-        z-index: 10; /* Ensure it is above other elements */
-    }
-
-    #use-invite-code-btn:hover {
-        background-color: rgba(255, 255, 255, 0.8); /* Lighter background on hover */
-        color: #000; /* Dark text on hover */
-    }
-
-    #use-invite-code-txt {
-        font-family: 'MedievalSharp', Arial, sans-serif; /* Match the font-family */
-        color: inherit; /* Inherit the color from the parent */
-    }
-
-    .story-icon-join {
-        margin-right: 10px; /* Add some space between the image and the text */
-    }
 </style>

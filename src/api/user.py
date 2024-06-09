@@ -1,6 +1,6 @@
 from bcrypt import checkpw, hashpw, gensalt
 from fastapi import APIRouter, Depends, HTTPException, status, Security
-from sqlmodel import Session, select
+from sqlmodel import Session
 from ..core.database import get_session
 from ..models.user import User, UserBase, UserRead
 from ..models.session import Token, LoginSession
@@ -20,18 +20,22 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 @router.post('/user', status_code=201, response_model=UserRead)
 async def create_user(*, user: UserBase, session: Session = Depends(get_session)):
     db_user = session.get(User, user.username)
     if db_user is not None:
         raise HTTPException(400, 'Username already exists. Please try a different one.')
     
-    hashed_password = hashpw(user.password.encode('utf-8'), gensalt())
-    user.password = hashed_password.decode('utf-8')
+    hashed_password = hashpw(user.password.encode(), gensalt())
     new_user = User.model_validate(user)
-    logger.debug(f'CREATE_USER: {user = }')
+    new_user.password = hashed_password.decode()
     
-    logger.debug(f'New user created: username={new_user.username}')
+    logger.debug(new_user)
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
@@ -40,34 +44,13 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
 
 @router.post('/login', response_model=Token)
 async def login(*, session: Session = Depends(get_session), form_data: OAuth2PasswordRequestForm = Depends()):
-    logger.debug(f'This is the username we will check for existance: {form_data.username}')
-    # Fetch user by username
-    statement = select(User).where(User.username == form_data.username)
-    db_user = session.exec(statement).first()
-    logger.debug(f'LOGIN: Retrieved user: {db_user}')
-    if db_user:
-        logger.debug(f'User found: {db_user.username}')
-    else:
-        logger.debug(f'User not found: {form_data.username}')
-    # logger.debug(f'Will check encoded field: {form_data.password.encode('utf-8')} against stored password: {db_user.password.encode('utf-8')}')
-    if db_user is None or not checkpw(form_data.password.encode('utf-8'), db_user.password.encode('utf-8')):
+    db_user = session.get(User, form_data.username)
+    if db_user is None or not checkpw(form_data.password.encode(), db_user.password.encode()):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token_expires = timedelta(minutes=60)
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": db_user.username}, expires_delta=access_token_expires)
-    return_payload = {"user_id": db_user.user_id, "access_token": access_token, "token_type": "bearer"}
-    logger.debug(f'Return payload: {return_payload}')
-
-    # Save login session details
-    login_session = LoginSession(
-        user_id=db_user.user_id,
-        access_token=access_token,
-        token_type="bearer"
-    )
-    session.add(login_session)
-    session.commit()
-
-    return return_payload
+    return {"access_token": access_token, "token_type": "bearer", "user_id": db_user.user_id}
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
