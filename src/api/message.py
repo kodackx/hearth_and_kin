@@ -43,7 +43,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
                     # Extract the soundtrack name from the directive
                     soundtrack_name = directive.strip('[]').split(': ')[1]
                     # Assuming you have a method to get the path of the soundtrack
-                    soundtrack_path = f'/azure/public/soundtracks/{soundtrack_name}'
+                    soundtrack_path = f'/static/soundtrack/{soundtrack_name}'
                     logger.debug(f'[MESSAGE] Soundtrack path: {soundtrack_path}')
                     # Remove the directive from the narrator_reply to clean up the final message
                     narrator_reply = narrator_reply.replace(directive, '').strip()
@@ -54,7 +54,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
                 _, audio_url = audio.store(audio_bytes=audio_data)
             if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
                 image_url = imagery.generate(narrator_reply)
-                _ , image_url = imagery.store(image_url=image_url, type='story')
+                _ , image_url = await imagery.store(image_url=image_url, type='story')
                 logger.debug(f'[MESSAGE] {image_url = }')
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')

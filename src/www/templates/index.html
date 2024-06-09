@@ -1,93 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
-    <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Hearth and Kin</title>
-            <style>
-                body {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 20px;
-                    padding: 20px;
-                    font-family: Arial, sans-serif;
-                    background-color: #404f5a;
-                }
-                #logo {
-                    width: 400px;
-                    height: auto;
-                }
-                
-                #auth, #story {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                button {
-                    padding: 10px 20px;
-                    font-size: 20px;
-                    color: #3b372a;
-                    background-color: #ffcf86;
-                    border: none;
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-                    cursor: pointer;
-                    transition: background-color 0.3s ease;
-                }
-
-                button:hover {
-                    background-color: #d79736;
-                }
-
-                button:active {
-                    background-color: #7f571d;
-                }
-                input[type="text"], input[type="password"] {
-                    padding: 10px;
-                    font-size: 18px;
-                    color: #f4e8c1;
-                    background-color: #3b372a;
-                    border: none;
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-                }
-
-                input[type="text"]:focus, input[type="password"]:focus {
-                    outline: none;
-                    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-                }
-
-                hr {
-                    border: none;
-                    border-top: 1px solid #f4e8c1;
-                    width: 50%;
-                    margin: 20px auto;
-                }
-            </style>
-        </head>
-        <body>
-            <img id="logo" src="azure/public/img/www/DALL.png" alt="Logo">
-
-            <hr>  <!-- Line separator -->
-        
-            <div id="auth">
-                <input type="text" id="username" placeholder="Username">
-                <input type="password" id="password" placeholder="Password">
-                <button id="registerBtn">Register</button>
-                <button id="loginBtn">Login</button>
-            </div>
-            <div id="errorContainer"></div>
-            <hr>  <!-- Line separator -->
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hearth and Kin</title>
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                background-color: #404f5a;
+            }
+            #logo {
+                width: 400px;
+                height: auto;
+            }
             
-            <!-- <div id="room">
-                <input type="text" id="room_id" placeholder="Room ID">
-                <button onclick="createRoom()">Create Room</button>
-                <button onclick="joinRoom()">Join Room</button>
-            </div> -->
+            #auth, #story {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 20px;
+                color: #3b372a;
+                background-color: #ffcf86;
+                border: none;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+            button:hover {
+                background-color: #d79736;
+            }
+
+            button:active {
+                background-color: #7f571d;
+            }
+            input[type="text"], input[type="password"] {
+                padding: 10px;
+                font-size: 18px;
+                color: #f4e8c1;
+                background-color: #3b372a;
+                border: none;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            }
+
+            input[type="text"]:focus, input[type="password"]:focus {
+                outline: none;
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
+
+            hr {
+                border: none;
+                border-top: 1px solid #f4e8c1;
+                width: 50%;
+                margin: 20px auto;
+            }
+
+            .register-text {
+                font-size: 14px;
+                color: #f4e8c1;
+                text-align: center;
+            }
+
+            .register-link {
+                color: #ffcf86;
+                text-decoration: none;
+                font-weight: bold;
+            }
+
+            .register-link:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <img id="logo" src="static/img/DALL.png" alt="Logo">
+
+        <hr>  <!-- Line separator -->
+    
+        <div id="auth">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="loginBtn">Login</button>
+        </div>
+        <div id="errorContainer"></div>
+        <hr>  <!-- Line separator -->
+
+        <p class="register-text">Don't have an account yet? <a href="/register" id="registerLink" class="register-link">Register here!</a></p>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script type="module" src="js/index.js"></script> 
+    <script type="module" src="js/index.js"></script>
 </body>
 </html>

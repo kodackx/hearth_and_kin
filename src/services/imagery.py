@@ -5,18 +5,21 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 import base64
+import httpx
+from PIL import Image
+from io import BytesIO
 from ..core.config import logger
 from ..core import storage
 
 
 def generate(prompt_text):
-    llm = ChatOpenAI(model_name='gpt-3.5-turbo')  # type: ignore
+    llm = ChatOpenAI(model_name='gpt-4o')  # type: ignore
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
-        You are a virtual D&D scene prompt generator. 
         You will be given the latest narrator text from a cozy fantasy story that is currently developing.
-        You must build a short prompt to generate an image based on the text. (no more than 100 tokens)
+        You must build a short prompt to generate an image that will be sent to Dall-e3. 
+        The prompt should be expressed as image captions, just like they are found on the internet. 
         Return it as "Scene Summary:".
         ---
         Here is the narration text:
@@ -32,7 +35,7 @@ def generate(prompt_text):
         The illustration should mimic the style of a graphic novel, with bold and precise linework and a color palette of vibrant highlights. 
         The scene should feel alive and dynamic, yet cozy and intimate, capturing the essence of a fantasy adventure just about to unfold.
         Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
-        Here is the scene description:
+        Here is the scene prompt:
         """
         + summary
     )
@@ -44,15 +47,36 @@ def generate(prompt_text):
     return image_url
 
 
-def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
+async def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
     """
     Store an image from an URL in Azure Blob Storage and return the url to the stored file
     """
-    if not filename:
-        filename = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-    if type == 'character':
-        path = f'img/characters/{filename}.jpg'
-    elif type == 'story':
-        path = f'img/stories/{filename}.jpg'
-    azure_url = storage.store_public(remote_path=path, url = image_url)
-    return filename, azure_url
+    if type == 'story':
+        # obtain image from url
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+        img = Image.open(BytesIO(response.content))
+        # define path to save image
+        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+        dir_path = os.path.join('data', 'visuals', visual_id)
+        os.makedirs(dir_path, exist_ok=True)
+        file_path = os.path.join(dir_path, 'image.jpg')
+        img.save(file_path)
+        return visual_id, file_path
+    elif type== 'character':
+        # obtain image from url
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+        img = Image.open(BytesIO(response.content))
+        # define path to save image
+        visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
+        # dir_path = os.path.join('data', 'characters', visual_id)
+        dir_path = os.path.join('src', 'www', 'static', 'characters', visual_id)
+        os.makedirs(dir_path, exist_ok=True)
+        file_path = os.path.join(dir_path, 'character.jpg')
+        img.save(file_path)
+        serve_image_path = file_path.replace('src/www/', '')
+        return visual_id, serve_image_path 
+    else:
+        error = 'Invalid store image type. Can only store `character` or `story` images'
+        return 0, error
