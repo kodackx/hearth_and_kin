@@ -1,0 +1,23 @@
+services:
+  hearthandkin:
+    container_name: hearthandkin
+    image: sjoeborg/hearthandkin:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - type: bind
+        source: ./src
+        target: /app/src
+      #- type: bind
+      #  source: ./db
+      #  target: /app/db
+      #- type: bind
+      #  source: ./data
+      #  target: /app/data
+    ports:
+      - 8000:8000
+    environment:
+      - OPENAI_API_KEY=secret
+      - ELEVENLABS_API_KEY=secret
+      - ELEVENLABS_VOICE_ID=secret

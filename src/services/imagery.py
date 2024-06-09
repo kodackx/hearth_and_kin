@@ -9,7 +9,6 @@ import httpx
 from PIL import Image
 from io import BytesIO
 from ..core.config import logger
-from ..core import storage
 
 
 def generate(prompt_text):
@@ -49,7 +48,7 @@ def generate(prompt_text):
 
 async def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
     """
-    Store an image from an URL in Azure Blob Storage and return the url to the stored file
+    Store an image from an URL and return the url to the stored file
     """
     if type == 'story':
         # obtain image from url
