@@ -36,17 +36,47 @@
         <div class="stories-container">
             <h1 class="container-title">STORIES</h1>
             <!-- Story Boxes Here -->
-            <div class="story-box" id="story1">
+            <div class="story-box" id="story1" data-action="create">
                 <div class="box-content">+</div>
                 <div class="box-footer">Create New Story</div>
             </div>
             <!-- Add more story boxes as needed -->
-            <div class="story-box" id="story2">
+            <div class="story-box" id="story2" data-action="create">
                 <div class="box-content">+</div>
                 <div class="box-footer">Create New Story</div>
             </div>
             <!-- Add more story boxes as needed -->
-            <div class="story-box" id="story3">
+            <div class="story-box" id="story3" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story4" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story5" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story6" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story7" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story8" data-action="create">
+                <div class="box-content">+</div>
+                <div class="box-footer">Create New Story</div>
+            </div>
+            <!-- Add more story boxes as needed -->
+            <div class="story-box" id="story9" data-action="create">
                 <div class="box-content">+</div>
                 <div class="box-footer">Create New Story</div>
             </div>
@@ -206,6 +236,36 @@
     .stories-container.visible {
         display: flex; /* or block, depending on your layout */
         animation: slideInFromRight 0.5s ease-out forwards;
+    }
+
+    .created-story {
+    /* Styles for created story boxes */
+    background-color: #f4d9c5;
+    color: #000;
+    }
+
+    .active-story {
+        /* Styles for active story boxes */
+        background-color: #8b4513;
+        color: #f4d9c5;
+    }
+
+    .joined-story {
+        /* Styles for joined story boxes */
+        background-color: #406f41;
+        color: #f4d9c5;
+    }
+
+    .left-story {
+        /* Styles for left story boxes */
+        background-color: #f4d9c5;
+        color: #000;
+    }
+
+    .deleted-story {
+        /* Styles for deleted story boxes */
+        background-color: #000;
+        color: #f4d9c5;
     }
 
 </style>

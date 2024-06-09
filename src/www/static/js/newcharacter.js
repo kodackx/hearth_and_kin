@@ -114,7 +114,9 @@ function sendMessage() {
         // check for finalized characters stats
         if (data.character_data) {
             let characterData = data.character_data;
-            localStorage.setItem('characterData', JSON.stringify(data.character_data));
+            const userId = localStorage.getItem('user_id'); // Retrieve user_id from localStorage
+            characterData.user_id = userId; // Add user_id to character_data
+            localStorage.setItem('characterData', JSON.stringify(characterData));
             console.log('Character saved:', characterData);
         }
         // check for audio

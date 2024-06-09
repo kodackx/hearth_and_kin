@@ -7,6 +7,12 @@ var boxes = [
     { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
     { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
     { boxElement: document.getElementById('story3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story4'), boxId: 4, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story5'), boxId: 5, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story6'), boxId: 6, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story7'), boxId: 7, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story8'), boxId: 8, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story9'), boxId: 9, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
 ];
 
 
@@ -90,11 +96,9 @@ function selectCharacter(box, character) {
         // container.classList.remove('visible');
         console.log('No characters selected.');
     } else {
-        // If not already selected, proceed with the selection
-
         // Optionally, clear previous selections
         characterBoxes.forEach(characterBox => {
-            characterBox.boxElement.classList.remove('selected'); // Assuming 'selected' is a class that styles the selected box
+            characterBox.boxElement.classList.remove('selected');
         });
 
         // Mark the clicked box as selected
@@ -110,15 +114,17 @@ function selectCharacter(box, character) {
         // Save selected character data to localstorage
         localStorage.setItem('selectedCharacter', JSON.stringify(character));
         localStorage.setItem('character_id', parseInt(character.character_id));
-        localStorage.setItem('story_id', character.story_id)
-        loadStories();
+        localStorage.setItem('story_id', character.story_id) //unsure if this is correct, why would there be just 1 story id?
+        
+        // Call loadStories with character_id
+        loadStories(character.character_id);
     }
 
 }
 
 function updateEventListener(box, func) {
     box.boxElement.removeEventListener('click', box.clickHandler);
-    box.clickHandler = func(box);
+    box.clickHandler = func;
     box.boxElement.addEventListener('click', box.clickHandler);
 }
 
@@ -159,78 +165,96 @@ function playOrResumeStory(box) {
 
 
 function drawCreatedStory(box, story) {
-    box.boxElement.style.backgroundColor = 'blue';
+    box.boxElement.classList.add('created-story');
     box.storyCreated = true;
     box.creator = story.creator;
     box.storyId = story.story_id;
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinClickHandler)
+    updateEventListener(box, joinStory);
 }
 
 
 function drawActiveStory(box) {
     box.storyActive = true;
+    box.boxElement.classList.add('active-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
-    box.boxElement.style.backgroundColor = 'purple';
-    box.boxElement.removeEventListener('click', box.clickHandler);
-    createButtons(box);
+    updateEventListener(box, playStory);
 }
 
 
 function drawJoinedStory(box) {
+    box.boxElement.classList.add('joined-story');
     box.boxElement.querySelector('.box-footer').textContent = undefined;
-    box.boxElement.style.backgroundColor = 'green';
-    box.boxElement.removeEventListener('click', box.clickHandler);
-    createButtons(box);
+    updateEventListener(box, leaveStory);
 }
 
 
 function drawLeftStory(box) {
-    box.boxElement.style.backgroundColor = 'blue';
+    box.boxElement.classList.add('left-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinClickHandler)
-    removeButtons(box);
+    updateEventListener(box, joinStory);
 }
 
 
 function drawDeletedStory(box) {
+    box.boxElement.classList.add('deleted-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
-    box.boxElement.style.backgroundColor = 'white';
     box.storyId = undefined;
     box.storyCreated = false;
     box.creator = undefined;
-    updateEventListener(box, createClickHandler)
-    removeButtons(box);
+    updateEventListener(box, createStory);
 }
 
 
-function loadStories() {
-    fetch('/stories', {
+function loadStories(character_id) {
+    fetch(`/stories?character_id=${character_id}`, {
         method: 'GET',
     })
     .then(response => handleResponse(response, stories => {
         const character = JSON.parse(localStorage.getItem('selectedCharacter'))
-        // Draw created storys
-        stories.forEach(story => {
-            var box = boxes.find(box => box.boxId === story.story_id);
-            box.storyId = story.story_id;
-            box.storyCreated = true
-            box.storyActive = story.active
-            box.creator = story.creator
-            console.log('Drawing story:', story);
-            // Join any previously joined story
-            if (story.active && story.story_id == character.story_id) {
-                drawActiveStory(box)
+        
+        // Clear previous story assignments
+        boxes.forEach(box => {
+            box.storyId = undefined;
+            box.storyCreated = false;
+            box.storyActive = false;
+            box.creator = undefined;
+            box.boxElement.classList.remove('created-story', 'active-story', 'joined-story', 'left-story', 'deleted-story');
+            box.boxElement.querySelector('.box-footer').textContent = '';
+            box.boxElement.style.display = 'none'; // Hide all boxes initially
+        });
+        
+        // Determine the starting index for the boxes based on the selected character
+        const characterIndex = characterBoxes.findIndex(box => box.boxElement.classList.contains('selected'));
+        const startIndex = characterIndex * 3;
+
+        // Show only the relevant story boxes
+        for (let i = startIndex; i < startIndex + 3; i++) {
+            if (i < boxes.length) {
+                boxes[i].boxElement.style.display = 'block'; // Show relevant boxes
             }
-            else if (!story.active && story.story_id == character.story_id) {
-                drawJoinedStory(box);
-            } else {
-                drawCreatedStory(box, story);
+        }
+        
+        // Assign stories to the appropriate boxes
+        stories.forEach((story, index) => {
+            const boxIndex = startIndex + index;
+            if (boxIndex < boxes.length) {
+                const box = boxes[boxIndex];
+                box.storyId = story.story_id;
+                box.storyCreated = true;
+                box.storyActive = story.active;
+                box.creator = story.creator;
+                console.log('Drawing story:', story);
+
+                if (story.active && story.story_id == character.story_id) {
+                    drawActiveStory(box);
+                } else if (!story.active && story.story_id == character.story_id) {
+                    drawJoinedStory(box);
+                } else {
+                    drawCreatedStory(box, story);
+                }
             }
         });
-
-
-       
     }))
     .catch((error) => {
         alert(error);
@@ -345,65 +369,3 @@ function leaveStory(box) {
         alert(error);
     });
 };
-
-
-
-
-function createButtons(box) {
-    const character_id = localStorage.getItem('character_id')
-    const story_id = localStorage.getItem('story_id')
-
-    if (box.creator === parseInt(character_id)) {
-        var playButton = document.createElement('button');
-        if (box.storyId === story_id) {
-            playButton.innerHTML = 'Resume Story';
-            playButton.addEventListener('click', () => resumeStory(box))
-        } else {
-            playButton.innerHTML = 'Play Story';
-            playButton.addEventListener('click', () => playStory(box))
-        }
-        playButton.id = 'playButton' + box.boxId;  // Add a unique id
-        box.boxElement.appendChild(playButton);
-    }
-    var leaveButton = document.createElement('button');
-    leaveButton.innerHTML = 'Leave Story';
-    leaveButton.addEventListener('click', () => leaveStory(box))
-    leaveButton.id = 'leaveButton' + box.boxId;  // Add a unique id
-    box.boxElement.appendChild(leaveButton);
-
-
-    if (box.creator === parseInt(character_id)) {
-        var thirdButton = document.createElement('button');
-        thirdButton.innerHTML = 'Delete Story';
-        thirdButton.id = 'deleteButton' + box.boxId;  // Add a unique id
-        thirdButton.addEventListener('click', () => deleteStory(box));
-        box.boxElement.appendChild(thirdButton);
-    }
-}
-
-
-function removeButtons(box) {
-    // Find the left and right buttons within the boxElement
-    var playButton = document.getElementById('playButton' + box.boxId);
-    var leaveButton = document.getElementById('leaveButton' + box.boxId);
-    var deleteButton = document.getElementById('deleteButton' + box.boxId);
-   
-    // Remove the left and right buttons if they exist
-    if (playButton) {
-        playButton.parentNode.removeChild(playButton);
-        playButton.remove();
-       
-    }
-    if (leaveButton) {
-        leaveButton.parentNode.removeChild(leaveButton);
-        leaveButton.remove();
-
-
-    }
-    if (deleteButton) {
-        deleteButton.parentNode.removeChild(deleteButton);
-        deleteButton.remove();
-
-
-    }
-}

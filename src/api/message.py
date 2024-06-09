@@ -20,8 +20,10 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
-    messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
+    messages = session.exec(
+        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
+    ).all()
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id)  # type: ignore
     
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_url = image_url = soundtrack_path = narrator_reply = None
@@ -60,22 +62,40 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
     
-    new_message = Message(
+    # Create the human message entry
+    human_message = Message(
         story_id=message.story_id,
         character_id=message.character_id,
         character_name=message.character_name,
+        character=message.character,
         message=message.message,
-        narrator_reply=narrator_reply or 'Narrator says hi',
+        narrator_reply=None,
+        audio_path=None,
+        image_path=None,
+        soundtrack_path=None
+    )
+    session.add(human_message)
+    session.commit()
+    session.refresh(human_message)
+
+    # Create the narrator message entry
+    narrator_message = Message(
+        story_id=message.story_id,
+        character_id=None,  # Assuming narrator doesn't have a character_id
+        character_name="NARRATOR",
+        character="NARRATOR",
+        message=narrator_reply or 'Narrator says hi',
+        narrator_reply=None,
         audio_path=audio_url,
         image_path=image_url,
         soundtrack_path=soundtrack_path
     )
-    session.add(new_message)
+    session.add(narrator_message)
     session.commit()
-    session.refresh(new_message)
+    session.refresh(narrator_message)
 
-    # Timestamp field is not json serializable by websocket, exclude it here before passing to websocket
-    websocket_message = MessageRead.model_validate(new_message).model_dump(exclude='timestamp')
+    # Broadcast the narrator's reply
+    websocket_message = MessageRead.model_validate(narrator_message).model_dump(exclude='timestamp')
     await socket_manager.broadcast('reply', websocket_message, message.story_id)
 
-    return new_message
+    return human_message

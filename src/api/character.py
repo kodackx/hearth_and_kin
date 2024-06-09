@@ -44,5 +44,5 @@ async def update_character(*, character: CharacterUpdate, character_id: int, ses
 
 @router.get('/characters', response_model=List[CharacterRead])
 async def list_characters_for_user(current_user: str, session: Session = Depends(get_session)):
-    characters = session.query(Character).filter(Character.username == current_user).all()
+    characters = session.exec(Character).filter(Character.user_id == current_user).all()
     return characters

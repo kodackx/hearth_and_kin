@@ -12,6 +12,11 @@ from src.models.character import Character
 from src.models.message import MessageBase, MessageRead
 from src.core.config import logger
 
+from typing import Dict
+
+# Dictionary to store chains by story_id
+chains: Dict[str, LLMChain] = {}
+
 ################
 # OpenAI stuff #
 ################
@@ -87,8 +92,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead]) -> LLMChain:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead], story_id: str) -> LLMChain:
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
     for message in message_history:
@@ -97,8 +101,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
 
     llm = ChatOpenAI(
         model_name='gpt-4o',  # type: ignore
-        # max_tokens=300,
-        temperature=0.5,
+        temperature=0.75,
     )
     chat_llm_chain = LLMChain(
         llm=llm,
@@ -107,7 +110,13 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
         memory=memory,
     )
 
+    # Store the chain in the dictionary
+    chains[story_id] = chat_llm_chain
+
     return chat_llm_chain
+
+def get_chain(story_id: str) -> LLMChain:
+    return chains.get(story_id)
 
 
 def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:

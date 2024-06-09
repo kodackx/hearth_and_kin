@@ -5,8 +5,9 @@ from pydantic import field_validator
 
 
 class UserBase(Model):
-    username: str = Field(min_length=1, max_length=50, primary_key=True)
-    password: str = Field(min_length=1)
+    user_id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True)
+    password: str
 
 
 class UserRead(Model):
@@ -14,6 +15,4 @@ class UserRead(Model):
 
 
 class User(UserBase, UserRead, table=True):  # type: ignore
-    @field_validator('password')
-    def hash_password(cls, v: str):
-        return hashpw(v.encode(), gensalt()).decode()
+    pass
