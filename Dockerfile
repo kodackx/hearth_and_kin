@@ -19,6 +19,7 @@ RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
 
 FROM python:${PYTHON_VERSION}-slim
+ENV POETRY_VERSION=1.2.2
 
 # add images to the container
 WORKDIR /app
@@ -34,6 +35,6 @@ COPY . /app
 EXPOSE 8000
 
 # Run the application:
-RUN pip install poetry==${POETRY_VERSION}
-CMD ["poetry", "run", "gunicorn", "-c", "/app/gunicorn_config.py", "-k", "uvicorn.workers.UvicornWorker", "src.main:app"]
-#CMD ["gunicorn", "-c", "/app/gunicorn_config.py", "-k", "uvicorn.workers.UvicornWorker", "src.main:app"]
+#RUN pip install poetry==${POETRY_VERSION}
+#CMD ["poetry", "run", "gunicorn", "-c", "/app/gunicorn_config.py", "-k", "uvicorn.workers.UvicornWorker", "src.main:app"]
+CMD ["gunicorn", "-c", "/app/gunicorn_config.py", "-k", "uvicorn.workers.UvicornWorker", "src.main:app"]
