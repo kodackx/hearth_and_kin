@@ -10,6 +10,6 @@ push:
 	make build
 	docker push sjoeborg/hearthandkin:latest
 run:
-	docker compose up --build
+	docker compose up
 teardown:
 	docker compose down
