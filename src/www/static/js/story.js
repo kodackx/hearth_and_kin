@@ -3,13 +3,15 @@ import * as messageApi from './api/message.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 let currentAudio = null; // Add this at the top of your script
-let currentSoundtrack = new Audio("azure/public/audio/soundtracks/ambiance.m4a"); // Default ambiance audio
+let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/story/' + story_id
+const hostname = window.location.hostname;
+export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
+console.log('hostname is: ' + hostname)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
@@ -86,7 +88,7 @@ async function drawStoryPage() {
     document.getElementById('party-container').style.display = 'none';
     document.getElementById('developer-options-container').style.display = 'none';
     document.getElementById('dev-button').style.display = 'none';
-    var imagePath = "azure/public/img/www/login1.png";
+    var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     currentSoundtrack.volume = 0.3;
     currentSoundtrack.play();
@@ -303,7 +305,7 @@ function tryPlaySoundtrack(soundtrackPath) {
         // If there's a new soundtrack and it's different from the current, change it
         currentSoundtrack.pause(); // Stop the current soundtrack
         currentSoundtrack = new Audio(soundtrackPath); // Load the new soundtrack
-        currentSoundtrack.volume = 0.2; // Set a reasonable volume
+        currentSoundtrack.volume = 0.1; // Set a reasonable volume
         currentSoundtrack.loop = true; // Loop the soundtrack
         currentSoundtrack.play(); // Play the new soundtrack
     } else if (!soundtrackPath) {
