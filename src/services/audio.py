@@ -2,7 +2,6 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
-from ..core import storage
 from ..core.config import ELEVENLABS_VOICE_ID
 
 def generate(text: str) -> bytes | Iterator[bytes]:
