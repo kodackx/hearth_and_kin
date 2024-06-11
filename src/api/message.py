@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlmodel import Session, select
+import asyncio
 
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, GENERATE_REPLY, logger
 from ..core.database import get_session
@@ -15,6 +16,20 @@ socket_manager = WebsocketManager()
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
 
+async def handle_audio(narrator_reply, story_id):
+    if GENERATE_AUDIO:
+        audio_url = await audio.generate_audio(narrator_reply)
+        await socket_manager.broadcast('reply', {'audio_url': audio_url}, story_id)
+        return audio_url
+    return None
+
+async def handle_image(narrator_reply, story_id):
+    if GENERATE_IMAGE:
+        image_url = await imagery.generate_image(narrator_reply)
+        await socket_manager.broadcast('reply', {'image_url': image_url}, story_id)
+        return image_url
+    return None
+
 @router.post('/message', response_model=MessageRead)
 async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
     # Broadcast the incoming message to all users
@@ -23,24 +38,26 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
     chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
     
-    # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
-    audio_url = image_url = soundtrack_path = narrator_reply = None
+    logger.debug(f'[MESSAGE] {message.message = }')
+    # Not sure if we want to get this from the endpoint or just query the db here
+    character = session.get(Character, message.character_id)
+    if character is None:
+        raise HTTPException(404, 'Character not found')
+        
     try:
-        logger.debug(f'[MESSAGE] {message.message = }')
-        # Not sure if we want to get this from the endpoint or just query the db here
-        character = session.get(Character, message.character_id)
-        if character is None:
-            raise HTTPException(404, 'Character not found')
-        # Will send to openai and obtain reply
-        if GENERATE_REPLY:
-            logger.debug('[MESSAGE] generating reply')
-            narrator_reply, soundtrack_path = narrator.generate_reply(character, message, chain)
-            logger.debug(f'[MESSAGE] {narrator_reply = }')
-            if GENERATE_AUDIO:  # Will send to narrator and obtain audio
-                audio_url = await audio.generate_audio(narrator_reply)
-            if GENERATE_IMAGE:  # Will send to dalle3 and obtain image
-                logger.debug('[MESSAGE] generating image')
-                image_url = await imagery.generate_image(narrator_reply)
+        # Generate the reply first
+        narrator_reply, soundtrack_path = narrator.generate_reply(character, message, chain)
+        logger.debug(f'[MESSAGE] {soundtrack_path = }')
+        await socket_manager.broadcast('reply', {'narrator_reply': narrator_reply}, message.story_id)
+        if soundtrack_path:
+            await socket_manager.broadcast('reply', {'soundtrack_path': soundtrack_path}, message.story_id)
+
+        # Generate audio and image concurrently and broadcast results as they complete
+        audio_task = asyncio.create_task(handle_audio(narrator_reply, message.story_id))
+        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id))
+
+        audio_url, image_url = await asyncio.gather(audio_task, image_task)
+        
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
@@ -53,7 +70,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         narrator_reply=narrator_reply or 'Narrator says hi',
         audio_path=audio_url,
         image_path=image_url,
-        soundtrack_path=soundtrack_path
+        soundtrack_path=soundtrack_path or None
     )
     session.add(new_message)
     session.commit()

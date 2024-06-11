@@ -11,7 +11,7 @@ from io import BytesIO
 from ..core.config import logger
 
 
-def generate(prompt_text) -> str | None:
+def generate(prompt_text) -> str:
     llm = ChatOpenAI(model_name='gpt-4o')  # type: ignore
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
@@ -42,7 +42,7 @@ def generate(prompt_text) -> str | None:
         image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_dalle)  # type: ignore
     except Exception as e:
         logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
-        return None
+        image_url = '[NO IMAGE]'
     return image_url
 
 
@@ -80,7 +80,7 @@ async def store(image_url: str, type: str, filename: Optional[str] = None) -> tu
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def generate_image(narrator_reply) -> str | None:
+async def generate_image(narrator_reply) -> str:
     image_url = generate(narrator_reply)
     if image_url is not None:
         _, image_url = await store(image_url=image_url, type='story')
