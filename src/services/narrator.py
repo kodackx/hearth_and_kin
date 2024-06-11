@@ -129,3 +129,21 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) ->
     output = chain.predict(input=message_and_character_data)
     logger.debug(f'[GPT Narrator] {output = }')
     return output
+
+def generate_reply(character, message, chain) -> tuple[str, str]:
+    narrator_reply = gpt_narrator(character=character, message=message, chain=chain)
+    soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
+    for directive in soundtrack_directives:
+        if directive in narrator_reply:
+            # Handle the soundtrack directive here
+            # For example, log it or set a path to the soundtrack file
+            logger.debug(f'[MESSAGE] Soundtrack directive found: {directive}')
+            # Extract the soundtrack name from the directive
+            soundtrack_name = directive.strip('[]').split(': ')[1]
+            # Assuming you have a method to get the path of the soundtrack
+            soundtrack_path = f'/static/soundtrack/{soundtrack_name}'
+            logger.debug(f'[MESSAGE] Soundtrack path: {soundtrack_path}')
+            # Remove the directive from the narrator_reply to clean up the final message
+            narrator_reply = narrator_reply.replace(directive, '').strip()
+            break  # Assuming only one soundtrack directive per reply, break after handling the first one found
+    return narrator_reply, soundtrack_path

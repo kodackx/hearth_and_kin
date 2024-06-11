@@ -3,7 +3,7 @@ import os
 from elevenlabs import set_api_key
 DEBUG = True
 GENERATE_IMAGE = True
-GENERATE_AUDIO = True
+GENERATE_AUDIO = False
 GENERATE_REPLY = True
 logger = logging.getLogger(__name__)
 
