@@ -7,15 +7,14 @@ let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-let avatarPath = selectedCharacter.portrait_path; //only for current player!
-let system_portrait = 'static/img/system.png';
-let narrator_portrait = 'static/img/narrator.png';
+let avatarPath = selectedCharacter.portrait_path;
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
 const hostname = window.location.hostname;
-export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
-console.log('hostname is: ' + hostname)
+const port = hostname === '127.0.0.1' ? ':8000' : '';
+export const webSocketEndpoint = `ws://${hostname}${port}/ws/story/${story_id}`;
+console.log('Attempting websocket connection at: ' + webSocketEndpoint)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
@@ -124,13 +123,13 @@ async function drawStoryPage() {
                 messages.forEach(message => {
                     switch(message.character) {
                         case 'PC':
-                            appendMessage('',`${message.character_name}: ${message.message}`, 'user');
+                            appendMessage(`${message.character_name}: ${message.message}`, 'user');
                             break;
                         case 'NARRATOR':
-                            appendMessage(narrator_portrait, `${message.character_name}: ${message.message}`, 'narrator');
+                            appendMessage(`${message.character_name}: ${message.message}`, 'narrator');
                             break;
                         case 'SYSTEM':
-                            appendMessage(system_portrait, `${message.character_name}: ${message.message}`, 'system');
+                            appendMessage(`${message.character_name}: ${message.message}`, 'system');
                             break;
                         default:
                             console.log('Unknown character type');
@@ -141,24 +140,11 @@ async function drawStoryPage() {
             const lastCoupleNarratorMessages = narratorMessages.slice(-replayLastMessages);
             // print lastMessage to check object for debugging
             console.log("Resuming from previous play...")
-            console.log("Re-reading the following messages: ")
-            console.log(lastCoupleNarratorMessages)
-
-            // Process each of the last couple narrator messages
-            lastCoupleNarratorMessages.forEach(lastMessage => {
-                const narration = {
-                    text: lastMessage.message,
-                    audio_path: lastMessage.audio_path || null,
-                    soundtrack_path: lastMessage.soundtrack_path || null,
-                };
-                
-                narrationQueue.push(narration);
-            });
-            // Change the background image to the last narrator message's image
-            const lastNarratorMessage = narratorMessages[narratorMessages.length - 1];
-            tryChangeBackgroundImage(lastNarratorMessage.image_path);
-            // Start processing the narration queue
-            processNextNarration();
+            console.log("Last incoming message was: ")
+            console.log(lastMessage)
+            tryPlayAudio(lastMessage.audio_path)
+            tryChangeBackgroundImage(lastMessage.image_path)
+            tryPlaySubtitles(lastMessage.message)
         }
     }))
     .catch((error) => {
@@ -216,19 +202,27 @@ function handleMessage(message) {
             break;
         case 'reply':
             try {
-                if (data.message) {
-                    console.log('Received successful reply: ' + data.message);
-                    const narration = {
-                        text: data.message,
-                        audio_path: data.audio_path || null,
-                        soundtrack_path: data.soundtrack_path || null,
-                    };
-                    narrationQueue.push(narration);
-                    appendMessage(narrator_portrait, 'Narrator: ' + data.message, 'narrator');
-                    if (!isProcessingNarration) {
-                        processNextNarration();
-                        break;
-                    }
+                if (data.soundtrack_path) {
+                    tryPlaySoundtrack(data.soundtrack_path);
+                } 
+                var narratorMessage = data.message;
+                var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
+                console.log('Received successful reply: ' + formattedMessage);
+                document.getElementById('send-button').style.display = 'block';
+                document.getElementById('spinner').style.display = 'none';
+                document.getElementById('message-input-group').classList.remove('waiting-state');
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('message-input').placeholder = "What do you do next?";
+                document.getElementById('message-input').value = '';
+                document.getElementById('message-input').focus();
+                tryPlayAudio(data.audio_path);
+                tryChangeBackgroundImage(data.image_path);
+                tryPlaySubtitles(formattedMessage);
+            } catch {(error) => {
+                    console.error(error);
+                    document.getElementById('spinner').style.display = 'none';
+                    document.getElementById('send-button').style.display = 'block';
+                    alert(error)
                 }
                 if (data.image_path) {
                     console.log('Received new background image')
@@ -255,9 +249,9 @@ function appendMessage(portrait, message, entity) {
     switch (entity) {
         case 'user':
             divClass = 'user-message';
-            if (portrait) {
+            if (avatarPath) {
                 const avatarImg = document.createElement('img');
-                avatarImg.src = portrait;
+                avatarImg.src = avatarPath;
                 avatarImg.className = 'avatar'; // Add a class for styling
                 messageDiv.appendChild(avatarImg);
             }

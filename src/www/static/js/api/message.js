@@ -15,8 +15,7 @@ export function sendMessage(message, story_id, character_id, character_name) {
             story_id: story_id,
             character: "PC",
             character_id: parseInt(character_id),
-            character_name: character_name,
-            portrait_path: portraitPath
+            character_name: character_name
         }),
     })
     .then(response => handleApiErrors(response, data => {

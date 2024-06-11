@@ -21,6 +21,7 @@ azure-storage-blob = "^12.19.0"
 azure-identity = "^1.15.0"
 azure-keyvault = "^4.2.0"
 gunicorn = "^22.0.0"
+python-multipart = "^0.0.9"
 
 
 [tool.poetry.group.dev.dependencies]

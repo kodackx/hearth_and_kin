@@ -5,15 +5,15 @@ let username = localStorage.getItem('username');
 let story_id = localStorage.getItem('story_id');
 
 var boxes = [
-    { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story4'), boxId: 4, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story5'), boxId: 5, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story6'), boxId: 6, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story7'), boxId: 7, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story8'), boxId: 8, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story9'), boxId: 9, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story3'), boxId: 3, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story4'), boxId: 4, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story5'), boxId: 5, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story6'), boxId: 6, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story7'), boxId: 7, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story8'), boxId: 8, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story9'), boxId: 9, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
 ];
 
 
@@ -23,8 +23,8 @@ var characterBoxes = [
     { boxElement: document.getElementById('char3'), boxId: 3, characterId: undefined, characterCreated: false, party_lead: undefined},
 ];
 
+
 document.addEventListener('DOMContentLoaded', welcomePopUp);
-document.addEventListener('DOMContentLoaded', InitializeInviteCodePopUp);
 document.addEventListener('DOMContentLoaded', function() {
     // first we requests the list of characters and populate the boxes
     getCharactersForUser().then(characters => {
@@ -71,30 +71,6 @@ function welcomePopUp() {
         }
     }
     localStorage.setItem('welcomePopupShown', 'false');
-}
-
-function InitializeInviteCodePopUp() {
-    console.log('Initializing invite code functionality...')
-    // Add event listener for the "Use Invite Code" button
-    document.getElementById('use-invite-code-btn').addEventListener('click', function() {
-        console.log('Clicked on the invite code button!')
-        document.getElementById('invite-code-popup').style.display = 'block';
-    });
-
-    // Add event listener for the close button in the popup
-    document.querySelector('#invite-code-popup .close-btn').addEventListener('click', function() {
-        document.getElementById('invite-code-popup').style.display = 'none';
-    });
-
-    // Add event listener for the submit button in the popup
-    document.getElementById('submit-invite-code-btn').addEventListener('click', function() {
-        const inviteCode = document.getElementById('invite-code-input').value;
-        if (inviteCode) {
-            console.log('Trying to conenct with invite code')
-            console.log(inviteCode)
-            joinStoryByInviteCode(inviteCode);
-        }
-    });
 }
 
 async function getCharactersForUser() {
@@ -174,6 +150,7 @@ function selectCharacter(box, character) {
 }
 
 function updateEventListener(box, func) {
+    console.log(`[updateEventListener] Checking storyId for box ${box.boxId}: ${box.storyId}`);
     box.boxElement.removeEventListener('click', box.clickHandler);
     box.clickHandler = func;
     box.boxElement.addEventListener('click', box.clickHandler);
@@ -183,24 +160,24 @@ function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
     // Add event listeners to the boxes
     boxes.forEach(box => {
-        drawEmptyStory(box)
+        // box.boxElement.addEventListener('click', createClickHandler(box));
+        //box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
+        updateEventListener(box, createStory)
     });
 }
 
-
-function createClickHandler(box) {
-    //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
-    return function() {
-        createStory(box);
-    };
-}
+// function createClickHandler(box) {
+//     //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
+//     return function() {
+//         createStory(box);
+//     };
+// }
 
 function joinClickHandler(box) {
     return function() {
         joinStory(box);
     };
 }
-
 
 function playOrResumeStory(box) {
     return function() {
@@ -210,45 +187,107 @@ function playOrResumeStory(box) {
 }
 
 
+// function drawCreatedStory(box, story) {
+//     box.boxElement.classList.add('created-story');
+//     box.storyCreated = true;
+//     box.party_lead = story.party_lead;
+//     box.storyId = story.story_id;
+//     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+//     updateEventListener(box, joinStory);
+// }
 function drawCreatedStory(box, story) {
     box.boxElement.classList.add('created-story');
     box.storyCreated = true;
-    box.creator = story.creator;
+    box.party_lead = story.party_lead;
     box.storyId = story.story_id;
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinStory);
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => joinStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
-
+// function drawActiveStory(box) {
+//     console.log(`[drawActiveStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
+//     box.storyActive = true;
+//     box.boxElement.classList.add('active-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Resume adventure';
+//     updateEventListener(box, playStory);
+// }
 function drawActiveStory(box) {
+    console.log(`[drawActiveStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
     box.storyActive = true;
     box.boxElement.classList.add('active-story');
-    box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
-    updateEventListener(box, playStory);
+    box.boxElement.querySelector('.box-footer').textContent = 'Resume adventure';
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => playStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
+// function drawJoinedStory(box) {
+//     console.log(`[drawJoinedStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
+//     box.boxElement.classList.add('joined-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
+//     updateEventListener(box, playStory);
+// }
 function drawJoinedStory(box) {
     box.boxElement.classList.add('joined-story');
-    box.boxElement.querySelector('.box-footer').textContent = undefined;
-    updateEventListener(box, leaveStory);
+    box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => playStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
+// function drawLeftStory(box) {
+//     box.boxElement.classList.add('left-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+//     updateEventListener(box, joinStory);
+// }
 function drawLeftStory(box) {
     box.boxElement.classList.add('left-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinStory);
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => joinStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
-
+// function drawDeletedStory(box) {
+//     box.boxElement.classList.add('deleted-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+//     box.storyId = undefined;
+//     box.storyCreated = false;
+//     box.party_lead = undefined;
+//     updateEventListener(box, createStory);
+// }
 function drawDeletedStory(box) {
     box.boxElement.classList.add('deleted-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
     box.storyId = undefined;
     box.storyCreated = false;
-    box.creator = undefined;
-    updateEventListener(box, createStory);
+    box.party_lead = undefined;
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => createStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
+}
+
+// function drawEmptyStory(box) {
+//     box.boxElement.classList.add('empty-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+//     box.storyId = undefined;
+//     box.storyCreated = false;
+//     box.party_lead = undefined;
+//     updateEventListener(box, createStory);
+// }
+function drawEmptyStory(box) {
+    box.boxElement.classList.add('empty-story');
+    box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+    box.storyId = undefined;
+    box.storyCreated = false;
+    box.party_lead = undefined;
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => createStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
@@ -264,7 +303,7 @@ function loadStories(character_id) {
             box.storyId = undefined;
             box.storyCreated = false;
             box.storyActive = false;
-            box.creator = undefined;
+            box.party_lead = undefined;
             box.boxElement.classList.remove('created-story', 'active-story', 'joined-story', 'left-story', 'deleted-story');
             box.boxElement.querySelector('.box-footer').textContent = '';
             box.boxElement.style.display = 'none'; // Hide all boxes initially
@@ -277,7 +316,7 @@ function loadStories(character_id) {
         // Show only the relevant story boxes
         for (let i = startIndex; i < startIndex + 3; i++) {
             if (i < boxes.length) {
-                boxes[i].boxElement.style.display = 'block'; // Show relevant boxes
+                boxes[i].boxElement.style.display = 'flex'; // Show relevant boxes
             }
         }
         
@@ -287,20 +326,35 @@ function loadStories(character_id) {
             if (boxIndex < boxes.length) {
                 const box = boxes[boxIndex];
                 box.storyId = story.story_id;
-                box.storyCreated = true;
-                box.storyActive = story.active;
-                box.creator = story.creator;
+                console.log(`Setting storyId for box ${box.boxId}: ${box.storyId}`);
+                box.storyCreated = true; //we know this because of how we entered the loop
+                box.storyActive = story.has_started;
+                box.party_lead = story.party_lead;
                 console.log('Drawing story:', story);
-
-                if (story.active && story.story_id == character.story_id) {
+                console.log('Printing boolean checks...')
+                console.log('Story active: ' + box.storyActive)
+                console.log('Story party_lead: ' + box.party_lead);
+                console.log('Story party_member_1: ' + box.party_member_1);
+                console.log('Story party_member_2: ' + box.party_member_2);
+                console.log('Story ID: ' + box.storyId);
+                // Reasoning: We already know the box we are populating is for the currently selected character
+                // All that remains to find out is if the story has started or not
+                // Remember, if this data is pulled, it already means the character is involved with
+                // this story either as a memeber or a leader
+                if (box.storyActive) {
                     drawActiveStory(box);
-                } else if (!story.active && story.story_id == character.story_id) {
-                    drawJoinedStory(box);
                 } else {
-                    drawCreatedStory(box, story);
-                }
+                    drawJoinedStory(box);
+                } 
             }
         });
+
+         // Mark any remaining boxes as empty
+         for (let i = startIndex + stories.length; i < startIndex + 3; i++) {
+            if (i < boxes.length) {
+                drawEmptyStory(boxes[i]);
+            }
+        };
     }))
     .catch((error) => {
         showToast(`Frontend Error: ${error.message}`);
@@ -318,113 +372,70 @@ function createStory(box) {
             party_lead: character_id
         }),
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('API response:', data);
-        const { story, invite_code } = data;
-
-        if (story.story_id && invite_code && story.party_lead) {
-            console.log('Story created:', story.story_od);
-            console.log('Invite code:', invite_code);
-            console.log('Party Lead', story.party_lead)
-            // Set story id, party lead and invite code on the box before draw
-            box.inviteCode = invite_code;
-            box.storyId = story.story_id; 
-            box.partyLead = story.party_lead; 
-            localStorage.setItem(`invite_code_${story.story_id}`, invite_code); // Save invite code in local storage
-            drawCreatedStory(box, story, invite_code);
-            showToast('Story created!');
-        } else {
-            console.error('Error: storyId is undefined or API response is malformed');
-            showToast('Error: Failed to create story. Please try again.');
-        }
-    })
+    .then(response => handleApiErrors(response, data => {
+        drawCreatedStory(box, data);
+        showToast('Story created!');
+    }))
     .catch((error) => {
-        console.error('Fetch error:', error);
         showToast(`Frontend Error: ${error.message}`);
     });
 }
 
-// function joinStory(box) {
-//     const character_id = parseInt(localStorage.getItem('character_id'));
-//     fetch('/story/' + box.storyId + '/join', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//             story_id: box.storyId,
-//             character_id: character_id
-//         }),
-//     })
-//     .then(response => handleApiErrors(response, data => {
-//         localStorage.setItem('story_id', data.story_id);
-//         drawJoinedStory(box);
-//         showToast('Story joined!');
-//     }))
-//     .catch((error) => {
-//         showToast(`Frontend Error: ${error.message}`);
-//     });
-// }
-
-async function joinStoryByInviteCode(inviteCode) {
-    try {
-        const response = await fetch(`/join_by_invite?invite_code=${inviteCode}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ invite_code: inviteCode }),
-        });
+function joinStory(box) {
+    const character_id = parseInt(localStorage.getItem('character_id'));
+    fetch('/story/' + box.storyId + '/join', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: box.storyId,
+            character_id: character_id
+        }),
+    })
+    .then(response => handleApiErrors(response, data => {
+        localStorage.setItem('story_id', data.story_id);
+        drawJoinedStory(box);
+        showToast('Story joined!');
+    }))
+    .catch((error) => {
+        showToast(`Frontend Error: ${error.message}`);
+    });
+}
 
         handleApiErrors(response, async story => {
             const storyId = story.story_id;
             const character_id = parseInt(localStorage.getItem('character_id'));
 
-            // Make another API call to add the player to the story
-            const addPlayerResponse = await fetch(`/story/${storyId}/add_player`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ character_id: character_id , story_id: storyId}),
-            });
-
-            handleApiErrors(addPlayerResponse, () => {
-                // Find the appropriate box and draw it as a joined story
-                const box = boxes.find(box => box.storyId === undefined); // Find the first empty box
-                if (box) {
-                    box.storyId = storyId;
-                    drawJoinedStory(box);
-                    showToast('Successfully joined the story!');
-                } else {
-                    // TODO, stop player BEFORE joining a story if all boxes are full!
-                    showToast('No available box to display the joined story.');
-                }
-            });
-        });
-    } catch (error) {
-        showToast(`Error: ${error.message}`);
-    }
-}
-
-function goToLobby(box) {
-    const storyId = box.storyId || box.story_id; // Handle both cases
-    if (!storyId) {
-        console.error("Error: We don't have the storyId");
+function playStory(box) {
+    const character_id = parseInt(localStorage.getItem('character_id'));
+    console.log("Attempting to POST to '/story/'" + box.storyId + "/play");
+    if (!box.storyId) {
+        console.error("Error: box.storyId is undefined");
         return;
     }
-    // Save story_id to localStorage
-    localStorage.setItem('story_id', storyId);
-    // Navigate to the lobby
-    window.location.href = '/lobby';
+    fetch('/story/' + box.storyId + '/play', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            story_id: box.storyId,
+            character_id: character_id
+        }),
+    })
+    .then(response => handleApiErrors(response, data => {
+        localStorage.setItem('story_id', box.storyId);
+        window.location.href = '/story';
+    }))
+    .catch((error) => {
+        showToast(`Frontend Error: ${error.message}`);
+    });
 }
 
 
 function deleteStory(box) {
     const character_id = parseInt(localStorage.getItem('character_id'));
-    console.log("Attempting to DELETE '/story/'" + box.storyId);
-    console.log("Character ID: " + character_id);
     fetch('/story/' + box.storyId, {
         method: 'DELETE',
         headers: {

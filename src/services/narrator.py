@@ -94,7 +94,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead], story_id: str) -> LLMChain:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> LLMChain:
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
     if message_history:
@@ -133,8 +133,8 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, p
     if character.character_name:
         message_and_character_data += f'\n(SYSTEM NOTE - Character Name: {character.character_name})'
 
-    if party_info:
-        message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
+    if character.description:
+        message_and_character_data += f'\n(Character Data: {character.description})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)

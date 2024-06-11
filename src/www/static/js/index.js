@@ -1,3 +1,5 @@
+import { handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 document.getElementById('loginBtn').addEventListener('click', login);
 
 function register() {
@@ -32,11 +34,16 @@ function login() {
             password: password,
         }),
     })
-    .then(response => handleApiResponse(response, data => {
-        localStorage.setItem('username', username);
-        localStorage.setItem('user_id', data.user_id);
-        localStorage.setItem('access_token', data.access_token);
-        window.location.href = '/dashboard';
+    .then(response => handleApiErrors(response, data => {
+        console.log('Response data:', data); // Log the response data for debugging
+        if (data.user_id) {
+            localStorage.setItem('username', username);
+            localStorage.setItem('user_id', data.user_id);
+            localStorage.setItem('access_token', data.access_token);
+            window.location.href = '/dashboard';
+        } else {
+            throw new Error('User ID is missing in the response.');
+        }
     }))
     .catch((error) => {
         showToast(`Frontend Error: ${error.message}`);

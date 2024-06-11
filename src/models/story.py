@@ -24,7 +24,7 @@ class StoryBase(Model):
     party_objective: Optional[str]
 
 
-class StoryCreate(StoryBase):
+class StoryCreate(Model):
     party_lead: int = Field(foreign_key='character.character_id')
 
 
@@ -33,12 +33,16 @@ class StoryJoin(Model):
     character_id: int = Field(foreign_key='character.character_id')
 
 
-class StoryDelete(StoryJoin):
+class StoryDelete(Model):
     character_id: int = Field(foreign_key='character.character_id')
 
 
-class StoryRead(StoryCreate):
+class StoryRead(Model):
+    story_id: int
     has_started: bool = Field(default=False)
+    party_lead: int
+    party_member_1: Optional[int] = Field(default=None)
+    party_member_2: Optional[int] = Field(default=None)
 
 
 class Story(StoryBase, table=True):  # type: ignore

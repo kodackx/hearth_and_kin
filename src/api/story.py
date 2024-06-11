@@ -43,9 +43,10 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 # POST /story: Creates a new story and generates an invite code.
 @router.post('/story', status_code=201)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)) -> StoryCreate:
-    db_story = session.get(Story, story.story_id)
-    if db_story is not None:
-        raise HTTPException(400, 'Story already exists')
+    logger.debug(f"Received story data: {story}")
+    # db_story = session.get(Story, story.story_id)
+    # if db_story is not None:
+    #     raise HTTPException(400, 'Story already exists')
     new_story = Story(party_lead=story.party_lead)
 
     session.add(new_story)
@@ -66,7 +67,7 @@ async def delete_story(story_id: int, story: StoryDelete, session: Session = Dep
     statement = select(Story).where(Story.story_id == story_id).where(Story.party_lead == story.character_id)
     db_story = session.exec(statement).first()
     if not db_story:
-        raise HTTPException(404, 'This character was not the creator, therefore they cannot delete.')
+        raise HTTPException(404, 'This character is not the party lead, therefore they cannot delete.')
 
     # Remove the story
     session.delete(db_story)
@@ -150,22 +151,22 @@ async def add_player_to_story(*, story_join_data: StoryJoin, session: Session = 
 
 
 @router.post('/story/{story_id}/play')
-async def play_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
-    db_story = session.get(Story, story.story_id)
-    db_character = session.get(Character, story.character_id)
-    logger.debug(f'[STORY]: {db_story}')
-    logger.debug(f'[CHARACTER]: {db_character}')
+async def play_story(*, story_join_data: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
+    db_story = session.get(Story, story_join_data.story_id)
+    db_character = session.get(Character, story_join_data.character_id)
+    logger.debug(f'[STORY ID]: {db_story}')
+    logger.debug(f'[CHARACTER ID]: {db_character}')
     if not db_story or not db_character:
         raise HTTPException(404, 'Story or character does not exist')
 
     if db_story.party_lead != db_character.character_id:
         raise HTTPException(400, 'Only the party lead can initiate play.')
 
-    db_story.active = True
+    db_story.has_started = True
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
-    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), story.story_id)
+    await socket_manager.broadcast('play_story', StoryRead.model_validate(db_story), story_join_data.story_id)
     return db_story
 
 # COSTI: I don't think this should exist. We either add players to a story party OR we manage the lobby

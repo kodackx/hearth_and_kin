@@ -7,7 +7,6 @@ from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
-from ..models.story import Story
 from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
 
@@ -17,37 +16,6 @@ socket_manager = WebsocketManager()
 @router.websocket('/ws/story/{story_id}')
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
-
-async def generate_audio(text: str) -> str:
-    audio_data = audio.generate(text)
-    _, audio_url = audio.store(audio_bytes=audio_data)
-    return audio_url
-
-async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[list[str], list[str]]:
-    sentence_endings = re.compile(r'(?<=[.!?]) +')
-    # Split the text into sentences
-    sentences = sentence_endings.split(narrator_reply)
-    # Group sentences into chunks of SENTENCES_PER_SUBTITLE
-    narration_chunks = [' '.join(sentences[i:i+SENTENCES_PER_SUBTITLE]) for i in range(0, len(sentences), SENTENCES_PER_SUBTITLE)]
-
-    audio_paths = []
-    for narration_chunk in narration_chunks:
-        payload = {'message': narration_chunk}
-        if GENERATE_AUDIO:
-            audio_path = await generate_audio(narration_chunk)
-            audio_paths.append(audio_path)
-            payload['audio_path'] = audio_path
-        if soundtrack_path:
-            payload['soundtrack_path'] = soundtrack_path
-        await socket_manager.broadcast('reply', payload, story_id)
-    return narration_chunks, audio_paths
-
-async def handle_image(narrator_reply, story_id) -> str | None:
-    if GENERATE_IMAGE:
-        image_path = await imagery.generate_image(narrator_reply, 'story')
-        await socket_manager.broadcast('reply', {'image_path': image_path}, story_id)
-        return image_path
-    return None
 
 @router.post('/message', response_model=MessageNARRATORorSYSTEM)
 async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
@@ -101,7 +69,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         story_id=message.story_id,
         character_id=message.character_id,
         character_name=message.character_name,
-        character=message.character,
+        character=message.character, #could be NARRATOR, PC or SYSTEM
         message=message.message,
         narrator_reply=None,
         audio_path=None,
@@ -117,7 +85,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         story_id=message.story_id,
         character_id=None,  # Assuming narrator doesn't have a character_id
         character_name="NARRATOR",
-        character="NARRATOR",
+        character="NARRATOR", #could be NARRATOR, PC or SYSTEM
         message=narrator_reply or 'Narrator says hi',
         narrator_reply=None,
         audio_path=audio_url,
@@ -129,7 +97,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     session.refresh(narrator_message)
 
     # Broadcast the narrator's reply
-    websocket_message = MessageRead.model_validate(narrator_message).model_dump(exclude='timestamp')
+    websocket_message = MessageNARRATORorSYSTEM.model_validate(narrator_message).model_dump(exclude='timestamp')
     await socket_manager.broadcast('reply', websocket_message, message.story_id)
 
     return human_message

@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..core.database import get_session
 from sqlmodel import Session, select
-from ..models.character import Character, CharacterRead, CharacterUpdate
-from ..models.character import CharacterDetails
-from ..models.story import Story
+from ..models.character import Character, CharacterCreate, CharacterRead, CharacterUpdate
 from ..core.config import logger
 from typing import List
 
@@ -45,8 +43,9 @@ async def update_character(*, character: CharacterUpdate, character_id: int, ses
 #     return user
 
 @router.get('/characters', response_model=List[CharacterRead])
-async def list_characters_for_user(current_user: str, session: Session = Depends(get_session)):
-    characters = session.exec(Character).filter(Character.user_id == current_user).all()
+async def list_characters_for_user(current_user_id: int, session: Session = Depends(get_session)):
+    statement = select(Character).where(Character.user_id == current_user_id)
+    characters = session.exec(statement).all()
     return characters
 
 @router.get('/story/{story_id}/characters', response_model=List[CharacterDetails])
