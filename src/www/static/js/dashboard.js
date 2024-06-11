@@ -1,28 +1,30 @@
-import { handleResponse } from './utils.js'
+import {handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 document.getElementById('username').textContent = localStorage.getItem('username');
 let username = localStorage.getItem('username');
 let story_id = localStorage.getItem('story_id');
 
 var boxes = [
-    { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story3'), boxId: 3, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story4'), boxId: 4, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story5'), boxId: 5, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story6'), boxId: 6, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story7'), boxId: 7, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story8'), boxId: 8, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
-    { boxElement: document.getElementById('story9'), boxId: 9, storyId: undefined, storyCreated: false, creator: undefined, storyActive: false},
+    { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story3'), boxId: 3, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story4'), boxId: 4, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story5'), boxId: 5, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story6'), boxId: 6, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story7'), boxId: 7, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story8'), boxId: 8, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
+    { boxElement: document.getElementById('story9'), boxId: 9, storyId: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
 ];
 
 
 var characterBoxes = [
-    { boxElement: document.getElementById('char1'), boxId: 1, characterId: undefined, characterCreated: false, creator: undefined},
-    { boxElement: document.getElementById('char2'), boxId: 2, characterId: undefined, characterCreated: false, creator: undefined},
-    { boxElement: document.getElementById('char3'), boxId: 3, characterId: undefined, characterCreated: false, creator: undefined},
+    { boxElement: document.getElementById('char1'), boxId: 1, characterId: undefined, characterCreated: false, party_lead: undefined},
+    { boxElement: document.getElementById('char2'), boxId: 2, characterId: undefined, characterCreated: false, party_lead: undefined},
+    { boxElement: document.getElementById('char3'), boxId: 3, characterId: undefined, characterCreated: false, party_lead: undefined},
 ];
 
 
+document.addEventListener('DOMContentLoaded', welcomePopUp);
 document.addEventListener('DOMContentLoaded', function() {
     // first we requests the list of characters and populate the boxes
     getCharactersForUser().then(characters => {
@@ -48,21 +50,46 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDashboard(boxes);
 });
 
+function welcomePopUp() {
+    // Check if the user has seen the popup before
+    if (!localStorage.getItem('welcomePopupShown')) {
+        // Show the popup
+        document.getElementById('welcome-popup').style.display = 'block';
+        // Set the flag in localStorage
+        localStorage.setItem('welcomePopupShown', 'false');
+    }
+    // Get the <span> element that closes the popup
+    var closeBtn = document.getElementsByClassName('close-btn')[0];
+    // When the user clicks on <span> (x), close the popup
+    closeBtn.onclick = function() {
+        document.getElementById('welcome-popup').style.display = 'none';
+    }
+    // When the user clicks anywhere outside of the popup, close it
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('welcome-popup')) {
+            document.getElementById('welcome-popup').style.display = 'none';
+        }
+    }
+    localStorage.setItem('welcomePopupShown', 'false');
+}
 
 async function getCharactersForUser() {
-    const current_user = username; // Assuming 'username' is already defined in your scope
-    const url = `/characters?current_user=${encodeURIComponent(current_user)}`;
+    const user_id = localStorage.getItem('user_id');
+    if (!user_id) {
+        alert("No current user was identified. Please log in and try again.");
+        window.location.href = '/';
+        return;
+    }
+    const url = `/characters?current_user_id=${encodeURIComponent(user_id)}`;
     try {
         const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        console.log('Received characters for this account:', data);
-        return data; // This will return the array from data
+        return handleApiErrors(response, data => {
+            console.log('Received characters for this account:', data);
+            return data;
+        });
     } catch (error) {
-        console.error('There was a problem with your fetch operation:', error);
-        throw error; // Rethrow the error if you want to handle it outside
+        showToast(`Frontend Error: ${error.message}`);
+        throw error;
     }
 }
 
@@ -123,6 +150,7 @@ function selectCharacter(box, character) {
 }
 
 function updateEventListener(box, func) {
+    console.log(`[updateEventListener] Checking storyId for box ${box.boxId}: ${box.storyId}`);
     box.boxElement.removeEventListener('click', box.clickHandler);
     box.clickHandler = func;
     box.boxElement.addEventListener('click', box.clickHandler);
@@ -130,31 +158,26 @@ function updateEventListener(box, func) {
 
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
-    
-
-
     // Add event listeners to the boxes
     boxes.forEach(box => {
         // box.boxElement.addEventListener('click', createClickHandler(box));
         //box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
-        updateEventListener(box, createClickHandler)
+        updateEventListener(box, createStory)
     });
 }
 
-
-function createClickHandler(box) {
-    //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
-    return function() {
-        createStory(box);
-    };
-}
+// function createClickHandler(box) {
+//     //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
+//     return function() {
+//         createStory(box);
+//     };
+// }
 
 function joinClickHandler(box) {
     return function() {
         joinStory(box);
     };
 }
-
 
 function playOrResumeStory(box) {
     return function() {
@@ -164,45 +187,107 @@ function playOrResumeStory(box) {
 }
 
 
+// function drawCreatedStory(box, story) {
+//     box.boxElement.classList.add('created-story');
+//     box.storyCreated = true;
+//     box.party_lead = story.party_lead;
+//     box.storyId = story.story_id;
+//     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+//     updateEventListener(box, joinStory);
+// }
 function drawCreatedStory(box, story) {
     box.boxElement.classList.add('created-story');
     box.storyCreated = true;
-    box.creator = story.creator;
+    box.party_lead = story.party_lead;
     box.storyId = story.story_id;
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinStory);
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => joinStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
-
+// function drawActiveStory(box) {
+//     console.log(`[drawActiveStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
+//     box.storyActive = true;
+//     box.boxElement.classList.add('active-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Resume adventure';
+//     updateEventListener(box, playStory);
+// }
 function drawActiveStory(box) {
+    console.log(`[drawActiveStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
     box.storyActive = true;
     box.boxElement.classList.add('active-story');
-    box.boxElement.querySelector('.box-footer').textContent = 'Resume Story';
-    updateEventListener(box, playStory);
+    box.boxElement.querySelector('.box-footer').textContent = 'Resume adventure';
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => playStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
+// function drawJoinedStory(box) {
+//     console.log(`[drawJoinedStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
+//     box.boxElement.classList.add('joined-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
+//     updateEventListener(box, playStory);
+// }
 function drawJoinedStory(box) {
     box.boxElement.classList.add('joined-story');
-    box.boxElement.querySelector('.box-footer').textContent = undefined;
-    updateEventListener(box, leaveStory);
+    box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => playStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
+// function drawLeftStory(box) {
+//     box.boxElement.classList.add('left-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+//     updateEventListener(box, joinStory);
+// }
 function drawLeftStory(box) {
     box.boxElement.classList.add('left-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
-    updateEventListener(box, joinStory);
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => joinStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
-
+// function drawDeletedStory(box) {
+//     box.boxElement.classList.add('deleted-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+//     box.storyId = undefined;
+//     box.storyCreated = false;
+//     box.party_lead = undefined;
+//     updateEventListener(box, createStory);
+// }
 function drawDeletedStory(box) {
     box.boxElement.classList.add('deleted-story');
     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
     box.storyId = undefined;
     box.storyCreated = false;
-    box.creator = undefined;
-    updateEventListener(box, createStory);
+    box.party_lead = undefined;
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => createStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
+}
+
+// function drawEmptyStory(box) {
+//     box.boxElement.classList.add('empty-story');
+//     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+//     box.storyId = undefined;
+//     box.storyCreated = false;
+//     box.party_lead = undefined;
+//     updateEventListener(box, createStory);
+// }
+function drawEmptyStory(box) {
+    box.boxElement.classList.add('empty-story');
+    box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
+    box.storyId = undefined;
+    box.storyCreated = false;
+    box.party_lead = undefined;
+    box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    box.clickHandler = () => createStory(box); // Assign new handler
+    box.boxElement.addEventListener('click', box.clickHandler);
 }
 
 
@@ -210,7 +295,7 @@ function loadStories(character_id) {
     fetch(`/stories?character_id=${character_id}`, {
         method: 'GET',
     })
-    .then(response => handleResponse(response, stories => {
+    .then(response => handleApiErrors(response, stories => {
         const character = JSON.parse(localStorage.getItem('selectedCharacter'))
         
         // Clear previous story assignments
@@ -218,7 +303,7 @@ function loadStories(character_id) {
             box.storyId = undefined;
             box.storyCreated = false;
             box.storyActive = false;
-            box.creator = undefined;
+            box.party_lead = undefined;
             box.boxElement.classList.remove('created-story', 'active-story', 'joined-story', 'left-story', 'deleted-story');
             box.boxElement.querySelector('.box-footer').textContent = '';
             box.boxElement.style.display = 'none'; // Hide all boxes initially
@@ -231,7 +316,7 @@ function loadStories(character_id) {
         // Show only the relevant story boxes
         for (let i = startIndex; i < startIndex + 3; i++) {
             if (i < boxes.length) {
-                boxes[i].boxElement.style.display = 'block'; // Show relevant boxes
+                boxes[i].boxElement.style.display = 'flex'; // Show relevant boxes
             }
         }
         
@@ -241,51 +326,64 @@ function loadStories(character_id) {
             if (boxIndex < boxes.length) {
                 const box = boxes[boxIndex];
                 box.storyId = story.story_id;
-                box.storyCreated = true;
-                box.storyActive = story.active;
-                box.creator = story.creator;
+                console.log(`Setting storyId for box ${box.boxId}: ${box.storyId}`);
+                box.storyCreated = true; //we know this because of how we entered the loop
+                box.storyActive = story.has_started;
+                box.party_lead = story.party_lead;
                 console.log('Drawing story:', story);
-
-                if (story.active && story.story_id == character.story_id) {
+                console.log('Printing boolean checks...')
+                console.log('Story active: ' + box.storyActive)
+                console.log('Story party_lead: ' + box.party_lead);
+                console.log('Story party_member_1: ' + box.party_member_1);
+                console.log('Story party_member_2: ' + box.party_member_2);
+                console.log('Story ID: ' + box.storyId);
+                // Reasoning: We already know the box we are populating is for the currently selected character
+                // All that remains to find out is if the story has started or not
+                // Remember, if this data is pulled, it already means the character is involved with
+                // this story either as a memeber or a leader
+                if (box.storyActive) {
                     drawActiveStory(box);
-                } else if (!story.active && story.story_id == character.story_id) {
-                    drawJoinedStory(box);
                 } else {
-                    drawCreatedStory(box, story);
-                }
+                    drawJoinedStory(box);
+                } 
             }
         });
+
+         // Mark any remaining boxes as empty
+         for (let i = startIndex + stories.length; i < startIndex + 3; i++) {
+            if (i < boxes.length) {
+                drawEmptyStory(boxes[i]);
+            }
+        };
     }))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
 }
 
 
 function createStory(box) {
-    const character_id = parseInt(localStorage.getItem('character_id'))
+    const character_id = parseInt(localStorage.getItem('character_id'));
     fetch('/story', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            story_id: box.boxId,
-            creator: character_id,
+            party_lead: character_id
         }),
     })
-    .then(response => handleResponse(response, data => {
-            drawCreatedStory(box, data);
-            alert('Story created!')
+    .then(response => handleApiErrors(response, data => {
+        drawCreatedStory(box, data);
+        showToast('Story created!');
     }))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
-};
-
+}
 
 function joinStory(box) {
-    const character_id = parseInt(localStorage.getItem('character_id'))
+    const character_id = parseInt(localStorage.getItem('character_id'));
     fetch('/story/' + box.storyId + '/join', {
         method: 'POST',
         headers: {
@@ -296,19 +394,24 @@ function joinStory(box) {
             character_id: character_id
         }),
     })
-    .then(response => handleResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         localStorage.setItem('story_id', data.story_id);
         drawJoinedStory(box);
-        alert('Story joined!')
+        showToast('Story joined!');
     }))
     .catch((error) => {
-        alert(error);
-    })
-};
+        showToast(`Frontend Error: ${error.message}`);
+    });
+}
 
 
 function playStory(box) {
-    const character_id = parseInt(localStorage.getItem('character_id'))
+    const character_id = parseInt(localStorage.getItem('character_id'));
+    console.log("Attempting to POST to '/story/'" + box.storyId + "/play");
+    if (!box.storyId) {
+        console.error("Error: box.storyId is undefined");
+        return;
+    }
     fetch('/story/' + box.storyId + '/play', {
         method: 'POST',
         headers: {
@@ -319,18 +422,18 @@ function playStory(box) {
             character_id: character_id
         }),
     })
-    .then(response => handleResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         localStorage.setItem('story_id', box.storyId);
         window.location.href = '/story';
     }))
     .catch((error) => {
-        alert(error);
-    })
-};
+        showToast(`Frontend Error: ${error.message}`);
+    });
+}
 
 
 function deleteStory(box) {
-    const character_id = parseInt(localStorage.getItem('character_id'))
+    const character_id = parseInt(localStorage.getItem('character_id'));
     fetch('/story/' + box.storyId, {
         method: 'DELETE',
         headers: {
@@ -341,11 +444,14 @@ function deleteStory(box) {
             story_id: box.storyId
         }),
     })
-    .then(response => handleResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         localStorage.setItem('story_id', undefined);
-        alert('Story deleted!')
+        showToast('Story deleted!');
         drawDeletedStory(box);
     }))
+    .catch((error) => {
+        showToast(`Frontend Error: ${error.message}`);
+    });
 };
 
 
@@ -361,11 +467,11 @@ function leaveStory(box) {
             character_id: character_id
         }),
     })
-    .then(response => handleResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         localStorage.setItem('story_id', undefined);
         drawLeftStory(box);
     }))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
 };

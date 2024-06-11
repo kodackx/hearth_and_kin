@@ -1,3 +1,5 @@
+import { handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 document.getElementById('registerBtn').addEventListener('click', register);
 
 

@@ -1,4 +1,5 @@
-import { handleResponse } from './utils.js'
+import { handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 import * as messageApi from './api/message.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
@@ -6,12 +7,14 @@ let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
+let avatarPath = selectedCharacter.portrait_path;
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
 const hostname = window.location.hostname;
-export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
-console.log('hostname is: ' + hostname)
+const port = hostname === '127.0.0.1' ? ':8000' : '';
+export const webSocketEndpoint = `ws://${hostname}${port}/ws/story/${story_id}`;
+console.log('Attempting websocket connection at: ' + webSocketEndpoint)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
@@ -95,7 +98,7 @@ async function drawStoryPage() {
 
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
     await fetch(`/story/${story_id}/messages`)
-        .then(response => handleResponse(response, messages => {
+        .then(response => handleApiErrors(response, messages => {
 
             if (messages.length === 0) {
                 // If no history is found, display the current introduction message
@@ -107,20 +110,33 @@ async function drawStoryPage() {
             } else {
                 // Iterate through the array of messages and append them to the main-content
                 messages.forEach(message => {
-                    appendMessage(`${message.character_name}: ${message.message}`, 'user');
-                    appendMessage('Narrator: ' + message.narrator_reply, 'narrator');
+                    switch(message.character) {
+                        case 'PC':
+                            appendMessage(`${message.character_name}: ${message.message}`, 'user');
+                            break;
+                        case 'NARRATOR':
+                            appendMessage(`${message.character_name}: ${message.message}`, 'narrator');
+                            break;
+                        case 'SYSTEM':
+                            appendMessage(`${message.character_name}: ${message.message}`, 'system');
+                            break;
+                        default:
+                            console.log('Unknown character type');
+                    }
                 });
 
             const lastMessage = messages[messages.length - 1]
             // print lastMessage to check object for debugging
+            console.log("Resuming from previous play...")
+            console.log("Last incoming message was: ")
             console.log(lastMessage)
             tryPlayAudio(lastMessage.audio_path)
             tryChangeBackgroundImage(lastMessage.image_path)
-            tryPlaySubtitles(lastMessage.narrator_reply)
+            tryPlaySubtitles(lastMessage.message)
         }
     }))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     })
 }
 
@@ -128,7 +144,7 @@ function populateCharacterSheet() {
     // Assuming selectedCharacter has portrait, description, and stats properties
     let character = selectedCharacter;
     // Update the character portrait
-    document.querySelector('.character-portrait img').src = character.portrait_path;
+    document.querySelector('.character-portrait img').src = avatarPath;
     // Update the name
     document.querySelector('#name').innerHTML = character.character_name;
     // Update the character description
@@ -173,7 +189,7 @@ function handleMessage(message) {
                 if (data.soundtrack_path) {
                     tryPlaySoundtrack(data.soundtrack_path);
                 } 
-                var narratorMessage = data.narrator_reply;
+                var narratorMessage = data.message;
                 var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
                 console.log('Received successful reply: ' + formattedMessage);
                 document.getElementById('send-button').style.display = 'block';
@@ -205,10 +221,17 @@ function handleMessage(message) {
 // Function to append a new message to the chat box
 function appendMessage(message, entity) {
     const chatBox = document.getElementById('chat-box');
-    let divClass = '';
+    let divClass = ''
+    const messageDiv = document.createElement('div');;
     switch (entity) {
         case 'user':
             divClass = 'user-message';
+            if (avatarPath) {
+                const avatarImg = document.createElement('img');
+                avatarImg.src = avatarPath;
+                avatarImg.className = 'avatar'; // Add a class for styling
+                messageDiv.appendChild(avatarImg);
+            }
             break;
         case 'narrator':
             divClass = 'narrator-message';
@@ -219,9 +242,13 @@ function appendMessage(message, entity) {
         default:
             divClass = 'unknown-message';
     }
-    const messageDiv = document.createElement('div');
+    
     messageDiv.className = divClass;
-    messageDiv.innerHTML = message;
+
+    const messageContent = document.createElement('span');
+    messageContent.innerHTML = message;
+    messageDiv.appendChild(messageContent);
+
     chatBox.appendChild(messageDiv);
     return messageDiv.id;
 }

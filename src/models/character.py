@@ -1,6 +1,11 @@
 from sqlmodel import Relationship, SQLModel as Model, Field
 from typing import Optional
+from enum import Enum
 
+class CharacterType(str, Enum):
+    PC = "PC"
+    NARRATOR = "NARRATOR"
+    SYSTEM = "SYSTEM"
 
 class CharacterBase(Model):
     character_id: Optional[int] = Field(default=None, primary_key=True)

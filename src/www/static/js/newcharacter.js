@@ -1,3 +1,5 @@
+import { handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 // Start flow
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('send-button').style.display = 'none';

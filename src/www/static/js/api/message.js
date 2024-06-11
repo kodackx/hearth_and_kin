@@ -1,4 +1,5 @@
-import { handleResponse } from "../utils.js";
+import {handleApiErrors} from '../utils.js'
+import {showToast} from '../utils.js'
 
 export function sendMessage(message, story_id, character_id, character_name) {
     fetch('/message', {
@@ -7,17 +8,18 @@ export function sendMessage(message, story_id, character_id, character_name) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            story_id: story_id,
-            character_id: parseInt(character_id),
             message: message,
-            character_name: character_name,
+            story_id: story_id,
+            character: "PC",
+            character_id: parseInt(character_id),
+            character_name: character_name
         }),
     })
-    .then(response => handleResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         // processMessage(data)
     }))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
 };
 

@@ -8,6 +8,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+    <div id="toastContainer"></div>
     <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
         <h2>Players in Party</h2>
         <h3 class="invite-text">To invite other players, use code: <span class="invite-code">HT3MG8</span></h3>
@@ -837,5 +838,46 @@ body {
 .icon-int { background-image: url('https://fontawesome.com/icons/brain?f=classic&s=solid'); }
 .icon-wis { background-image: url('https://fontawesome.com/icons/book?f=classic&s=solid'); }
 .icon-cha { background-image: url('https://fontawesome.com/icons/clover?f=classic&s=solid'); } */
+
+/* Toast container */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+/* Toast message */
+.toast {
+    background-color: #f8d7da; /* Light red background for error */
+    color: #721c24; /* Dark red text for error */
+    border: 1px solid #f5c6cb; /* Border color for error */
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    pointer-events: auto; /* Allows interaction with the toast */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Show toast */
+.toast.show {
+    opacity: 1;
+}
+
+/* Add this to your CSS file */
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
 </style>
 <script type="module" src="js/story.js"></script>

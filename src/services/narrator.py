@@ -9,7 +9,8 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from src.models.character import Character
 
-from src.models.message import MessageBase, MessageRead
+from src.models.message import MessageBase
+from src.models.character import CharacterType
 from src.core.config import logger
 
 from typing import Dict
@@ -92,12 +93,17 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead], story_id: str) -> LLMChain:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> LLMChain:
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-    for message in message_history:
-        memory.chat_memory.add_user_message(message.message)
-        memory.chat_memory.add_ai_message(message.narrator_reply)
+    if message_history:
+        for message in message_history:
+            if message.character == CharacterType.PC:
+                memory.chat_memory.add_user_message(message.message)
+            elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
+                memory.chat_memory.add_ai_message(message.message)
+    else:
+        logger.debug("No message history. Will start story from scratch.")
 
     llm = ChatOpenAI(
         model_name='gpt-4o',  # type: ignore
@@ -127,12 +133,6 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) ->
 
     if character.description:
         message_and_character_data += f'\n(Character Data: {character.description})'
-
-    if character.location:
-        message_and_character_data += f'\n(Location: {character.location})'
-
-    if character.goal:
-        message_and_character_data += f'\n(Current Goal: {character.goal})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)

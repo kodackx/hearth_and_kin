@@ -5,7 +5,7 @@ from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, GENERATE_REPLY, logger
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
-from ..models.message import Message, MessageBase, MessageRead
+from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
 
 router = APIRouter()
@@ -15,8 +15,8 @@ socket_manager = WebsocketManager()
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
 
-@router.post('/message', response_model=MessageRead)
-async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
+@router.post('/message', response_model=MessageNARRATORorSYSTEM)
+async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
@@ -67,7 +67,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         story_id=message.story_id,
         character_id=message.character_id,
         character_name=message.character_name,
-        character=message.character,
+        character=message.character, #could be NARRATOR, PC or SYSTEM
         message=message.message,
         narrator_reply=None,
         audio_path=None,
@@ -83,7 +83,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         story_id=message.story_id,
         character_id=None,  # Assuming narrator doesn't have a character_id
         character_name="NARRATOR",
-        character="NARRATOR",
+        character="NARRATOR", #could be NARRATOR, PC or SYSTEM
         message=narrator_reply or 'Narrator says hi',
         narrator_reply=None,
         audio_path=audio_url,
@@ -95,7 +95,7 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     session.refresh(narrator_message)
 
     # Broadcast the narrator's reply
-    websocket_message = MessageRead.model_validate(narrator_message).model_dump(exclude='timestamp')
+    websocket_message = MessageNARRATORorSYSTEM.model_validate(narrator_message).model_dump(exclude='timestamp')
     await socket_manager.broadcast('reply', websocket_message, message.story_id)
 
     return human_message
