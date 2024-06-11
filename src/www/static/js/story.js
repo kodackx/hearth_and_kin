@@ -10,7 +10,7 @@ let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
 
 const hostname = window.location.hostname;
-export const webSocketEndpoint = `ws://${hostname}/ws/story/${story_id}`;
+export const webSocketEndpoint = `ws://${hostname}:8000/ws/story/${story_id}`;
 console.log('hostname is: ' + hostname)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
@@ -172,20 +172,26 @@ function handleMessage(message) {
             try {
                 if (data.soundtrack_path) {
                     tryPlaySoundtrack(data.soundtrack_path);
+                }
+                if (data.narrator_reply) {
+                    console.log('Received successful reply: ' + data.narrator_reply);
+                    document.getElementById('send-button').style.display = 'block';
+                    document.getElementById('spinner').style.display = 'none';
+                    document.getElementById('message-input-group').classList.remove('waiting-state');
+                    document.getElementById('message-input').disabled = false;
+                    document.getElementById('message-input').placeholder = "What do you do next?";
+                    document.getElementById('message-input').value = '';
+                    document.getElementById('message-input').focus();
+                    appendMessage('Narrator: ' + data.narrator_reply, 'narrator');
+                    // var subtitles = narratorMessage.replace(/\n/g, '');
+                    tryPlaySubtitles(data.narrator_reply);
                 } 
-                var narratorMessage = data.narrator_reply;
-                var formattedMessage = narratorMessage.replace(/\n/g, '<br>');
-                console.log('Received successful reply: ' + formattedMessage);
-                document.getElementById('send-button').style.display = 'block';
-                document.getElementById('spinner').style.display = 'none';
-                document.getElementById('message-input-group').classList.remove('waiting-state');
-                document.getElementById('message-input').disabled = false;
-                document.getElementById('message-input').placeholder = "What do you do next?";
-                document.getElementById('message-input').value = '';
-                document.getElementById('message-input').focus();
-                tryPlayAudio(data.audio_path);
-                tryChangeBackgroundImage(data.image_path);
-                tryPlaySubtitles(formattedMessage);
+                if (data.audio_url) {
+                    tryPlayAudio(data.audio_url);
+                }
+                if (data.image_path) {
+                    tryChangeBackgroundImage(data.image_path);
+                }
             } catch {(error) => {
                     console.error(error);
                     document.getElementById('spinner').style.display = 'none';
@@ -193,8 +199,6 @@ function handleMessage(message) {
                     alert(error)
                 }
             }
-            console.log('processed message: ', formattedMessage)
-            appendMessage('Narrator: ' + formattedMessage, 'narrator');
             break;
         default:
             alert('Got action ', action, ' from websocket. NYI')
@@ -240,7 +244,7 @@ function tryPlaySubtitles(text) {
     if (text) {
         const subtitleDiv = document.getElementById('subtitle');
         // Split the text into sentences
-        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
+        const sentences = [text]//text.match(/[^\.!\?]+[\.!\?]+/g) || [text];
         let currentSentence = 0;
 
         const displayNextSentence = () => {
@@ -256,8 +260,8 @@ function tryPlaySubtitles(text) {
                     subtitleDiv.textContent = sentences[currentSentence++];
                     // Calculate display duration based on text length
                     // Assuming an average reading speed and adding some padding time
-                    const displayDuration = Math.max(2000, sentences[currentSentence - 1].length * 45.81632653061224);
-
+                    var displayDuration = Math.max(2000, sentences[currentSentence - 1].length * 45.81632653061224);
+                    displayDuration = Math.min(2000, displayDuration); // Cap the duration at 10 seconds
                     subtitleDiv.classList.add('fade-in');
 
                     // Optionally, remove fade-in class after animation to allow it to be reapplied next time

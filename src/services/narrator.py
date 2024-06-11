@@ -130,8 +130,9 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) ->
     logger.debug(f'[GPT Narrator] {output = }')
     return output
 
-def generate_reply(character, message, chain) -> tuple[str, str]:
+def generate_reply(character, message, chain) -> tuple[str, str | None]:
     narrator_reply = gpt_narrator(character=character, message=message, chain=chain)
+    soundtrack_path = None
     soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
     for directive in soundtrack_directives:
         if directive in narrator_reply:
