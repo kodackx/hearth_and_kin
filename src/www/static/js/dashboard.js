@@ -23,8 +23,8 @@ var characterBoxes = [
     { boxElement: document.getElementById('char3'), boxId: 3, characterId: undefined, characterCreated: false, party_lead: undefined},
 ];
 
-
 document.addEventListener('DOMContentLoaded', welcomePopUp);
+document.addEventListener('DOMContentLoaded', InitializeInviteCodePopUp);
 document.addEventListener('DOMContentLoaded', function() {
     // first we requests the list of characters and populate the boxes
     getCharactersForUser().then(characters => {
@@ -71,6 +71,49 @@ function welcomePopUp() {
         }
     }
     localStorage.setItem('welcomePopupShown', 'false');
+}
+
+function InitializeInviteCodePopUp() {
+    console.log('Initializing invite code functionality...')
+    // Add event listener for the "Use Invite Code" button
+    document.getElementById('use-invite-code-btn').addEventListener('click', function() {
+        console.log('Clicked on the invite code button!')
+        document.getElementById('invite-code-popup').style.display = 'block';
+    });
+
+    // Add event listener for the close button in the popup
+    document.querySelector('#invite-code-popup .close-btn').addEventListener('click', function() {
+        document.getElementById('invite-code-popup').style.display = 'none';
+    });
+
+    // Add event listener for the submit button in the popup
+    document.getElementById('submit-invite-code-btn').addEventListener('click', function() {
+        const inviteCode = document.getElementById('invite-code-input').value;
+        if (inviteCode) {
+            joinStoryByInviteCode(inviteCode);
+        }
+    });
+}
+
+async function joinStoryByInviteCode(inviteCode) {
+    try {
+        const response = await fetch('/join_by_invite', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ invite_code: inviteCode }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to join story');
+        }
+
+        const story = await response.json();
+        playStory({ storyId: story.story_id });
+    } catch (error) {
+        showToast(`Error: ${error.message}`);
+    }
 }
 
 async function getCharactersForUser() {
@@ -149,43 +192,13 @@ function selectCharacter(box, character) {
 
 }
 
-function updateEventListener(box, func) {
-    console.log(`[updateEventListener] Checking storyId for box ${box.boxId}: ${box.storyId}`);
-    box.boxElement.removeEventListener('click', box.clickHandler);
-    box.clickHandler = func;
-    box.boxElement.addEventListener('click', box.clickHandler);
-}
-
 function initializeDashboard(boxes) {
     document.getElementById('username').textContent = username;
     // Add event listeners to the boxes
     boxes.forEach(box => {
-        // box.boxElement.addEventListener('click', createClickHandler(box));
-        //box.boxElement.addEventListener('click', () => createStory(box), { 'once': true});
-        updateEventListener(box, createStory)
+        drawEmptyStory(box)
     });
 }
-
-// function createClickHandler(box) {
-//     //const character = JSON.parse(localStorage.getItem('selectedCharacter'))
-//     return function() {
-//         createStory(box);
-//     };
-// }
-
-function joinClickHandler(box) {
-    return function() {
-        joinStory(box);
-    };
-}
-
-function playOrResumeStory(box) {
-    return function() {
-        localStorage.setItem('story_id', box.storyId);
-        window.location.href = '/story';
-    }
-}
-
 
 // function drawCreatedStory(box, story) {
 //     box.boxElement.classList.add('created-story');
@@ -197,13 +210,26 @@ function playOrResumeStory(box) {
 // }
 function drawCreatedStory(box, story) {
     box.boxElement.classList.add('created-story');
+    box.boxElement.querySelector('.box-content').innerHTML = `
+    <img src="static/img/HAK_story_icons_3.png" alt="Begin Adventure" class="story-icon">
+    `;
     box.storyCreated = true;
     box.party_lead = story.party_lead;
     box.storyId = story.story_id;
-    box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+    // box.boxElement.querySelector('.box-footer').textContent = 'Join Story';
+    // box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
+    // box.clickHandler = () => joinStory(box); // Assign new handler
+    // box.boxElement.addEventListener('click', box.clickHandler);
+    // because the creator is also a party_lead, they are already joined
+    box.boxElement.classList.add('joined-story');
+    box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
     box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
-    box.clickHandler = () => joinStory(box); // Assign new handler
+    box.clickHandler = () => playStory(box); // Assign new handler
     box.boxElement.addEventListener('click', box.clickHandler);
+    // Add delete button if the character is the party lead
+    if (box.party_lead === parseInt(localStorage.getItem('character_id'))) {
+        addDeleteButton(box);
+    }
 }
 
 // function drawActiveStory(box) {
@@ -217,12 +243,18 @@ function drawActiveStory(box) {
     console.log(`[drawActiveStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
     box.storyActive = true;
     box.boxElement.classList.add('active-story');
+    box.boxElement.querySelector('.box-content').innerHTML = `
+    <img src="static/img/HAK_story_icons_4.png" alt="Resume Adventure" class="story-icon">
+    `;
     box.boxElement.querySelector('.box-footer').textContent = 'Resume adventure';
     box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
     box.clickHandler = () => playStory(box); // Assign new handler
     box.boxElement.addEventListener('click', box.clickHandler);
+    // Add delete button if the character is the party lead
+    if (box.party_lead === parseInt(localStorage.getItem('character_id'))) {
+        addDeleteButton(box);
+    }
 }
-
 
 // function drawJoinedStory(box) {
 //     console.log(`[drawJoinedStory] Checking storyId for box ${box.boxId}: ${box.storyId}`);
@@ -232,12 +264,18 @@ function drawActiveStory(box) {
 // }
 function drawJoinedStory(box) {
     box.boxElement.classList.add('joined-story');
+    box.boxElement.querySelector('.box-content').innerHTML = `
+    <img src="static/img/HAK_story_icons_2.png" alt="Join Story" class="story-icon">
+    `;
     box.boxElement.querySelector('.box-footer').textContent = 'Begin adventure...';
     box.boxElement.removeEventListener('click', box.clickHandler); // Remove previous handler if any
     box.clickHandler = () => playStory(box); // Assign new handler
     box.boxElement.addEventListener('click', box.clickHandler);
+    // Add delete button if the character is the party lead
+    if (box.party_lead === parseInt(localStorage.getItem('character_id'))) {
+        addDeleteButton(box);
+    }
 }
-
 
 // function drawLeftStory(box) {
 //     box.boxElement.classList.add('left-story');
@@ -262,6 +300,9 @@ function drawLeftStory(box) {
 // }
 function drawDeletedStory(box) {
     box.boxElement.classList.add('deleted-story');
+    box.boxElement.querySelector('.box-content').innerHTML = `
+    <img src="static/img/HAK_story_icons_1.png" alt="Create New Story" class="story-icon">
+    `;
     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
     box.storyId = undefined;
     box.storyCreated = false;
@@ -281,6 +322,9 @@ function drawDeletedStory(box) {
 // }
 function drawEmptyStory(box) {
     box.boxElement.classList.add('empty-story');
+    box.boxElement.querySelector('.box-content').innerHTML = `
+    <img src="static/img/HAK_story_icons_1.png" alt="Create New Story" class="story-icon">
+    `;
     box.boxElement.querySelector('.box-footer').textContent = 'Create New Story';
     box.storyId = undefined;
     box.storyCreated = false;
@@ -374,7 +418,10 @@ function createStory(box) {
         }),
     })
     .then(response => handleApiErrors(response, data => {
-        drawCreatedStory(box, data);
+        const { story, invite_code } = data;
+        box.inviteCode = invite_code; // Save invite code in the box
+        localStorage.setItem(`invite_code_${story.story_id}`, invite_code); // Save invite code in local storage
+        drawCreatedStory(box, story);
         showToast('Story created!');
     }))
     .catch((error) => {
@@ -407,6 +454,7 @@ function joinStory(box) {
 
 function playStory(box) {
     const character_id = parseInt(localStorage.getItem('character_id'));
+    const storyId = box.storyId || box.story_id; // Handle both cases
     console.log("Attempting to POST to '/story/'" + box.storyId + "/play");
     if (!box.storyId) {
         console.error("Error: box.storyId is undefined");
@@ -434,6 +482,8 @@ function playStory(box) {
 
 function deleteStory(box) {
     const character_id = parseInt(localStorage.getItem('character_id'));
+    console.log("Attempting to DELETE '/story/'" + box.storyId);
+    console.log("Character ID: " + character_id);
     fetch('/story/' + box.storyId, {
         method: 'DELETE',
         headers: {
@@ -474,4 +524,17 @@ function leaveStory(box) {
     .catch((error) => {
         showToast(`Frontend Error: ${error.message}`);
     });
+};
+
+function addDeleteButton(box) {
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.classList.add('delete-button');
+    deleteButton.addEventListener('click', (event) => {
+        event.stopPropagation(); // Prevent triggering the box click event
+        if (confirm('Are you sure you want to delete this story?')) {
+            deleteStory(box);
+        }
+    });
+    box.boxElement.appendChild(deleteButton);
 };

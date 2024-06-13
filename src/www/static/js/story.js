@@ -67,6 +67,18 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const inviteCodeElement = document.querySelector('.invite-code');
+    const storyId = localStorage.getItem('story_id');
+    if (storyId) {
+        const inviteCode = localStorage.getItem(`invite_code_${storyId}`);
+        if (inviteCode) {
+            console.log("Invite code is: " + inviteCode)
+            inviteCodeElement.textContent = inviteCode;
+        }
+    }
+});
+
 
 async function toggleDevPane() {
     const devPane = document.getElementById('developer-options-container');

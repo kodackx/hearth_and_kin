@@ -8,6 +8,7 @@ from ..models.message import Message, MessageRead
 from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
+from ..models.story import Invite
 from ..core.config import logger
 
 router = APIRouter()
@@ -19,17 +20,21 @@ async def dashboard_websocket(websocket: WebSocket):
 
 
 @router.post('/story', status_code=201)
-async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)) -> StoryCreate:
+async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)) -> dict:
     logger.debug(f"Received story data: {story}")
-    # db_story = session.get(Story, story.story_id)
-    # if db_story is not None:
-    #     raise HTTPException(400, 'Story already exists')
     new_story = Story(party_lead=story.party_lead)
 
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
-    return new_story
+
+    # Generate invite code
+    invite = Invite(story_id=new_story.story_id)
+    session.add(invite)
+    session.commit()
+    session.refresh(invite)
+
+    return {"story": new_story, "invite_code": invite.invite_code}
 
 
 @router.delete('/story/{story_id}', status_code=200, response_model=StoryDelete)
@@ -80,28 +85,38 @@ async def get_story_messages(*, story_id: int, session: Session = Depends(get_se
 
     return messages
 
+# @router.post('/story/{story_id}/join')
+# async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
+#     db_story = session.get(Story, story.story_id)
+#     db_character = session.get(Character, story.character_id)
 
-@router.post('/story/{story_id}/join')
-async def join_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
-    db_story = session.get(Story, story.story_id)
-    db_character = session.get(Character, story.character_id)
+#     if not db_story or not db_character:
+#         raise HTTPException(404, 'Story or character does not exist.')
 
-    if not db_story or not db_character:
-        raise HTTPException(404, 'Story or character does not exist.')
+#     # Check for available member slots
+#     if db_story.party_member_1 is None:
+#         db_story.party_member_1 = db_character.character_id
+#     elif db_story.party_member_2 is None:
+#         db_story.party_member_2 = db_character.character_id
+#     else:
+#         raise HTTPException(400, 'No available slots in the story.')
 
-    # Check for available member slots
-    if db_story.party_member_1 is None:
-        db_story.party_member_1 = db_character.character_id
-    elif db_story.party_member_2 is None:
-        db_story.party_member_2 = db_character.character_id
-    else:
-        raise HTTPException(400, 'No available slots in the story.')
+#     session.add(db_story)  # Make sure to add the updated story to the session
+#     session.commit()
+#     session.refresh(db_story)
+#     await socket_manager.broadcast('join_story', story, story.story_id)
+#     return story
+@router.post('/join_by_invite', status_code=200)
+async def join_by_invite(*, invite_code: str, session: Session = Depends(get_session)) -> StoryRead:
+    invite = session.exec(select(Invite).where(Invite.invite_code == invite_code)).first()
+    if not invite:
+        raise HTTPException(404, 'Invalid invite code')
 
-    session.add(db_story)  # Make sure to add the updated story to the session
-    session.commit()
-    session.refresh(db_story)
-    await socket_manager.broadcast('join_story', story, story.story_id)
-    return story
+    db_story = session.get(Story, invite.story_id)
+    if not db_story:
+        raise HTTPException(404, 'Story not found')
+
+    return db_story
 
 
 @router.post('/story/{story_id}/play')
