@@ -1,5 +1,9 @@
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
+from sqlmodel import SQLModel, Field
+import random
+import string
+import uuid
 
 def generate_invite_code(length=5):
     invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -7,7 +11,7 @@ def generate_invite_code(length=5):
     return invite_code
     
 
-class Invite(Model, table=True):
+class Invite(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     story_id: int
     invite_code: str = Field(default_factory=generate_invite_code)
@@ -35,6 +39,7 @@ class StoryJoin(Model):
 
 class StoryDelete(Model):
     character_id: int = Field(foreign_key='character.character_id')
+    story_id: int
 
 
 class StoryRead(Model):

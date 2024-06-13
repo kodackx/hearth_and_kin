@@ -66,18 +66,18 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
-async function obtainInviteCode() {
-    try {
-        const response = await fetch(`/story/${story_id}/invite`);
-        handleApiErrors(response, inviteCode => {
-            console.log('Invite Code:', inviteCode);
-            // You can use the inviteCode here, for example, display it in the UI
-            // document.getElementById('invite-code').textContent = inviteCode;
-        });
-    } catch (error) {
-        showToast(`Error fetching invite code: ${error.message}`);
+document.addEventListener('DOMContentLoaded', () => {
+    const inviteCodeElement = document.querySelector('.invite-code');
+    const storyId = localStorage.getItem('story_id');
+    if (storyId) {
+        const inviteCode = localStorage.getItem(`invite_code_${storyId}`);
+        if (inviteCode) {
+            console.log("Invite code is: " + inviteCode)
+            inviteCodeElement.textContent = inviteCode;
+        }
     }
-}
+});
+
 
 async function toggleDevPane() {
     const devPane = document.getElementById('developer-options-container');
