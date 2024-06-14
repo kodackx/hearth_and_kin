@@ -1,5 +1,6 @@
 services:
   hearthandkin:
+    restart: always
     container_name: hearthandkin
     image: sjoeborg/hearthandkin:latest
     build:
@@ -7,8 +8,8 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - type: bind
-        source: ./src
-        target: /app/src
+        source: .
+        target: /app/
     ports:
       - 8000:8000
     env_file:

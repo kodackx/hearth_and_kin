@@ -21,18 +21,19 @@ async def generate_audio(text: str) -> str:
     _, audio_url = audio.store(audio_bytes=audio_data)
     return audio_url
 
-async def handle_narration(narrator_reply, story_id) -> tuple[list[str], list[str]]:
+async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[list[str], list[str]]:
     narration_chunks = narrator_reply.split("\n\n")
-    audio_urls = []
+    audio_paths = []
     for narration_chunk in narration_chunks:
         payload = {'narrator_reply': narration_chunk}
         if GENERATE_AUDIO:
-            audio_url = await generate_audio(narration_chunk)
-            audio_urls.append(audio_url)
-            payload['audio_url'] = audio_url
-        await asyncio.sleep(5)
+            audio_path = await generate_audio(narration_chunk)
+            audio_paths.append(audio_path)
+            payload['audio_path'] = audio_path
+        if soundtrack_path:
+            payload['soundtrack_path'] = soundtrack_path
         await socket_manager.broadcast('reply', payload, story_id)
-    return narration_chunks, audio_urls
+    return narration_chunks, audio_paths
 
 async def handle_image(narrator_reply, story_id) -> str | None:
     if GENERATE_IMAGE:
@@ -58,27 +59,25 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
     try:
         # Generate the reply first
         narrator_reply, soundtrack_path = narrator.generate_reply(character, message, chain)
-        if soundtrack_path:
-            await socket_manager.broadcast('reply', {'soundtrack_path': soundtrack_path}, message.story_id)
 
         # Generate narration and image concurrently and broadcast results as they complete
-        narration_task = asyncio.create_task(handle_narration(narrator_reply, message.story_id))
+        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id))
         image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id))
 
         narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
-        narration_chunks, audio_urls = narration_tuple
+        subtitles, audio_paths = narration_tuple
     except Exception as e:
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
     
-    for i in range(len(narration_chunks)):
+    for i in range(len(subtitles)):
         new_message = Message(
             story_id=message.story_id,
             character_id=message.character_id,
             character_name=message.character_name,
             message=message.message,
-            narrator_reply=narration_chunks[i],
-            audio_path=audio_urls[i],
+            narrator_reply=subtitles[i],
+            audio_path=audio_paths[i],
             image_path=image_path,
             soundtrack_path=soundtrack_path
         )

@@ -8,3 +8,4 @@ __pycache__
 *.txt
 .DS_Store
 .env
+.env

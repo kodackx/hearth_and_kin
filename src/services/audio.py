@@ -23,5 +23,5 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
 
 async def generate_audio(narrator_reply) -> str:
     audio_data = generate(narrator_reply)
-    _, audio_url = store(audio_bytes=audio_data)
-    return audio_url
+    _, audio_path = store(audio_bytes=audio_data)
+    return audio_path

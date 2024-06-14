@@ -9,7 +9,12 @@ push:
 	make test
 	make build
 	docker push sjoeborg/hearthandkin:latest
-run:
+docker-run:
+	make install
+	make test
+	make build
 	docker compose up
 teardown:
 	docker compose down
+run:
+	poetry run uvicorn --host 0.0.0.0 src.main:app --reload
