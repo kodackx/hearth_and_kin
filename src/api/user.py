@@ -10,7 +10,6 @@ router = APIRouter()
 
 @router.post('/user', status_code=201, response_model=UserRead)
 async def create_user(*, user: UserBase, session: Session = Depends(get_session)):
-    logger.debug(f'CREATE_USER: {user = }')
 
     db_user = session.get(User, user.username)
     if db_user is not None:

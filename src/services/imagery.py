@@ -92,8 +92,8 @@ async def _generate(prompt_text) -> str:
     return result
 
 
-async def generate_image(narrator_reply) -> str:
-    image_url = await _generate(narrator_reply)
+async def generate_image(prompt: str, type: str) -> str:
+    image_url = await _generate(prompt)
     if image_url is not None:
-        _, image_url = await _store(image_url=image_url, type='story')
-    return image_url
+        _, image_path = await _store(image_url=image_url, type=type)
+    return image_path

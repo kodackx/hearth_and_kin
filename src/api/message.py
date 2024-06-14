@@ -37,7 +37,7 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[l
 
 async def handle_image(narrator_reply, story_id) -> str | None:
     if GENERATE_IMAGE:
-        image_path = await imagery.generate_image(narrator_reply)
+        image_path = await imagery.generate_image(narrator_reply, 'story')
         await socket_manager.broadcast('reply', {'image_path': image_path}, story_id)
         return image_path
     return None
