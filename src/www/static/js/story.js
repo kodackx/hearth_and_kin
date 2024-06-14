@@ -273,8 +273,8 @@ function processNextNarration() {
                     // Optionally, remove fade-in class after animation to allow it to be reapplied next time
                     setTimeout(() => {
                         subtitleDiv.classList.remove('fade-in');
-                    }, 1000); // This timeout should match the duration of the fade-in animation
-                }, 1000); // This timeout should match the duration of the fade-out animation
+                    }, fadeDuration);
+                }, fadeDuration);
 
                 audio.addEventListener('ended', () => {
                     processNextNarration();
