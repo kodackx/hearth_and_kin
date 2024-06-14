@@ -48,6 +48,8 @@ class WebsocketManager:
                 await self.broadcast(message['action'], message['data'], story_id)
         
         except WebSocketDisconnect:
+            print(f"Client disconnected from story {story_id}")
+        finally:
             await self.disconnect(websocket, story_id)
 
 def get_socket():
