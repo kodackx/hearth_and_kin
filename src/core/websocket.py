@@ -19,11 +19,8 @@ class WebsocketManager:
             logger.debug(self.active_connections)
 
     async def disconnect(self, websocket: WebSocket, story_id: int) -> None:
-        logger.debug(f'Disconnecting ws from story_id {story_id}')
-        self.active_connections[story_id].remove(websocket)
-        if websocket.client_state.CONNECTED:
-            await websocket.close()
-        logger.debug(f'Disconnecting ws from story_id {story_id} complete')
+        if self.active_connections.get(story_id):
+            self.active_connections[story_id].remove(websocket)
 
     async def broadcast(self, action: str, payload: dict | SQLModel, story_id: int) -> None:
         logger.debug(f'Received {action} to story_id {story_id}')
