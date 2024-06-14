@@ -19,3 +19,9 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     print(f"[GEN AUDIO] Audio file saved at: {file_path}")
 
     return filename, file_path
+
+
+async def generate_audio(narrator_reply) -> str:
+    audio_data = generate(narrator_reply)
+    _, audio_path = store(audio_bytes=audio_data)
+    return audio_path

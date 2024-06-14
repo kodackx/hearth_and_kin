@@ -1,3 +1,5 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 from langchain.utilities.dalle_image_generator import DallEAPIWrapper
 import os
@@ -11,7 +13,7 @@ from io import BytesIO
 from ..core.config import logger
 
 
-def generate(prompt_text):
+def _generate_blocking(prompt_text) -> str:
     llm = ChatOpenAI(model_name='gpt-4o')  # type: ignore
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
@@ -42,11 +44,11 @@ def generate(prompt_text):
         image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_dalle)  # type: ignore
     except Exception as e:
         logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
-        image_url = '[NO_IMAGE]'
+        image_url = '[NO IMAGE]'
     return image_url
 
 
-async def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
+async def _store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
     """
     Store an image from an URL and return the url to the stored file
     """
@@ -78,4 +80,20 @@ async def store(image_url: str, type: str, filename: Optional[str] = None) -> tu
         return visual_id, serve_image_path 
     else:
         error = 'Invalid store image type. Can only store `character` or `story` images'
-        return 0, error
+        return '0', error
+
+async def _generate(prompt_text) -> str:
+    """
+    Needed to not let the image generation block the event loop
+    """
+    loop = asyncio.get_running_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text)
+    return result
+
+
+async def generate_image(prompt: str, type: str) -> str:
+    image_url = await _generate(prompt)
+    if image_url is not None:
+        _, image_path = await _store(image_url=image_url, type=type)
+    return image_path

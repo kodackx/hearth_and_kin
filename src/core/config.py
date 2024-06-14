@@ -1,12 +1,14 @@
 import logging
 import os
 from elevenlabs import set_api_key
+from dotenv import load_dotenv
 DEBUG = True
 GENERATE_IMAGE = True
 GENERATE_AUDIO = True
 GENERATE_REPLY = True
 logger = logging.getLogger(__name__)
 
+load_dotenv()
 if DEBUG:
     logger.setLevel(logging.DEBUG)
 else:
