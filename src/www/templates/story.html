@@ -9,12 +9,11 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
-    <div id="toastContainer"></div>
+    <!-- 
     <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
         <h2>Players in Party</h2>
-        <h3 class="invite-text">To invite other players, use code: <span class="invite-code" data-story-id="STORY_ID_PLACEHOLDER">HT3MG8</span></h3>
+        <h3 class="invite-text">To invite other players, use code: <span id="invite-code" class="invite-code" data-story-id="STORY_ID_PLACEHOLDER">HT3MG8</span></h3>
         <ul id="party-list">
-            <!-- Placeholder for player items -->
             <li class="party-member">
                 <img src="/static/img/grom.jpg" alt="Character Avatar" class="avatar">
                 <span class="character-name">Grom Tuskweave</span>
@@ -23,10 +22,9 @@
                 <img src="/static/img/alleria.jpg" alt="Character Avatar" class="avatar">
                 <span class="character-name">Alleria Windrunner</span>
             </li>
-            <!-- Repeat <li> for each party member -->
         </ul>
     </div>
-    <button type="button" id="start-button">Let the adventure begin...</button>
+    <button type="button" id="start-button">Let the adventure begin...</button> -->
     <!-- <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         <span>Select Layout:</span>
         <div>
@@ -48,7 +46,7 @@
             <label for="enable-audio-gen">Enable Audio Generation</label>
         </div>
     </div> -->
-    <button type="button" id="dev-button">[Toggle Dev Pane]</button>
+    <!-- <button type="button" id="dev-button">[Toggle Dev Pane]</button>
     <div id="developer-options-container" class="developer-options slideInFromBottom">
         <h3>Developer Options</h3>
         <div class="option">
@@ -85,10 +83,12 @@
             <input type="radio" id="layout-b" name="layout" value="immersive" >
             <label for="layout-b">Layout B - Immersive with scrolling text</label>
         </div>
-    </div>
+    </div> -->
+    <div id="toastContainer"></div>
     <button type="button" id="toggle-chat-btn">Toggle Chat</button>
     <button type="button" id="toggle-character-sheet-btn">Character Sheet</button>
     <!-- <button type="button" id="play-dev-button" onclick="toggleDevPane">[Dev Options]</button> -->
+    <button id="ready-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">READY</button>
     <div id="chat-container" class="slideOutToLeft">
         <!-- Chatbox content -->
         <div class="card" id="chat-box">
@@ -97,7 +97,7 @@
             </div>
         </div>
     </div>
-    <div class="flex-container" id="main-content">
+    <div class="flex-container" id="main-content" style="display: none;">
         <div class="story-image" id="story-image">
             <div id="subtitle" class="subtitle">...</div>formattedMessage
         </div>

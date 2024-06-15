@@ -125,14 +125,14 @@ def get_chain(story_id: str) -> LLMChain:
     return chains.get(story_id)
 
 
-def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
+def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
-        message_and_character_data += f'\n(Character Name: {character.character_name})'
+        message_and_character_data += f'\n(SYSTEM NOTE - Character Name: {character.character_name})'
 
-    if character.description:
-        message_and_character_data += f'\n(Character Data: {character.description})'
+    if party_info:
+        message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)

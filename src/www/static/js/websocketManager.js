@@ -5,6 +5,7 @@ export function connectToWebSocket(endpoint, messageHandler) {
     socket.onmessage = messageHandler;
     websocketMap.set(endpoint, socket);
     //socket.onclose = closeWebSocket(endpoint)
+    return socket
 }
 
 export function sendMessage(endpoint, action, data) {

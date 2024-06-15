@@ -18,6 +18,7 @@ from langchain.schema import SystemMessage
 from sqlmodel import Session
 import random
 from pydantic import ValidationError
+import re
 
 router = APIRouter()
 
@@ -38,11 +39,12 @@ Let your words flow freely and paint the portrait of your character. Their story
 -
 
 If we reach a point where we have enough information we can return a character description.
-Please mark that section with "FINAL CHARACTER DESCRIPTION:\n". 
-The description should always start with the character name, like this "CHARACTER NAME: [name here].\n"
-Then it should be followed by "CHARCTER RACE: [race here].\n".
-Then it should be followed by "CHARCTER CLASS: [class here].\n".
-Then by "DESCRIPTION: ". Please provide a detailed description of everything we know about the character. 
+Please mark that section with "EMERGING FROM THE MISTS...\n---\n". 
+The description should always start with the character name, like this "CHARACTER NAME: [name here]\n"
+Then it should be followed by "CHARCTER RACE: [race here]\n".
+Then it should be followed by "CHARCTER CLASS: [class here]\n".
+Then by "CHARACTER DESCRIPTION: ", and end the final description with "---". 
+Please provide a detailed description of everything we know about the character. 
 This information will be used to generate an avatar as well as for the rest of the campaign.
 
 Conversation with player so far:
@@ -103,47 +105,32 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
 
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response):
-    # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
-        # Will send to openai and obtain reply
         narrator_reply = gpt_character_creator(input=message.message, chain=chat_llm_chain)
-        # Will send to narrator and obtain audio
-        # audio_path = audio.obtain_audio(narrator_reply)
-        # encoded_audio = audio.send_audio(audio_path)
-        final_character_creation_key = "FINAL CHARACTER DESCRIPTION:"
+        
+        final_character_creation_key = "EMERGING FROM THE MISTS..."
         portrait_path = None
         character_description = None
         character_data = None
+        
         if final_character_creation_key in narrator_reply:
-            character_name_start = narrator_reply.find("CHARACTER NAME: ") + len("CHARACTER NAME: ")
-            character_name_end = narrator_reply.find("\n", character_name_start)
-            character_name = narrator_reply[character_name_start:character_name_end]
-            
-            character_race_start = narrator_reply.find("CHARACTER RACE: ") + len("CHARACTER RACE: ")
-            character_race_end = narrator_reply.find("\n", character_race_start)
-            character_race = narrator_reply[character_race_start:character_race_end]
-
-            character_class_start = narrator_reply.find("CHARACTER CLASS: ") + len("CHARACTER CLASS: ")
-            character_class_end = narrator_reply.find("\n", character_class_start)
-            character_class = narrator_reply[character_class_start:character_class_end]
-
-            character_description_start = narrator_reply.find("CHARACTER DESCRIPTION: ") + len("CHARACTER DESCRIPTION: ")
-            character_description_end = narrator_reply.find("\n", character_description_start)
-            character_description = narrator_reply[character_description_start:character_description_end]
+            character_name = re.search(r"CHARACTER NAME: (.+?)\n", narrator_reply).group(1)
+            character_race = re.search(r"CHARACTER RACE: (.+?)\n", narrator_reply).group(1)
+            character_class = re.search(r"CHARACTER CLASS: (.+?)\n", narrator_reply).group(1)
+            character_description_match = re.search(r"CHARACTER DESCRIPTION:(.+?)\n---", narrator_reply, re.DOTALL)
+            character_description = character_description_match.group(1).strip() if character_description_match else None
             
             logger.debug(f'[CREATION IMAGE] {character_description}')
-            # Will send to dalle3 and obtain image
             portrait_url = imagery.generate(narrator_reply)
             _, portrait_path = await imagery.store(portrait_url, type='character')
             logger.debug(f'[MESSAGE] {portrait_path = }')
-            # portrait_image = imagery.obtain_image_from_url(portrait_path)
-            # logger.debug(f'[MESSAGE] {portrait_image = }')
+            
             character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)
+        
         response.status_code = status.HTTP_201_CREATED
         return {
             'message': 'Narrator: ' + narrator_reply,
-            # 'audio': encoded_audio,
             'image': portrait_path,
             'description': character_description,
             'character_data': character_data,
@@ -153,20 +140,6 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
         logger.error(f'[CREATION MESSAGE] {e}')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {'error': f'An error occurred while generating the response: {e}'}
-    # Will send to user
-    # TODO: Replace socketio.emit with the appropriate method to send data to the client
-    # socketio.emit('new_message', {'message': 'Openai reply: '})
-    # with Session(engine) as session:
-    #     new_message = Message(
-    #         message=message.message,
-    #         narrator_reply=narrator_reply,
-    #         # audio=audio_path,
-    #         # image=background_path,
-    #     )
-    #     logger.debug(f'{new_message = }')
-    #     session.add(new_message)
-    #     session.commit()
-    #     session.refresh(new_message)
 
 @router.post('/createcharacter', status_code=201, response_model=CharacterRead)
 # async def create_character(*, character_stats: CharacterCreate, session: Session = Depends(get_session)):

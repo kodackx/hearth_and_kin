@@ -43,6 +43,10 @@ app.include_router(character.router, prefix='', tags=['character'], dependencies
 app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session)])
 app.include_router(newcharacter.router, prefix='', tags=['message'])
 
+@app.get('/lobby')
+async def lobby_page(request: Request):
+    return Response(content=open('src/www/templates/lobby.html', 'r').read(), media_type='text/html')
+
 
 @app.get('/dashboard')
 async def dashboard_page(request: Request) -> Response:

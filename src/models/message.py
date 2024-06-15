@@ -31,6 +31,7 @@ class MessagePC(MessageBase):
     character: CharacterType
     character_id: int
     character_name: str
+    portrait_path: str
 
 class MessageNARRATORorSYSTEM(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)
