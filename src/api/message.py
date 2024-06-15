@@ -33,10 +33,10 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
 
     character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
     characters = session.exec(
-        select(Character).where(Character.id.in_(character_ids))
+        select(Character).where(Character.character_id.in_(character_ids))
     ).all()
     
-    character_details = [{"name": character.name, "race": character.character_race, "class": character.character_class} for character in characters]
+    character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
     party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
 
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
