@@ -45,6 +45,11 @@ class CharacterUpdate(Model):
     stat_wis: Optional[int]
     stat_cha: Optional[int]
 
+class CharacterDetails(Model):
+    character_id: int
+    character_name: str
+    portrait_path: str
+
 
 class Character(CharacterBase, table=True):  # type: ignore
     # Other fields for Character

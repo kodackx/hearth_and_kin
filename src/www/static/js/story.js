@@ -7,14 +7,16 @@ let currentAudio = null; // Add this at the top of your script
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
 const story_id = localStorage.getItem('story_id');
 let selectedCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
-let avatarPath = selectedCharacter.portrait_path;
+let avatarPath = selectedCharacter.portrait_path; //only for current player!
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
+let narrator_portrait = 'static/img/narrator.png';
+let system_portrait = 'static/img/system.png';
 
 const hostname = window.location.hostname;
 const port = hostname === '127.0.0.1' ? ':8000' : '';
 export const webSocketEndpoint = `ws://${hostname}${port}/ws/story/${story_id}`;
-console.log('Attempting websocket connection at: ' + webSocketEndpoint)
+console.log('Attempting STORY websocket connection at: ' + webSocketEndpoint)
 
 connectToWebSocket(webSocketEndpoint, handleMessage);
 window.addEventListener('beforeunload', function () {
@@ -66,18 +68,18 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    const inviteCodeElement = document.querySelector('.invite-code');
-    const storyId = localStorage.getItem('story_id');
-    if (storyId) {
-        const inviteCode = localStorage.getItem(`invite_code_${storyId}`);
-        if (inviteCode) {
-            console.log("Invite code is: " + inviteCode)
-            inviteCodeElement.textContent = inviteCode;
-        }
+async function obtainInviteCode() {
+    try {
+        const response = await fetch(`/story/${story_id}/invite`);
+        handleApiErrors(response, inviteCode => {
+            console.log('Invite Code:', inviteCode);
+            // You can use the inviteCode here, for example, display it in the UI
+            // document.getElementById('invite-code').textContent = inviteCode;
+        });
+    } catch (error) {
+        showToast(`Error fetching invite code: ${error.message}`);
     }
-});
-
+}
 
 async function toggleDevPane() {
     const devPane = document.getElementById('developer-options-container');
@@ -95,13 +97,6 @@ async function drawStoryPage() {
     populateCharacterSheet();
     document.getElementById('ready-btn').style.display = 'none';
     document.getElementById('main-content').style.display = 'flex';
-    document.getElementById('toggle-chat-btn').style.display = 'block';
-    document.getElementById('toggle-character-sheet-btn').style.display = 'block';
-    // hide elements (button, party list, options frame)
-    this.style.display = 'none';
-    document.getElementById('party-container').style.display = 'none';
-    document.getElementById('developer-options-container').style.display = 'none';
-    document.getElementById('dev-button').style.display = 'none';
     var imagePath = "static/img/login1.png";
     tryChangeBackgroundImage(imagePath);
     currentSoundtrack.volume = 0.1;
@@ -123,13 +118,13 @@ async function drawStoryPage() {
                 messages.forEach(message => {
                     switch(message.character) {
                         case 'PC':
-                            appendMessage(`${message.character_name}: ${message.message}`, 'user');
+                            appendMessage('',`${message.character_name}: ${message.message}`, 'user');
                             break;
                         case 'NARRATOR':
-                            appendMessage(`${message.character_name}: ${message.message}`, 'narrator');
+                            appendMessage(narrator_portrait, `${message.character_name}: ${message.message}`, 'narrator');
                             break;
                         case 'SYSTEM':
-                            appendMessage(`${message.character_name}: ${message.message}`, 'system');
+                            appendMessage(system_portrait, `${message.character_name}: ${message.message}`, 'system');
                             break;
                         default:
                             console.log('Unknown character type');
@@ -234,6 +229,8 @@ function handleMessage(message) {
                 document.getElementById('send-button').style.display = 'block';
                 alert(error);
             }
+            console.log('processed message: ', formattedMessage)
+            appendMessage(narrator_portrait,'Narrator: ' + formattedMessage, 'narrator');
             break;
         default:
             alert('Got action ', action, ' from websocket. NYI');
@@ -249,9 +246,9 @@ function appendMessage(portrait, message, entity) {
     switch (entity) {
         case 'user':
             divClass = 'user-message';
-            if (avatarPath) {
+            if (portrait) {
                 const avatarImg = document.createElement('img');
-                avatarImg.src = avatarPath;
+                avatarImg.src = portrait;
                 avatarImg.className = 'avatar'; // Add a class for styling
                 messageDiv.appendChild(avatarImg);
             }

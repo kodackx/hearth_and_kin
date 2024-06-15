@@ -7,6 +7,7 @@ from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
+from ..models.story import Story
 from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
 
@@ -27,6 +28,19 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     ).all()
     chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id)  # type: ignore
     
+    # Retrieve the story to get character IDs
+    story = session.get(Story, message.story_id)
+    if not story:
+        raise HTTPException(404, 'Story not found')
+
+    character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
+    characters = session.exec(
+        select(Character).where(Character.id.in_(character_ids))
+    ).all()
+    
+    character_details = [{"name": character.name, "race": character.character_race, "class": character.character_class} for character in characters]
+    party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
+
     # TODO: move the openai/audio/narrator stuff to a message/orchestrator service instead
     audio_url = image_url = soundtrack_path = narrator_reply = None
     try:
@@ -37,7 +51,8 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
             raise HTTPException(404, 'Character not found')
         # Will send to openai and obtain reply
         if GENERATE_REPLY:
-            narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain)
+
+            narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain, party_info=party_context)
             soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
             for directive in soundtrack_directives:
                 if directive in narrator_reply:
