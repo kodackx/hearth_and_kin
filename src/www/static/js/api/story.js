@@ -3,7 +3,9 @@ import { handleApiErrors } from '../utils.js'
 import { showToast } from '../utils.js'
 
 const username = localStorage.getItem('username')
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/dashboard'
+const hostname = window.location.hostname;
+const port = hostname === '127.0.0.1' ? ':8000' : '';
+export const webSocketEndpoint = `ws://${hostname}${port}/ws/dashboard`;
 export function createStory(storyId) {
     fetch('/story', {
         method: 'POST',

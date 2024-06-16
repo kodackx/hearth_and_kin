@@ -2,7 +2,6 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
-from ..core import storage
 from ..core.config import ELEVENLABS_VOICE_ID
 
 def generate(text: str) -> bytes | Iterator[bytes]:
@@ -20,3 +19,9 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     print(f"[GEN AUDIO] Audio file saved at: {file_path}")
 
     return filename, file_path
+
+
+async def generate_audio(narrator_reply) -> str:
+    audio_data = generate(narrator_reply)
+    _, audio_path = store(audio_bytes=audio_data)
+    return audio_path

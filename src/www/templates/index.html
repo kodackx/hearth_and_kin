@@ -39,6 +39,9 @@
             button:hover {
                 background-color: #d79736;
             }
+            button:hover {
+                background-color: #d79736;
+            }
 
             button:active {
                 background-color: #7f571d;
@@ -52,7 +55,23 @@
                 border-radius: 5px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
             }
+            button:active {
+                background-color: #7f571d;
+            }
+            input[type="text"], input[type="password"] {
+                padding: 10px;
+                font-size: 18px;
+                color: #f4e8c1;
+                background-color: #3b372a;
+                border: none;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            }
 
+            input[type="text"]:focus, input[type="password"]:focus {
+                outline: none;
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
             input[type="text"]:focus, input[type="password"]:focus {
                 outline: none;
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
@@ -128,7 +147,7 @@
         <hr>  <!-- Line separator -->
 
         <p class="register-text">Don't have an account yet? <a href="/register" id="registerLink" class="register-link">Register here!</a></p>
-
+        
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="module" src="js/index.js"></script>
 </body>

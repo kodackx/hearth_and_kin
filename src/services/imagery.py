@@ -1,3 +1,5 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 from langchain.utilities.dalle_image_generator import DallEAPIWrapper
 import os
@@ -9,15 +11,16 @@ import httpx
 from PIL import Image
 from io import BytesIO
 from ..core.config import logger
-from ..core import storage
 
 
-def generate(prompt_text):
+def _generate_blocking(prompt_text) -> str:
     llm = ChatOpenAI(model_name='gpt-4o')  # type: ignore
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
         You will be given the latest narrator text from a cozy fantasy story that is currently developing.
+        You must build a short prompt to generate an image that will be sent to Dall-e3. 
+        The prompt should be expressed as image captions, just like they are found on the internet. 
         You must build a short prompt to generate an image that will be sent to Dall-e3. 
         The prompt should be expressed as image captions, just like they are found on the internet. 
         Return it as "Scene Summary:".
@@ -36,6 +39,7 @@ def generate(prompt_text):
         The scene should feel alive and dynamic, yet cozy and intimate, capturing the essence of a fantasy adventure just about to unfold.
         Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
         Here is the scene prompt:
+        Here is the scene prompt:
         """
         + summary
     )
@@ -43,13 +47,13 @@ def generate(prompt_text):
         image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_dalle)  # type: ignore
     except Exception as e:
         logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
-        image_url = '[NO_IMAGE]'
+        image_url = '[NO IMAGE]'
     return image_url
 
 
-async def store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
+async def _store(image_url: str, type: str, filename: Optional[str] = None) -> tuple[str,str]:
     """
-    Store an image from an URL in Azure Blob Storage and return the url to the stored file
+    Store an image from an URL and return the url to the stored file
     """
     if type == 'story':
         # obtain image from url
@@ -79,4 +83,20 @@ async def store(image_url: str, type: str, filename: Optional[str] = None) -> tu
         return visual_id, serve_image_path 
     else:
         error = 'Invalid store image type. Can only store `character` or `story` images'
-        return 0, error
+        return '0', error
+
+async def _generate(prompt_text) -> str:
+    """
+    Needed to not let the image generation block the event loop
+    """
+    loop = asyncio.get_running_loop()
+    with ThreadPoolExecutor() as pool:
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text)
+    return result
+
+
+async def generate_image(prompt: str, type: str) -> str:
+    image_url = await _generate(prompt)
+    if image_url is not None:
+        _, image_path = await _store(image_url=image_url, type=type)
+    return image_path

@@ -13,7 +13,12 @@ app = FastAPI()
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
 app.mount('/data', StaticFiles(directory=Path('data')), name='data')
 app.mount('/js', StaticFiles(directory=Path('src/www/static/js')), name='js')
-AZURE_CDN_URL = 'https://cdn-fjgyffdwahaegmgb.z01.azurefd.net/'
+
+# router = APIRouter(prefix="/favicon.ico")
+favicon_path = 'src/www/static/img/favicon.ico'
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(favicon_path)
 
 # router = APIRouter(prefix="/favicon.ico")
 favicon_path = 'src/www/static/img/favicon.ico'
@@ -24,13 +29,6 @@ def favicon():
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
-
-@app.get("/azure/{file_path:path}")
-async def get_azure_file(file_path: str):
-    """
-    All requests to /azure/* will be redirected to the Azure CDN URL.
-    """
-    return RedirectResponse(url=f"{AZURE_CDN_URL}/{file_path}")
 
 @app.get('/')
 async def home(request: Request):

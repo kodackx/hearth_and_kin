@@ -122,11 +122,11 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
 
     return chat_llm_chain
 
-def get_chain(story_id: str) -> LLMChain:
+def get_chain(story_id: str) -> Dict[str, LLMChain] | None:
     return chains.get(story_id)
 
 
-def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
+def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
@@ -139,3 +139,22 @@ def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, pa
     output = chain.predict(input=message_and_character_data)
     logger.debug(f'[GPT Narrator] {output = }')
     return output
+
+def generate_reply(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> tuple[str, str | None]:
+    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info)
+    soundtrack_path = None
+    soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
+    for directive in soundtrack_directives:
+        if directive in narrator_reply:
+            # Handle the soundtrack directive here
+            # For example, log it or set a path to the soundtrack file
+            logger.debug(f'[MESSAGE] Soundtrack directive found: {directive}')
+            # Extract the soundtrack name from the directive
+            soundtrack_name = directive.strip('[]').split(': ')[1]
+            # Assuming you have a method to get the path of the soundtrack
+            soundtrack_path = f'/static/soundtrack/{soundtrack_name}'
+            logger.debug(f'[MESSAGE] Soundtrack path: {soundtrack_path}')
+            # Remove the directive from the narrator_reply to clean up the final message
+            narrator_reply = narrator_reply.replace(directive, '').strip()
+            break  # Assuming only one soundtrack directive per reply, break after handling the first one found
+    return narrator_reply, soundtrack_path

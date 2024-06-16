@@ -19,22 +19,17 @@ class WebsocketManager:
             logger.debug(self.active_connections)
 
     async def disconnect(self, websocket: WebSocket, story_id: int) -> None:
-        logger.debug(f'Disconnecting ws from story_id {story_id}')
-        self.active_connections[story_id].remove(websocket)
-        if websocket.client_state.CONNECTED:
-            await websocket.close()
-        logger.debug(f'Disconnecting ws from story_id {story_id} complete')
+        if self.active_connections.get(story_id):
+            self.active_connections[story_id].remove(websocket)
 
     async def broadcast(self, action: str, payload: dict | SQLModel, story_id: int) -> None:
-        logger.debug(f'Received broadcast command to story_id {story_id}')
+        logger.debug(f'Received {action} to story_id {story_id}')
         if isinstance(payload, SQLModel):
             payload = jsonable_encoder(payload)
         message = {'action': action, 'data': payload}
         if story_id in self.active_connections:
-            logger.debug(f'active connections: {self.active_connections[story_id]}')
             for connection in self.active_connections[story_id]:
                 if connection.client_state.CONNECTED:
-                    logger.debug(f'sending to story_id {story_id}')
                     try:
                         await connection.send_json(message)
                     except RuntimeError: # Happens If some connection is closed already
@@ -50,6 +45,8 @@ class WebsocketManager:
                 await self.broadcast(message['action'], message['data'], story_id)
         
         except WebSocketDisconnect:
+            logger.debug(f"Client disconnected from story {story_id}")
+        finally:
             await self.disconnect(websocket, story_id)
 
 def get_socket():

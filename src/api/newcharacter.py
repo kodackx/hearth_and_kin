@@ -122,24 +122,24 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             character_description = character_description_match.group(1).strip() if character_description_match else None
             
             logger.debug(f'[CREATION IMAGE] {character_description}')
-            portrait_url = imagery.generate(narrator_reply)
-            _, portrait_path = await imagery.store(portrait_url, type='character')
+            # Will send to dalle3 and obtain image
+            portrait_path = await imagery.generate_image(narrator_reply, 'character')
             logger.debug(f'[MESSAGE] {portrait_path = }')
             
             character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)
         
         response.status_code = status.HTTP_201_CREATED
-        return {
+    except Exception as e:
+        logger.error(f'[CREATION MESSAGE] {e}')
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {'error': f'An error occurred while generating the response: {e}'}
+    return {
             'message': 'Narrator: ' + narrator_reply,
             'image': portrait_path,
             'description': character_description,
             'character_data': character_data,
             'status': 'success'
-        }
-    except Exception as e:
-        logger.error(f'[CREATION MESSAGE] {e}')
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {'error': f'An error occurred while generating the response: {e}'}
+    }
 
 @router.post('/createcharacter', status_code=201, response_model=CharacterRead)
 # async def create_character(*, character_stats: CharacterCreate, session: Session = Depends(get_session)):
