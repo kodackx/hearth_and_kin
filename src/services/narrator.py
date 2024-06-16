@@ -1,12 +1,4 @@
-from langchain.chains import LLMChain
-from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain.schema import SystemMessage
+
 from src.models.character import Character
 
 from src.models.message import MessageBase
@@ -14,9 +6,22 @@ from src.models.character import CharacterType
 from src.core.config import logger
 
 from typing import Dict
+from langchain_core.messages import SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Dictionary to store chains by story_id
-chains: Dict[str, LLMChain] = {}
+chains: Dict[str, RunnableWithMessageHistory] = {}
+
+models = {
+    'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.75),
+    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
+}
 
 ################
 # OpenAI stuff #
@@ -94,39 +99,43 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> LLMChain:
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, model: str) -> RunnableWithMessageHistory:
+    #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+    memory = ChatMessageHistory()
 
     if message_history:
         for message in message_history:
             if message.character == CharacterType.PC:
-                memory.chat_memory.add_user_message(message.message)
+                if model == 'nvidia':
+                    memory.add_user_message('user: ' + message.message)
+                else:
+                    memory.add_user_message(message.message)
             elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
-                memory.chat_memory.add_ai_message(message.message)
+                if model == 'nvidia':
+                    memory.add_ai_message('assistant: ' + message.message)
+                else:
+                    memory.add_ai_message(message.message)
     else:
         logger.debug("No message history. Will start story from scratch.")
-
-    llm = ChatOpenAI(
-        model_name='gpt-4o',  # type: ignore
-        temperature=0.75,
-    )
-    chat_llm_chain = LLMChain(
-        llm=llm,
-        prompt=prompt,
-        verbose=True,
-        memory=memory,
+    
+    chat_llm_chain = prompt | models[model] | StrOutputParser()
+    chain_with_message_history = RunnableWithMessageHistory(
+        chat_llm_chain,
+        lambda session_id: memory,
+        input_messages_key="input",
+        history_messages_key="chat_history",
     )
 
     # Store the chain in the dictionary
-    chains[story_id] = chat_llm_chain
+    chains[story_id] = chain_with_message_history
 
-    return chat_llm_chain
+    return chain_with_message_history
 
-def get_chain(story_id: str) -> Dict[str, LLMChain] | None:
+def get_chain(story_id: str) -> RunnableWithMessageHistory | None:
     return chains.get(story_id)
 
 
-def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
+def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, model: str, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
@@ -134,14 +143,17 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, p
 
     if party_info:
         message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
+    
+    #if model == 'nvidia':
+    #    message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
-    output = chain.predict(input=message_and_character_data)
+    output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": message.story_id}})
     logger.debug(f'[GPT Narrator] {output = }')
     return output
 
-def generate_reply(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> tuple[str, str | None]:
-    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info)
+def generate_reply(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, model: str, party_info: str = '') -> tuple[str, str | None]:
+    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info, model=model)
     soundtrack_path = None
     soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
     for directive in soundtrack_directives:

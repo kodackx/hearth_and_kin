@@ -25,6 +25,9 @@ class CharacterBase(Model):
 class CharacterCreateMessage(Model):
     message: str
 
+    text_model: str | None = None
+    image_model: str | None = None
+
 class CharacterCreate(CharacterBase):
     pass
 

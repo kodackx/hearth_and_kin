@@ -1,20 +1,31 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
-from langchain.utilities.dalle_image_generator import DallEAPIWrapper
 import os
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
 import base64
 import httpx
 from PIL import Image
 from io import BytesIO
+
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from ..core.config import logger
+from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+
+text_models = {
+    'gpt': ChatOpenAI(model_name='gpt-4o'),
+    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
+}
+
+image_models = {
+    'dalle': DallEAPIWrapper(model='dall-e-3', size='1024x1024'),
+}
 
 
-def _generate_blocking(prompt_text) -> str:
-    llm = ChatOpenAI(model_name='gpt-4o')  # type: ignore
+
+def _generate_blocking(prompt_text: str, text_model: str, image_model: str) -> str:
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
@@ -29,8 +40,9 @@ def _generate_blocking(prompt_text) -> str:
         {prompt_text}
         """,
     )
-    summary = LLMChain(llm=llm, prompt=prompt_gpt_helper).run(prompt_text=prompt_text)
-    logger.debug('[GEN IMAGE]: ' + summary)
+    chain = prompt_gpt_helper | text_models[text_model] | StrOutputParser()
+    result = chain.invoke({'prompt_text': prompt_text})
+    logger.debug('[GEN IMAGE]: ' + result)
     image_url = ''
     prompt_dalle = (
         """
@@ -41,12 +53,15 @@ def _generate_blocking(prompt_text) -> str:
         Here is the scene prompt:
         Here is the scene prompt:
         """
-        + summary
+        + result
     )
-    try:
-        image_url = DallEAPIWrapper(model='dall-e-3', size='1024x1024').run(prompt_dalle)  # type: ignore
-    except Exception as e:
-        logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
+    if image_model == 'dalle':
+        try:
+            image_url = image_models[image_model].run(prompt_dalle)  # type: ignore
+        except Exception as e:
+            logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
+            image_url = '[NO IMAGE]'
+    else:
         image_url = '[NO IMAGE]'
     return image_url
 
@@ -85,18 +100,18 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def _generate(prompt_text) -> str:
+async def _generate(prompt_text: str, text_model: str, image_model: str) -> str:
     """
     Needed to not let the image generation block the event loop
     """
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text)
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model)
     return result
 
 
-async def generate_image(prompt: str, type: str) -> str:
-    image_url = await _generate(prompt)
+async def generate_image(prompt: str, type: str, text_model: str, image_model: str) -> str:
+    image_url = await _generate(prompt, text_model, image_model)
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)
     return image_path

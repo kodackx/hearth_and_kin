@@ -6,6 +6,9 @@ DEBUG = True
 GENERATE_IMAGE = True
 GENERATE_AUDIO = True
 GENERATE_REPLY = True
+DEFAULT_TEXT_NARRATOR_MODEL = 'nvidia'
+DEFAULT_TEXT_IMAGE_MODEL = 'nvidia'
+DEFAULT_IMAGE_MODEL = 'dalle'
 SENTENCES_PER_SUBTITLE = 2
 logger = logging.getLogger(__name__)
 
