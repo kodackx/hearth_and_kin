@@ -33,6 +33,10 @@ class MessagePC(MessageBase):
     character_name: str
     portrait_path: str
 
+    text_image_model: str | None = None
+    image_model: str | None = None
+    text_narrator_model: str | None = None
+
 class MessageNARRATORorSYSTEM(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)
     message: str
