@@ -1,25 +1,59 @@
 from sqlmodel import SQLModel as Model, Field
+from typing import Optional
+from sqlmodel import SQLModel, Field
+import random
+import string
+import uuid
 
+def generate_invite_code(length=5):
+    invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+    print('[CODEGEN]: Generated the following invite code: ', invite_code)
+    return invite_code
+    
+
+class Invite(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    story_id: int
+    invite_code: str = Field(default_factory=generate_invite_code)
 
 class StoryBase(Model):
-    story_id: int = Field(nullable=False, primary_key=True)
+    story_id: Optional[int] = Field(default=None, primary_key=True)
+    party_lead: int = Field(foreign_key="character.character_id")
+    join_code: Optional[str]
+    thread_id: Optional[int]
+    party_member_1: Optional[int] = Field(foreign_key="character.character_id")
+    party_member_2: Optional[int] = Field(foreign_key="character.character_id")
+    has_started: Optional[bool] = Field(default=False)
+    party_location: Optional[str]
+    party_objective: Optional[str]
 
 
-class StoryCreate(StoryBase):
-    creator: int = Field(foreign_key='character.character_id')
+class StoryCreate(Model):
+    party_lead: int = Field(foreign_key='character.character_id')
 
 
-class StoryJoin(StoryBase):
+class StoryJoin(Model):
+    story_id: int
     character_id: int = Field(foreign_key='character.character_id')
 
 
-class StoryDelete(StoryJoin):
+class StoryDelete(Model):
+    character_id: int = Field(foreign_key='character.character_id')
+    story_id: int
+
+
+class StoryRead(Model):
+    story_id: int
+    has_started: bool = Field(default=False)
+    party_lead: int
+    party_member_1: Optional[int] = Field(default=None)
+    party_member_2: Optional[int] = Field(default=None)
+
+
+class Story(StoryBase, table=True):  # type: ignore
     pass
 
-
-class StoryRead(StoryCreate):
-    active: bool = Field(default=False)
-
-
-class Story(StoryRead, table=True):  # type: ignore
-    pass
+class StoryTransferOwnership(Model):
+    story_id: int
+    current_lead_id: int
+    new_lead_id: int

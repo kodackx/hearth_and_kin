@@ -21,6 +21,8 @@ def _generate_blocking(prompt_text) -> str:
         You will be given the latest narrator text from a cozy fantasy story that is currently developing.
         You must build a short prompt to generate an image that will be sent to Dall-e3. 
         The prompt should be expressed as image captions, just like they are found on the internet. 
+        You must build a short prompt to generate an image that will be sent to Dall-e3. 
+        The prompt should be expressed as image captions, just like they are found on the internet. 
         Return it as "Scene Summary:".
         ---
         Here is the narration text:
@@ -36,6 +38,7 @@ def _generate_blocking(prompt_text) -> str:
         The illustration should mimic the style of a graphic novel, with bold and precise linework and a color palette of vibrant highlights. 
         The scene should feel alive and dynamic, yet cozy and intimate, capturing the essence of a fantasy adventure just about to unfold.
         Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
+        Here is the scene prompt:
         Here is the scene prompt:
         """
         + summary

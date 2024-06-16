@@ -20,6 +20,12 @@ favicon_path = 'src/www/static/img/favicon.ico'
 def favicon():
     return FileResponse(favicon_path)
 
+# router = APIRouter(prefix="/favicon.ico")
+favicon_path = 'src/www/static/img/favicon.ico'
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse(favicon_path)
+
 @app.router.on_startup.append
 async def on_startup():
     create_db_and_tables()
@@ -34,6 +40,10 @@ app.include_router(story.router, prefix='', tags=['story'], dependencies=[Depend
 app.include_router(character.router, prefix='', tags=['character'], dependencies=[Depends(get_session)])
 app.include_router(message.router, prefix='', tags=['message'], dependencies=[Depends(get_session)])
 app.include_router(newcharacter.router, prefix='', tags=['message'])
+
+@app.get('/lobby')
+async def lobby_page(request: Request):
+    return Response(content=open('src/www/templates/lobby.html', 'r').read(), media_type='text/html')
 
 
 @app.get('/dashboard')

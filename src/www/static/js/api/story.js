@@ -1,7 +1,11 @@
-import { handleResponse, fetchDataAsync } from "../utils.js";
+import { fetchDataAsync } from "../utils.js";
+import { handleApiErrors } from '../utils.js'
+import { showToast } from '../utils.js'
 
 const username = localStorage.getItem('username')
-export const webSocketEndpoint = 'ws://127.0.0.1:8000/ws/dashboard'
+const hostname = window.location.hostname;
+const port = hostname === '127.0.0.1' ? ':8000' : '';
+export const webSocketEndpoint = `ws://${hostname}${port}/ws/dashboard`;
 export function createStory(storyId) {
     fetch('/story', {
         method: 'POST',
@@ -13,9 +17,9 @@ export function createStory(storyId) {
             creator: username,
         }),
     })
-    .then(response => handleResponse(response, data => {}))
+    .then(response => handleApiErrors(response, data => {}))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
 };
 
@@ -30,9 +34,9 @@ export function joinStory(storyId) {
             username: username,
         }),
     })
-    .then(response => handleResponse(response, data => {}))
+    .then(response => handleApiErrors(response, data => {}))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     })
 };
 
@@ -47,9 +51,9 @@ export function playStory(storyId) {
             username: username,
         }),
     })
-    .then(response => handleResponse(response, data => {}))
+    .then(response => handleApiErrors(response, data => {}))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     })
 };
 
@@ -64,7 +68,7 @@ export function deleteStory(storyId) {
             story_id: storyId
         }),
     })
-    .then(response => handleResponse(response, data => {}))
+    .then(response => handleApiErrors(response, data => {}))
 };
 
 export async function getStoryUsers(storyId) {
@@ -82,8 +86,8 @@ export function leaveStory(storyId) {
             username: username,
         }),
     })
-    .then(response => handleResponse(response, data => {}))
+    .then(response => handleApiErrors(response, data => {}))
     .catch((error) => {
-        alert(error);
+        showToast(`Frontend Error: ${error.message}`);
     });
 };

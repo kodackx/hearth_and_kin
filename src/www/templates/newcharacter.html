@@ -1,5 +1,6 @@
 <html>
 <head>
+    <title>Hearth and Kin: Mists of Creation</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -9,6 +10,7 @@
     <script type="module" src="js/newcharacter.js"></script>
 </head>
 <body>
+    <div id="toastContainer"></div>
     <button id="start-button">Create your character...</button>
     <video autoplay muted loop playsinline id="background-video">
         <source src="static/img/char_create_video.mp4" type="video/mp4">
@@ -346,6 +348,37 @@
         top: 50%; /* Push down from the top half the height of the parent */
         transform: translateY(-50%); /* Pull back up 50% of its own height to center vertically */
         pointer-events: none; /* Ensures clicks go through to the button element */
+    }
+
+    /* Toast container */
+    #toastContainer {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        width: 80%;
+        max-width: 600px;
+        pointer-events: none; /* Allows clicks to pass through */
+    }
+
+    /* Toast message */
+    .toast {
+        background-color: #f8d7da; /* Light red background for error */
+        color: #721c24; /* Dark red text for error */
+        border: 1px solid #f5c6cb; /* Border color for error */
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        pointer-events: auto; /* Allows interaction with the toast */
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    /* Show toast */
+    .toast.show {
+        opacity: 1;
     }
 </style>
 

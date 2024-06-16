@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Hearth and Kin: Lobby</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tangerine&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="content-container">
+        <div id="toastContainer"></div>
+        <div id="party-container">
+            <h2>Players in Party</h2>
+            <h3 class="invite-text">To invite other players, use code: <span id="invite-code" class="invite-code" data-story-id="STORY_ID_PLACEHOLDER">HT3MG8</span></h3>
+            <ul id="party-list">
+                <li class="party-member">
+                    <span class="status-indicator offline"></span>
+                    <span class="player-name" id="party-lead">Party Lead</span>
+                </li>
+                <li class="party-member">
+                    <span class="status-indicator offline"></span>
+                    <span class="player-name" id="member-1">Member 1</span>
+                </li>
+                <li class="party-member">
+                    <span class="status-indicator offline"></span>
+                    <span class="player-name" id="member-2">Member 2</span>
+                </li>
+            </ul>
+        </div>
+        <button type="button" id="start-button">Let the adventure begin...</button>
+        <button type="button" id="dev-button">Session Options (WIP)</button>
+        <div id="developer-options-container" class="developer-options slideInFromBottom">
+            <h3>Session Options</h3>
+            <div class="option">
+                <label for="llm-model-selector">LLM Model Selector:</label>
+                <select id="llm-model-selector">
+                    <option value="placeholder1">Placeholder 1</option>
+                    <option value="placeholder2">Placeholder 2</option>
+                    <option value="placeholder3">Placeholder 3</option>
+                </select>
+            </div>
+            <div class="option">
+                <label for="audio-generation-model">Audio Generation Model:</label>
+                <select id="audio-generation-model">
+                    <option value="none">NONE</option>
+                    <option value="placeholder1">Placeholder 1</option>
+                    <option value="placeholder2">Placeholder 2</option>
+                    <option value="placeholder3">Placeholder 3</option>
+                </select>
+            </div>
+            <div class="option">
+                <label for="image-generation-model">Image Generation Model:</label>
+                <select id="image-generation-model">
+                    <option value="none">NONE</option>
+                    <option value="placeholder1">Placeholder 1</option>
+                    <option value="placeholder2">Placeholder 2</option>
+                    <option value="placeholder3">Placeholder 3</option>
+                </select>
+            </div>
+            <div>
+                <input type="radio" id="layout-a" name="layout" value="centered" checked>
+                <label for="layout-a">Layout A - Centered with subtitles</label>
+            </div>
+            <div>
+                <input type="radio" id="layout-b" name="layout" value="immersive" >
+                <label for="layout-b">Layout B - Immersive with scrolling text</label>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/lobby.js"></script>
+</body>
+</html>
+<style>
+body {
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+    font-size: large;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    overflow: hidden;
+}
+
+.background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95)), url('static/img/patrick-hendry-oaaRPhOz5Dg-unsplash.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: #fff2d5;
+}
+
+#start-button {
+    background-color: #8b4513;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    /* display: inline-block; */
+    font-size: 20px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+#dev-button {
+    position: relative;
+    top: 10px; /* Adjust as needed */
+    right: 10px; /* Adjust as needed */
+    background-color: #664a37;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+#party-container {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    border: 2px solid #5D3A00;
+    padding: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+#party-list {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0;
+}
+
+.party-member {
+    margin: 10px 0; /* Space between party members */
+    display: flex;
+    align-items: center; /* Align items vertically */
+    justify-content: center;
+    font-family: 'Palatino', 'Garamond', 'Georgia', 'Merriweather', 'Baskerville', serif;
+}
+
+.avatar {
+    width: 50px; /* Adjust based on your avatar size */
+    height: 50px; /* Adjust based on your avatar size */
+    border-radius: 50%; /* Make the avatar image round */
+    margin-right: 10px;
+}
+
+.character-name {
+    color: #fff2d5; /* Light cream color for text */
+    text-align: center; /* Center the name text */
+    font-size: 24px; /* Make the font larger */
+    font-weight: bold; /* Make the font bold */
+    font-family: 'Almendra', serif; /* Example fantasy-themed font */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Text shadow for depth */
+    margin: 20px 0; /* Add some space around the name */
+}
+
+.fade-in {
+    opacity: 0;
+    animation: fadeIn ease 1s;
+    animation-fill-mode: forwards;
+}
+
+.fade-out {
+    animation: fadeOut 1s forwards;
+}
+
+/* Style for options container to match fantasy game theme */
+#options-container {
+    color: #fff2d5; /* Light cream color for text to match the theme */
+    /* font-family: 'Almendra', serif; Fantasy-themed font */
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    margin-top: 20px; /* Space from the start button or other elements */
+    font-size: small;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Custom style for checkboxes */
+#options-container input[type="checkbox"] {
+    accent-color: #aa8838; /* Custom checkbox color */
+    margin-right: 5px;
+}
+
+/* Style for labels to match the fantasy game theme */
+#options-container label {
+    margin-right: 20px; /* Space between the checkboxes */
+    cursor: pointer;
+}
+
+/* Enhance the hover effect for labels */
+#options-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+#play-dev-button {
+    position: absolute;
+    z-index: 1;
+    top: 95%; /* Adjust based on the position of your toggle chat button */
+    left: 50%;
+    transform: translateX(-50%);
+    font-family:'Courier New', Courier, monospace;
+    font-size: 16px;
+    background-color: #403421; /* Dark brown */
+    color: #fff2d5; /* Light cream */
+    padding: 5px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#play-dev-button:hover {
+    background-color: #3E2C1B; /* Slightly darker on hover */
+}
+
+#layout-selection-container {
+    color: #fff2d5; /* Light cream color for text */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    border-radius: 10px; /* Rounded corners */
+    border: 2px solid #5D3A00; /* Dark brown border */
+    padding: 20px;
+    margin-top: 20px; /* Space from the start button */
+    font-family: 'Almendra', serif; /* Fantasy-themed font */
+}
+
+#layout-selection-container div {
+    margin-top: 10px;
+}
+
+#layout-selection-container input[type="radio"] {
+    accent-color: #aa8838; /* Custom radio button color */
+    margin-right: 5px;
+}
+
+#layout-selection-container label {
+    margin-right: 20px; /* Space between the radio options */
+    cursor: pointer;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+#layout-selection-container label:hover {
+    color: #bf845a; /* Lighter shade for hover effect */
+}
+
+.invite-text {
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    font-size: 18px;
+}
+
+.invite-code {
+    font-weight: bold;
+    color: #f4d9c5;
+    background-color: #8b4513;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.character-sheet {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 35%;
+    max-width: 500px;
+    overflow-y: auto;
+    background-color: rgba(0,0,0,0.5);
+    border-left: 2px solid #5D3A00;
+    color: #fff2d5;
+    padding: 20px;
+    animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+.character-portrait img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    border-radius: 50%;
+    margin: 0 auto;
+    display: block;
+}
+
+.character-description p {
+    text-align: justify;
+    margin-top: 20px;
+}
+
+.character-stats ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.character-stats li {
+    margin-bottom: 10px;
+}
+
+.developer-options {
+    position: fixed;
+    bottom: 0;
+    transform: translateX(-50%); /* Center horizontally */
+    width: 50%; /* Set width to 50% */
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff2d5;
+    border-top: 2px solid #5D3A00;
+    border-left: 2px solid #5D3A00; /* Add left border */
+    border-right: 2px solid #5D3A00; /* Add right border */
+    padding: 20px;
+    box-sizing: border-box;
+    animation: slideInFromBottom 0.5s ease-out forwards;
+    text-align: left; /* Align text to the left */
+    border-radius: 10px 10px 0 0; /* Rounded corners at the top */
+}
+
+.option {
+    margin-bottom: 15px;
+}
+
+.option label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.option select {
+    width: 100%;
+    padding: 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid #5D3A00;
+    color: #5D3A00;
+    border-radius: 5px;
+}
+
+/* Toast container */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+/* Toast message */
+.toast {
+    background-color: #f8d7da; /* Light red background for error */
+    color: #721c24; /* Dark red text for error */
+    border: 1px solid #f5c6cb; /* Border color for error */
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    pointer-events: auto; /* Allows interaction with the toast */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Show toast */
+.toast.show {
+    opacity: 1;
+}
+
+/* Add this to your CSS file */
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.status-indicator.online {
+    background-color: green;
+}
+
+.status-indicator.offline {
+    background-color: gray;
+}
+
+.waiting-state {
+    animation: pulse 2s infinite;
+}
+
+.slideInFromLeft {
+    animation: slideInFromLeft 0.5s ease-out forwards;
+}
+
+.slideOutToLeft {
+    animation: slideOutToLeft 0.5s ease-out forwards;
+}
+
+.slideInFromRight {
+    animation-name: slideInFromRight;
+}
+
+.slideOutToRight {
+    animation-name: slideOutToRight;
+}
+
+.slideOutToBottom {
+    animation: slideOutToBottom 0.5s ease-out forwards;
+}
+
+.slideInFromBottom {
+    animation: slideInFromBottom 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    0% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromBottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutToBottom {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInOut {
+    0%,100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+@keyframes fadeAndScale {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(219, 122, 52, 0); /* Increase the spread and adjust opacity */
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(219, 122, 52, 0);
+        }
+    }
+
+</style>
+<script type="module" src="js/lobby.js"></script>

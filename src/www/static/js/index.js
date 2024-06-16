@@ -1,3 +1,5 @@
+import { handleApiErrors} from './utils.js'
+import {showToast} from './utils.js'
 document.getElementById('loginBtn').addEventListener('click', login);
 
 function register() {
@@ -25,40 +27,25 @@ function login() {
     fetch('/login', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: JSON.stringify({
+        body: new URLSearchParams({
             username: username,
             password: password,
         }),
     })
-    .then(response => handleApiResponse(response, data => {
-        localStorage.setItem('username', data.username);
-        window.location.href = '/dashboard';
+    .then(response => handleApiErrors(response, data => {
+        console.log('Response data:', data); // Log the response data for debugging
+        if (data.user_id) {
+            localStorage.setItem('username', username);
+            localStorage.setItem('user_id', data.user_id);
+            localStorage.setItem('access_token', data.access_token);
+            window.location.href = '/dashboard';
+        } else {
+            throw new Error('User ID is missing in the response.');
+        }
     }))
     .catch((error) => {
-        alert(error)
-    })
-}
-
-function handleApiResponse(response, successCallback) {
-    // Parses and displays any validation errors from pydantic in the errorContainer div
-    document.getElementById('errorContainer').textContent = ''
-    if (!response.ok) {
-        console.error(response)
-        return response.json().then(data => {
-            if (Array.isArray(data.detail)) {
-                data.detail.forEach(error => {
-                    const errorField = error.loc.join(" > ");
-                    const errorMessage = error.msg;
-                    const errorElement = document.createElement('p');
-                    errorElement.textContent = `${errorField}: ${errorMessage}`;
-                    document.getElementById('errorContainer').appendChild(errorElement);
-                });
-            } else {
-                throw new Error(data.detail)
-            } 
-        })
-    }
-    return response.json().then(successCallback)
+        showToast(`Frontend Error: ${error.message}`);
+    });
 }

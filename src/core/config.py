@@ -6,6 +6,7 @@ DEBUG = True
 GENERATE_IMAGE = True
 GENERATE_AUDIO = True
 GENERATE_REPLY = True
+SENTENCES_PER_SUBTITLE = 2
 logger = logging.getLogger(__name__)
 
 load_dotenv()

@@ -9,8 +9,14 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from src.models.character import Character
 
-from src.models.message import MessageBase, MessageRead
+from src.models.message import MessageBase
+from src.models.character import CharacterType
 from src.core.config import logger
+
+from typing import Dict
+
+# Dictionary to store chains by story_id
+chains: Dict[str, LLMChain] = {}
 
 ################
 # OpenAI stuff #
@@ -28,9 +34,10 @@ prompt_narrator = """
 You are the game master for Hearth and Kin, a game inspired from Dungeons and Dragons.
 You must guide the adventurers (users) through a story in the style of a tabletop roleplaying game. 
 The adventurers will be able to make choices that affect the story, and you must react to their choices 
-in a way that makes sense. 
+in a way that makes sense. You are most inspired by the complexity and world building found in Critical Role campaigns.
 
-You are most inspired by the complexity and world building found in Critical Role campaigns.
+Be aware that there may be 1, 2 or even 3 players in a story. The list of players in a party
+is ocassionally provided under 'SYSTEM NOTE - Party Info' at each interaction.
     
 Please describe in detail the locations, characters, and events that the adventurers encounter. 
 Always take into account the following:
@@ -87,18 +94,21 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRead]) -> LLMChain:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> LLMChain:
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-    for message in message_history:
-        memory.chat_memory.add_user_message(message.message)
-        memory.chat_memory.add_ai_message(message.narrator_reply)
+    if message_history:
+        for message in message_history:
+            if message.character == CharacterType.PC:
+                memory.chat_memory.add_user_message(message.message)
+            elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
+                memory.chat_memory.add_ai_message(message.message)
+    else:
+        logger.debug("No message history. Will start story from scratch.")
 
     llm = ChatOpenAI(
         model_name='gpt-4o',  # type: ignore
-        # max_tokens=300,
-        temperature=0.5,
+        temperature=0.75,
     )
     chat_llm_chain = LLMChain(
         llm=llm,
@@ -107,31 +117,31 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageRe
         memory=memory,
     )
 
+    # Store the chain in the dictionary
+    chains[story_id] = chat_llm_chain
+
     return chat_llm_chain
 
+def get_chain(story_id: str) -> Dict[str, LLMChain] | None:
+    return chains.get(story_id)
 
-def gpt_narrator(character: Character, message: MessageBase, chain: LLMChain) -> str:
+
+def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
-        message_and_character_data += f'\n(Character Name: {character.character_name})'
+        message_and_character_data += f'\n(SYSTEM NOTE - Character Name: {character.character_name})'
 
-    if character.description:
-        message_and_character_data += f'\n(Character Data: {character.description})'
-
-    if character.location:
-        message_and_character_data += f'\n(Location: {character.location})'
-
-    if character.goal:
-        message_and_character_data += f'\n(Current Goal: {character.goal})'
+    if party_info:
+        message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.predict(input=message_and_character_data)
     logger.debug(f'[GPT Narrator] {output = }')
     return output
 
-def generate_reply(character, message, chain) -> tuple[str, str | None]:
-    narrator_reply = gpt_narrator(character=character, message=message, chain=chain)
+def generate_reply(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> tuple[str, str | None]:
+    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info)
     soundtrack_path = None
     soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
     for directive in soundtrack_directives:

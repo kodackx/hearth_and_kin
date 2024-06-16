@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlmodel import Session, select
 import asyncio
+import re
 
-from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger
+from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
-from ..models.message import Message, MessageBase, MessageRead
+from ..models.story import Story
+from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
 
 router = APIRouter()
@@ -22,10 +24,15 @@ async def generate_audio(text: str) -> str:
     return audio_url
 
 async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[list[str], list[str]]:
-    narration_chunks = narrator_reply.split("\n\n")
+    sentence_endings = re.compile(r'(?<=[.!?]) +')
+    # Split the text into sentences
+    sentences = sentence_endings.split(narrator_reply)
+    # Group sentences into chunks of SENTENCES_PER_SUBTITLE
+    narration_chunks = [' '.join(sentences[i:i+SENTENCES_PER_SUBTITLE]) for i in range(0, len(sentences), SENTENCES_PER_SUBTITLE)]
+
     audio_paths = []
     for narration_chunk in narration_chunks:
-        payload = {'narrator_reply': narration_chunk}
+        payload = {'message': narration_chunk}
         if GENERATE_AUDIO:
             audio_path = await generate_audio(narration_chunk)
             audio_paths.append(audio_path)
@@ -42,13 +49,29 @@ async def handle_image(narrator_reply, story_id) -> str | None:
         return image_path
     return None
 
-@router.post('/message')
-async def generate_message(*, message: MessageBase, session: Session = Depends(get_session)):
+@router.post('/message', response_model=MessageNARRATORorSYSTEM)
+async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
-    messages = session.exec(select(Message).where(Message.story_id == message.story_id)).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages)  # type: ignore
+    messages = session.exec(
+        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
+    ).all()
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id)  # type: ignore
+    
+    # Retrieve the story to get character IDs
+    story = session.get(Story, message.story_id)
+    if not story:
+        raise HTTPException(404, 'Story not found')
+
+    character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
+    characters = session.exec(
+        select(Character).where(Character.character_id.in_(character_ids))
+    ).all()
+    
+    character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
+    party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
+
     
     logger.debug(f'[MESSAGE] {message.message = }')
     # Not sure if we want to get this from the endpoint or just query the db here
@@ -58,7 +81,8 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
 
     try:
         # Generate the reply first
-        narrator_reply, soundtrack_path = narrator.generate_reply(character, message, chain)
+        narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context)
+
 
         # Generate narration and image concurrently and broadcast results as they complete
         narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id))
@@ -70,17 +94,35 @@ async def generate_message(*, message: MessageBase, session: Session = Depends(g
         logger.error(f'[MESSAGE] {e}')
         raise HTTPException(500, f'An error occurred while generating the response: {e}')
     
+    human_message = Message(
+        story_id=message.story_id,
+        character_id=message.character_id,
+        character_name=message.character_name,
+        character=message.character, #could be NARRATOR, PC or SYSTEM
+        message=message.message,
+        narrator_reply=None,
+        audio_path=None,
+        image_path=None,
+        soundtrack_path=None
+    )
+    session.add(human_message)
     for i in range(len(subtitles)):
-        new_message = Message(
+        # Create the narrator message entry
+        narrator_message = Message(
             story_id=message.story_id,
-            character_id=message.character_id,
-            character_name=message.character_name,
-            message=message.message,
-            narrator_reply=subtitles[i],
+            character_id=None,  # Assuming narrator doesn't have a character_id
+            character_name="NARRATOR",
+            character="NARRATOR", #could be NARRATOR, PC or SYSTEM
+            message=subtitles[i],
+            narrator_reply=None,
             audio_path=audio_paths[i],
             image_path=image_path,
             soundtrack_path=soundtrack_path
         )
-        session.add(new_message)
-        session.commit()
-        session.refresh(new_message)
+        session.add(narrator_message)
+        
+    session.commit()
+    session.refresh(human_message)
+
+
+    return human_message

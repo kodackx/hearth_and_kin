@@ -17,4 +17,4 @@ docker-run:
 teardown:
 	docker compose down
 run:
-	poetry run uvicorn --host 0.0.0.0 src.main:app --reload
+	poetry run uvicorn --host 127.0.0.1 src.main:app --reload

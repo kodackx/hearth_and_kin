@@ -1,5 +1,6 @@
 <html>
 <head>
+    <title>Hearth and Kin: Your Adventure</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Tangerine&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Merriweather&display=swap" rel="stylesheet">
@@ -8,11 +9,11 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
+    <!-- 
     <div id="party-container" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -100%); text-align: center;">
         <h2>Players in Party</h2>
-        <h3 class="invite-text">To invite other players, use code: <span class="invite-code">HT3MG8</span></h3>
+        <h3 class="invite-text">To invite other players, use code: <span id="invite-code" class="invite-code" data-story-id="STORY_ID_PLACEHOLDER">HT3MG8</span></h3>
         <ul id="party-list">
-            <!-- Placeholder for player items -->
             <li class="party-member">
                 <img src="/static/img/grom.jpg" alt="Character Avatar" class="avatar">
                 <span class="character-name">Grom Tuskweave</span>
@@ -21,10 +22,9 @@
                 <img src="/static/img/alleria.jpg" alt="Character Avatar" class="avatar">
                 <span class="character-name">Alleria Windrunner</span>
             </li>
-            <!-- Repeat <li> for each party member -->
         </ul>
     </div>
-    <button type="button" id="start-button">Let the adventure begin...</button>
+    <button type="button" id="start-button">Let the adventure begin...</button> -->
     <!-- <div id="layout-selection-container" style="position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         <span>Select Layout:</span>
         <div>
@@ -46,7 +46,7 @@
             <label for="enable-audio-gen">Enable Audio Generation</label>
         </div>
     </div> -->
-    <button type="button" id="dev-button">[Toggle Dev Pane]</button>
+    <!-- <button type="button" id="dev-button">[Toggle Dev Pane]</button>
     <div id="developer-options-container" class="developer-options slideInFromBottom">
         <h3>Developer Options</h3>
         <div class="option">
@@ -83,10 +83,12 @@
             <input type="radio" id="layout-b" name="layout" value="immersive" >
             <label for="layout-b">Layout B - Immersive with scrolling text</label>
         </div>
-    </div>
+    </div> -->
+    <div id="toastContainer"></div>
     <button type="button" id="toggle-chat-btn">Toggle Chat</button>
     <button type="button" id="toggle-character-sheet-btn">Character Sheet</button>
     <!-- <button type="button" id="play-dev-button" onclick="toggleDevPane">[Dev Options]</button> -->
+    <button id="ready-btn" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">READY</button>
     <div id="chat-container" class="slideOutToLeft">
         <!-- Chatbox content -->
         <div class="card" id="chat-box">
@@ -95,7 +97,7 @@
             </div>
         </div>
     </div>
-    <div class="flex-container" id="main-content">
+    <div class="flex-container" id="main-content" style="display: none;">
         <div class="story-image" id="story-image">
             <div id="subtitle" class="subtitle">...</div>formattedMessage
         </div>
@@ -837,5 +839,46 @@ body {
 .icon-int { background-image: url('https://fontawesome.com/icons/brain?f=classic&s=solid'); }
 .icon-wis { background-image: url('https://fontawesome.com/icons/book?f=classic&s=solid'); }
 .icon-cha { background-image: url('https://fontawesome.com/icons/clover?f=classic&s=solid'); } */
+
+/* Toast container */
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+/* Toast message */
+.toast {
+    background-color: #f8d7da; /* Light red background for error */
+    color: #721c24; /* Dark red text for error */
+    border: 1px solid #f5c6cb; /* Border color for error */
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    pointer-events: auto; /* Allows interaction with the toast */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Show toast */
+.toast.show {
+    opacity: 1;
+}
+
+/* Add this to your CSS file */
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
 </style>
 <script type="module" src="js/story.js"></script>
