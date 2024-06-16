@@ -99,26 +99,26 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, model: str) -> RunnableWithMessageHistory:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, text_model: str) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     memory = ChatMessageHistory()
 
     if message_history:
         for message in message_history:
             if message.character == CharacterType.PC:
-                if model == 'nvidia':
+                if text_model == 'nvidia':
                     memory.add_user_message('user: ' + message.message)
                 else:
                     memory.add_user_message(message.message)
             elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
-                if model == 'nvidia':
+                if text_model == 'nvidia':
                     memory.add_ai_message('assistant: ' + message.message)
                 else:
                     memory.add_ai_message(message.message)
     else:
         logger.debug("No message history. Will start story from scratch.")
     
-    chat_llm_chain = prompt | models[model] | StrOutputParser()
+    chat_llm_chain = prompt | models[text_model] | StrOutputParser()
     chain_with_message_history = RunnableWithMessageHistory(
         chat_llm_chain,
         lambda session_id: memory,

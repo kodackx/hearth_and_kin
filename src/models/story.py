@@ -26,6 +26,15 @@ class StoryBase(Model):
     has_started: Optional[bool] = Field(default=False)
     party_location: Optional[str]
     party_objective: Optional[str]
+    genai_text_model: str = Field(default="nvidia")
+    genai_audio_model: str = Field(default="elevenlabs")
+    genai_image_model: str = Field(default="dalle3")
+
+class StoryModelsUpdate(Model):
+    character_id: int = Field(foreign_key="character.character_id")
+    genai_text_model: Optional[str] = Field(default="nvidia")
+    genai_audio_model: Optional[str] = Field(default="elevenlabs")
+    genai_image_model: Optional[str] = Field(default="dalle3")
 
 
 class StoryCreate(Model):
