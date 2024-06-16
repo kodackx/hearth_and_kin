@@ -97,7 +97,7 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
 
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response):
-    # TODO: implement nvidia
+    # TODO: implement nvidia, does not work very well for it right now
     text_model = 'gpt' #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
     image_model = message.image_model or DEFAULT_IMAGE_MODEL
     chain = prompt | text_models[text_model] | StrOutputParser()

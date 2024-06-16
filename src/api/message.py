@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 import asyncio
 import re
 
-from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_TEXT_IMAGE_MODEL, DEFAULT_IMAGE_MODEL
+from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
 from ..models.character import Character
@@ -23,7 +23,10 @@ async def generate_audio(text: str) -> str:
     _, audio_url = audio.store(audio_bytes=audio_data)
     return audio_url
 
-async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[list[str], list[str]]:
+async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narrator_model) -> tuple[list[str], list[str]]:
+    print('Will use audio model to generate?')
+    print(audio_narrator_model != 'none')
+
     sentence_endings = re.compile(r'(?<=[.!?]) +')
     # Split the text into sentences
     sentences = sentence_endings.split(narrator_reply)
@@ -33,7 +36,7 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[l
     audio_paths = []
     for narration_chunk in narration_chunks:
         payload = {'message': narration_chunk}
-        if GENERATE_AUDIO:
+        if (GENERATE_AUDIO and audio_narrator_model != 'none'):
             audio_path = await generate_audio(narration_chunk)
             audio_paths.append(audio_path)
             payload['audio_path'] = audio_path
@@ -43,7 +46,10 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id) -> tuple[l
     return narration_chunks, audio_paths
 
 async def handle_image(narrator_reply, story_id, text_model: str, image_model: str) -> str | None:
-    if GENERATE_IMAGE:
+    print('Will use image model to generate?')
+    print(image_model != 'none')
+
+    if (GENERATE_IMAGE and image_model != 'none'):
         image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model)
         await socket_manager.broadcast('reply', {'image_path': image_path}, story_id)
         return image_path
@@ -51,9 +57,20 @@ async def handle_image(narrator_reply, story_id, text_model: str, image_model: s
 
 @router.post('/message', response_model=MessageNARRATORorSYSTEM)
 async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
-    text_image_model = message.text_image_model or DEFAULT_TEXT_IMAGE_MODEL
-    image_model = message.image_model or DEFAULT_IMAGE_MODEL
-    text_narrator_model = message.text_narrator_model or DEFAULT_TEXT_NARRATOR_MODEL
+    # Retrieve the story to get model information (that was set in the lobby!)
+    story = session.get(Story, message.story_id)
+    if not story:
+        raise HTTPException(404, 'Story not found')
+
+    text_narrator_model = story.genai_text_model or DEFAULT_TEXT_NARRATOR_MODEL
+    audio_narrator_model = story.genai_audio_model or DEFAULT_AUDIO_NARRATOR_MODEL
+    image_model = story.genai_image_model or DEFAULT_IMAGE_MODEL
+
+    print(f'Text Narrator Model: {text_narrator_model}')
+    print(f'Audio Narrator Model: {audio_narrator_model}')
+    print(f'Image Model: {image_model}')
+    
+    
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
@@ -81,25 +98,9 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         # Generate the reply first
         narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context, model=text_narrator_model)
 
-            narrator_reply = narrator.gpt_narrator(character=character, message=message, chain=chain, party_info=party_context)
-            soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
-            for directive in soundtrack_directives:
-                if directive in narrator_reply:
-                    # Handle the soundtrack directive here
-                    # For example, log it or set a path to the soundtrack file
-                    logger.debug(f'[MESSAGE] Soundtrack directive found: {directive}')
-                    # Extract the soundtrack name from the directive
-                    soundtrack_name = directive.strip('[]').split(': ')[1]
-                    # Assuming you have a method to get the path of the soundtrack
-                    soundtrack_path = f'/static/soundtrack/{soundtrack_name}'
-                    logger.debug(f'[MESSAGE] Soundtrack path: {soundtrack_path}')
-                    # Remove the directive from the narrator_reply to clean up the final message
-                    narrator_reply = narrator_reply.replace(directive, '').strip()
-                    break  # Assuming only one soundtrack directive per reply, break after handling the first one found
-
         # Generate narration and image concurrently and broadcast results as they complete
-        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id))
-        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_image_model, image_model=image_model))
+        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_narrator_model))
+        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model))
 
         narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
         subtitles, audio_paths = narration_tuple
@@ -120,6 +121,21 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         soundtrack_path=None
     )
     session.add(human_message)
+    for i in range(len(subtitles)):
+        # Create the narrator message entry
+        narrator_message = Message(
+            story_id=message.story_id,
+            character_id=None,  # Assuming narrator doesn't have a character_id
+            character_name="NARRATOR",
+            character="NARRATOR", #could be NARRATOR, PC or SYSTEM
+            message=subtitles[i],
+            narrator_reply=None,
+            audio_path=audio_paths[i] if i < len(audio_paths) else None,
+            image_path=image_path,
+            soundtrack_path=soundtrack_path
+        )
+        session.add(narrator_message)
+        
     session.commit()
     session.refresh(human_message)
 
