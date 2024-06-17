@@ -57,6 +57,9 @@ class StoryRead(Model):
     party_lead: int
     party_member_1: Optional[int] = Field(default=None)
     party_member_2: Optional[int] = Field(default=None)
+    genai_text_model: str = Field(default="nvidia")
+    genai_audio_model: str = Field(default="elevenlabs")
+    genai_image_model: str = Field(default="dalle3")
 
 
 class Story(StoryBase, table=True):  # type: ignore
