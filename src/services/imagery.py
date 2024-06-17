@@ -20,7 +20,7 @@ text_models = {
 }
 
 image_models = {
-    'dalle': DallEAPIWrapper(model='dall-e-3', size='1024x1024'),
+    'dalle3': DallEAPIWrapper(model='dall-e-3', size='1024x1024'),
 }
 
 
@@ -49,20 +49,19 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str) -> s
         You will be given a summary of a D&D story scene and you must build an image based on it.
         The illustration should mimic the style of a graphic novel, with bold and precise linework and a color palette of vibrant highlights. 
         The scene should feel alive and dynamic, yet cozy and intimate, capturing the essence of a fantasy adventure just about to unfold.
-        Use a warm, cozy, fantasy style. Make it cinematic. Avoid text.
-        Here is the scene prompt:
-        Here is the scene prompt:
+        Use a warm, cozy, fantasy style. Make it cinematic. No text.
+        Here is the scene description:
         """
         + result
     )
-    if image_model == 'dalle':
+    if image_model == 'dalle3':
         try:
             image_url = image_models[image_model].run(prompt_dalle)  # type: ignore
         except Exception as e:
             logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
-            image_url = '[NO IMAGE]'
+            image_url = None
     else:
-        image_url = '[NO IMAGE]'
+        image_url = None
     return image_url
 
 
@@ -112,6 +111,7 @@ async def _generate(prompt_text: str, text_model: str, image_model: str) -> str:
 
 async def generate_image(prompt: str, type: str, text_model: str, image_model: str) -> str:
     image_url = await _generate(prompt, text_model, image_model)
+    image_path = 'static/img/login1.png'
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)
     return image_path

@@ -38,6 +38,7 @@ window.addEventListener('beforeunload', function () {
 document.addEventListener('DOMContentLoaded', () => {
     obtainInviteCode();
     fetchStoryCharacters(story_id); // Add this line to call the function on DOM load
+    fetchStoryDetails(story_id);
     if (socket.readyState === WebSocket.OPEN) {
         notifyPresence(); // Notify others of your presence if the connection is already open
     }
@@ -72,6 +73,22 @@ async function checkPartyLead() {
     } catch (error) {
         console.error('Error checking party lead:', error);
         showToast(`Error checking party lead: ${error.message}`);
+    }
+}
+
+async function fetchStoryDetails(story_id) {
+    try {
+        const response = await fetch(`/story/${story_id}`);
+        handleApiErrors(response, storyDetails => {
+            console.log('Story Details:', storyDetails);
+            // Set the dev panel options
+            textModelSelector.value = storyDetails.genai_text_model;
+            audioModelSelector.value = storyDetails.genai_audio_model;
+            imageModelSelector.value = storyDetails.genai_image_model;
+        });
+    } catch (error) {
+        console.error('Error fetching story model configuration:', error);
+        showToast(`Error fetching story model configuration: ${error.message}`);
     }
 }
 

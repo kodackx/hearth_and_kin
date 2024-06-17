@@ -102,19 +102,47 @@ prompt = ChatPromptTemplate.from_messages(
 def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, text_model: str) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     memory = ChatMessageHistory()
-
+    narrator_messages_list = []
+    concatenated_narrator_message = ''
     if message_history:
         for message in message_history:
-            if message.character == CharacterType.PC:
+            # this will print a LOT!!!
+            print('[DEBUG] Currently processing message: ', str(message))
+            # finding a narrator messages does not warrant a dump into memory
+            if message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
+                narrator_messages_list.append(message.message)
+                print('### The list of narrator_messages_list looks like this now:')
+                print(narrator_messages_list)
+            # user messages require no concatenation (they are always singular)
+            # but they should trigger the dump of all narrator messages gathered in the chunk so far
+            # and these should be dumped first
+            elif message.character == CharacterType.PC:
+            # If there are accumulated narrator messages, add them to memory
+                if narrator_messages_list:
+                    for narrator_piece in narrator_messages_list:
+                        concatenated_narrator_message += narrator_piece
+                    if text_model == 'nvidia':
+                        memory.add_ai_message('assistant: ' + concatenated_narrator_message)
+                        narrator_messages_list = []
+                        print('[DEBUG] Added a big narrator message.')
+                    else:
+                        memory.add_ai_message(concatenated_narrator_message)
+                        narrator_messages_list = []
+                        print('[DEBUG] Added a big narrator message.')
+                # now add the user message we found
                 if text_model == 'nvidia':
                     memory.add_user_message('user: ' + message.message)
                 else:
-                    memory.add_user_message(message.message)
-            elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
-                if text_model == 'nvidia':
-                    memory.add_ai_message('assistant: ' + message.message)
-                else:
-                    memory.add_ai_message(message.message)
+                    memory.add_user_message(message.message)       
+        # Ensure any remaining narrator messages are added to memory
+        if narrator_messages_list:
+            for narrator_piece in narrator_messages_list:
+                concatenated_narrator_message += narrator_piece
+            if text_model == 'nvidia':
+                memory.add_ai_message('assistant: ' + concatenated_narrator_message)
+            else:
+                memory.add_ai_message(concatenated_narrator_message)
+            print('[DEBUG] Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
     
@@ -144,8 +172,8 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWit
     if party_info:
         message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
     
-    #if model == 'nvidia':
-    #    message_and_character_data = 'user: ' + message_and_character_data
+    if model == 'nvidia':
+       message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
     output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": message.story_id}})
@@ -154,6 +182,11 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWit
 
 def generate_reply(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, model: str, party_info: str = '') -> tuple[str, str | None]:
     narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info, model=model)
+    # Remove "assistant: " prefix if present
+    if narrator_reply.startswith(" assistant: "):
+        narrator_reply = narrator_reply[len(" assistant: "):]
+    if narrator_reply.startswith("assistant: "):
+        narrator_reply = narrator_reply[len("assistant: "):]
     soundtrack_path = None
     soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
     for directive in soundtrack_directives:
