@@ -62,7 +62,7 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         img = Image.open(BytesIO(response.content))
         # define path to save image
         visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
-        dir_path = os.path.join('data', 'visuals', visual_id)
+        dir_path = os.path.join('/data', 'visuals', visual_id)
         os.makedirs(dir_path, exist_ok=True)
         file_path = os.path.join(dir_path, 'image.jpg')
         img.save(file_path)
@@ -75,12 +75,12 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         # define path to save image
         visual_id = base64.urlsafe_b64encode(os.urandom(30)).decode('utf-8').rstrip('=')
         # dir_path = os.path.join('data', 'characters', visual_id)
-        dir_path = os.path.join('src', 'www', 'static', 'characters', visual_id)
+        dir_path = os.path.join('/data', 'characters', visual_id)
         os.makedirs(dir_path, exist_ok=True)
         file_path = os.path.join(dir_path, 'character.jpg')
         img.save(file_path)
-        serve_image_path = file_path.replace('src/www/', '')
-        return visual_id, serve_image_path 
+        #serve_image_path = file_path.replace('src/www/', '')
+        return visual_id, file_path 
     else:
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
