@@ -94,7 +94,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # print('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> LLMChain:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str) -> LLMChain:
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
     if message_history:
@@ -105,10 +105,11 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
                 memory.chat_memory.add_ai_message(message.message)
     else:
         logger.debug("No message history. Will start story from scratch.")
-
+    logger.debug(f'{api_key = }')
     llm = ChatOpenAI(
         model_name='gpt-4o',  # type: ignore
         temperature=0.75,
+        api_key=api_key,
     )
     chat_llm_chain = LLMChain(
         llm=llm,
@@ -122,7 +123,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
 
     return chat_llm_chain
 
-def get_chain(story_id: str) -> Dict[str, LLMChain] | None:
+def get_chain(story_id: str) -> LLMChain | None: #dict[str, LLMChain] | None:
     return chains.get(story_id)
 
 

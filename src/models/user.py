@@ -1,7 +1,5 @@
-from bcrypt import gensalt, hashpw
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
-from pydantic import field_validator
 
 
 class UserBase(Model):

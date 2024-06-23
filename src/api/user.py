@@ -1,6 +1,8 @@
 from bcrypt import checkpw, hashpw, gensalt
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlmodel import Session, select
+
+from ..models.settings import SettingsBase, Settings, SettingsRead
 from ..core.database import get_session
 from ..models.user import User, UserBase, UserRead
 from ..models.session import Token, LoginSession
@@ -8,7 +10,6 @@ from ..core.config import logger
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 import os
 
 router = APIRouter()
@@ -100,3 +101,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
 @router.get('/protected-route', response_model=UserRead)
 async def protected_route(current_user: User = Security(get_current_user)):
     return current_user
+
+@router.post('/settings', status_code=201, response_model=SettingsRead)
+async def update_settings(*, settings: SettingsBase, session: Session = Depends(get_session)):
+    new_settings = Settings.model_validate(settings)
+    logger.debug(f'UPDATE SETTINGS: {new_settings = }')
+    
+    session.add(new_settings)
+    session.commit()
+    session.refresh(new_settings)
+    return new_settings

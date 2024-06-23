@@ -3,6 +3,8 @@ from sqlmodel import Session, select
 import asyncio
 import re
 
+from src.models.settings import Settings
+
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
@@ -54,20 +56,34 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
-    messages = session.exec(
-        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
-    ).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id)  # type: ignore
-    
     # Retrieve the story to get character IDs
     story = session.get(Story, message.story_id)
     if not story:
         raise HTTPException(404, 'Story not found')
-
+    
     character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
     characters = session.exec(
         select(Character).where(Character.character_id.in_(character_ids))
     ).all()
+
+    # Retrieve the user_id from the message
+    character = session.exec(
+        select(Character).where(Character.character_id == message.character_id)
+    ).first()
+    if not character:
+        raise HTTPException(404, 'Character not found')
+    user_id = character.user_id
+
+    #Retrieve the settings for the user
+    settings = session.get(Settings, user_id).model_dump()
+
+    # Retrieve the message history for the story
+    messages = session.exec(
+        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
+    ).all()
+
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=settings['openai_api_key'])  # type: ignore
+
     
     character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
     party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
@@ -107,6 +123,9 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     )
     session.add(human_message)
     for i in range(len(subtitles)):
+        audio_path = None
+        if i < len(audio_paths):
+            audio_path = audio_paths[i]
         # Create the narrator message entry
         narrator_message = Message(
             story_id=message.story_id,
@@ -115,7 +134,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
             character="NARRATOR", #could be NARRATOR, PC or SYSTEM
             message=subtitles[i],
             narrator_reply=None,
-            audio_path=audio_paths[i],
+            audio_path=audio_path,
             image_path=image_path,
             soundtrack_path=soundtrack_path
         )
