@@ -81,6 +81,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     ).all()
     chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, text_narrator_model)  # type: ignore
     
+
     # Retrieve the story to get character IDs
     story = session.get(Story, message.story_id)
     if not story:
