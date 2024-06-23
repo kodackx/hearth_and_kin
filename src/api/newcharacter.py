@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Response, status, Depends, HTTPException
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
+
+from src.models.user import User
 from ..core.database import get_session
 from sqlmodel import Session
 from ..models.character import Character, CharacterCreate, CharacterRead, CharacterCreateMessage
@@ -19,10 +21,6 @@ from langchain_core.runnables import RunnableSerializable
 
 router = APIRouter()
 
-text_models = {
-    'gpt': ChatOpenAI(model_name='gpt-4o'),
-    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
-}
 
 prompt_narrator = """
 The player is starting a new journey in Hearth and Kin, a game inspired from Dungeons and Dragons.
@@ -96,10 +94,17 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
     return character_stats
 
 @router.post('/charactermessage')
-async def generate_character_message(message: CharacterCreateMessage, response: Response):
+async def generate_character_message(message: CharacterCreateMessage, response: Response, session: Session = Depends(get_session)):
     # TODO: implement nvidia, does not work very well for it right now
     text_model = 'gpt' #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
     image_model = message.image_model or DEFAULT_IMAGE_MODEL
+    user = session.get(User, message.user_id)
+    logger.debug(f'[MESSAGE] {user = }')
+    text_models = {
+        'gpt': ChatOpenAI(model_name='gpt-4o', api_key=user.openai_api_key), # api_key=user.openai_api_key or os.getenv('OPENAI_API_KEY')),
+        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.anthropic_api_key),
+    }
+    
     chain = prompt | text_models[text_model] | StrOutputParser()
 
     chain_with_message_history = RunnableWithMessageHistory(

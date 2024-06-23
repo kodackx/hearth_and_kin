@@ -2,11 +2,11 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
-from ..core.config import ELEVENLABS_VOICE_ID, logger
+from ..core.config import logger
 
 
-def generate(text: str) -> bytes | Iterator[bytes]:
-    audio = elevenlabs.generate(text, voice=ELEVENLABS_VOICE_ID, model="eleven_turbo_v2")
+def generate(text: str, api_key: str, voice_id: str) -> bytes | Iterator[bytes]:
+    audio = elevenlabs.generate(text, api_key=api_key, voice=voice_id, model="eleven_turbo_v2")
     return audio
 
 def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
@@ -22,7 +22,7 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     return filename, file_path
 
 
-async def generate_audio(narrator_reply) -> str:
-    audio_data = generate(narrator_reply)
+async def generate_audio(narrator_reply: str, api_key: str, voice_id: str) -> str:
+    audio_data = generate(text=narrator_reply, api_key=api_key, voice_id=voice_id)
     _, audio_path = store(audio_bytes=audio_data)
     return audio_path

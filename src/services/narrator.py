@@ -20,11 +20,6 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 # Dictionary to store chains by story_id
 chains: Dict[str, RunnableWithMessageHistory] = {}
 
-models = {
-    'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.75),
-    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
-}
-
 ################
 # OpenAI stuff #
 ################
@@ -101,7 +96,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # logger.info('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, text_model: str) -> RunnableWithMessageHistory:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str, text_model: str) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     memory = ChatMessageHistory()
     narrator_messages_list = []
@@ -147,6 +142,10 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
             logger.debug('Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
+    models = {
+    'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.75, api_key=api_key),
+    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=api_key),
+}
     
     chat_llm_chain = prompt | models[text_model] | StrOutputParser()
     chain_with_message_history = RunnableWithMessageHistory(

@@ -14,18 +14,17 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
-text_models = {
-    'gpt': ChatOpenAI(model_name='gpt-4o'),
-    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
-}
 
-image_models = {
-    'dalle3': DallEAPIWrapper(model='dall-e-3', size='1024x1024'),
-}
+def _generate_blocking(prompt_text: str, text_model: str, image_model: str, api_key: str) -> str:
+    text_models = {
+        'gpt': ChatOpenAI(model_name='gpt-4o', api_key=api_key),
+        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=api_key),
+    }
 
+    image_models = {
+        'dalle3': DallEAPIWrapper(model='dall-e-3', size='1024x1024', api_key=api_key),
+    }
 
-
-def _generate_blocking(prompt_text: str, text_model: str, image_model: str) -> str:
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
         template="""
@@ -99,18 +98,18 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def _generate(prompt_text: str, text_model: str, image_model: str) -> str:
+async def _generate(prompt_text: str, text_model: str, image_model: str, api_key: str) -> str:
     """
     Needed to not let the image generation block the event loop
     """
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model)
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model, api_key)
     return result
 
 
-async def generate_image(prompt: str, type: str, text_model: str, image_model: str) -> str:
-    image_url = await _generate(prompt, text_model, image_model)
+async def generate_image(prompt: str, type: str, text_model: str, image_model: str, api_key: str) -> str:
+    image_url = await _generate(prompt, text_model, image_model, api_key)
     image_path = 'static/img/login1.png'
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)

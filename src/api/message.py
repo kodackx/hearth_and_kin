@@ -3,6 +3,8 @@ from sqlmodel import Session, select
 import asyncio
 import re
 
+from src.models.user import User
+
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
@@ -18,12 +20,12 @@ socket_manager = WebsocketManager()
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
 
-async def generate_audio(text: str) -> str:
-    audio_data = audio.generate(text)
+async def generate_audio(text: str, api_key: str, voice_id: str) -> str:
+    audio_data = audio.generate(text, api_key=api_key, voice_id=voice_id)
     _, audio_url = audio.store(audio_bytes=audio_data)
     return audio_url
 
-async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narrator_model) -> tuple[list[str], list[str]]:
+async def handle_narration(narrator_reply: str, soundtrack_path: str, story_id: str, audio_narrator_model: str, api_key: str, voice_id: str) -> tuple[list[str], list[str]]:
     logger.info('Will use audio model to generate?')
     logger.info(audio_narrator_model != 'none')
 
@@ -37,7 +39,7 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narr
     for narration_chunk in narration_chunks:
         payload = {'message': narration_chunk}
         if (GENERATE_AUDIO and audio_narrator_model != 'none'):
-            audio_path = await generate_audio(narration_chunk)
+            audio_path = await generate_audio(narration_chunk, api_key=api_key, voice_id=voice_id)
             audio_paths.append(audio_path)
             payload['audio_path'] = audio_path
         if soundtrack_path:
@@ -45,12 +47,12 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narr
         await socket_manager.broadcast('reply', payload, story_id)
     return narration_chunks, audio_paths
 
-async def handle_image(narrator_reply, story_id, text_model: str, image_model: str) -> str | None:
+async def handle_image(narrator_reply, story_id, text_model: str, image_model: str, api_key: str) -> str | None:
     logger.info('Will use image model to generate?')
     logger.info(image_model != 'none')
 
     if (GENERATE_IMAGE and image_model != 'none'):
-        image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model)
+        image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model, api_key=api_key)
         await socket_manager.broadcast('reply', {'image_path': image_path}, story_id)
         return image_path
     return None
@@ -74,20 +76,36 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
 
-    messages = session.exec(
-        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
-    ).all()
-    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, text_narrator_model)  # type: ignore
-    
     # Retrieve the story to get character IDs
     story = session.get(Story, message.story_id)
     if not story:
         raise HTTPException(404, 'Story not found')
-
+    
     character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
     characters = session.exec(
         select(Character).where(Character.character_id.in_(character_ids))
     ).all()
+
+    # Retrieve the user_id from the message
+    character = session.exec(
+        select(Character).where(Character.character_id == message.character_id)
+    ).first()
+    if not character:
+        raise HTTPException(404, 'Character not found')
+    user_id = character.user_id
+
+    #Retrieve the api keys from the party lead
+    party_lead = session.get(Character, story.party_lead)
+    assert party_lead is not None
+
+    # Retrieve the message history for the story
+    messages = session.exec(
+        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
+    ).all()
+
+    logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead.openai_api_key}')
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=party_lead.openai_api_key, text_model=text_narrator_model)  # type: ignore
+
     
     character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
     party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
@@ -104,8 +122,8 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context, model=text_narrator_model)
 
         # Generate narration and image concurrently and broadcast results as they complete
-        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_narrator_model))
-        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model))
+        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_narrator_model, api_key=party_lead.elevenlabs_api_key, voice_id=party_lead.elevenlabs_voice_id))
+        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model, api_key = party_lead.openai_api_key))
 
         narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
         subtitles, audio_paths = narration_tuple

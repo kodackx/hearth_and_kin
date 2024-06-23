@@ -1,14 +1,14 @@
 from bcrypt import checkpw, hashpw, gensalt
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlmodel import Session, select
+
 from ..core.database import get_session
-from ..models.user import User, UserBase, UserRead
+from ..models.user import User, UserBase, UserRead, UserUpdate
 from ..models.session import Token, LoginSession
 from ..core.config import logger
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 import os
 
 router = APIRouter()
@@ -100,3 +100,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
 @router.get('/protected-route', response_model=UserRead)
 async def protected_route(current_user: User = Security(get_current_user)):
     return current_user
+
+@router.patch('/user/{user_id}', status_code=201, response_model=UserRead)
+async def update_user(*, user: UserUpdate, user_id: int, session: Session = Depends(get_session)):
+    db_user = session.get(User, user_id)
+    if not db_user:
+        raise HTTPException(404, 'User not found')
+    user_data = user.model_dump(exclude_unset=True)
+    for key, value in user_data.items():
+        setattr(db_user, key, value)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    logger.debug(f'[USER]: updated user {db_user}')
+    return db_user
