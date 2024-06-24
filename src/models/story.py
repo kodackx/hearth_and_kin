@@ -13,13 +13,13 @@ def generate_invite_code(length=5):
 
 class Invite(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    story_id: int
+    story_id: int = Field(foreign_key="storybase.story_id")  # Updated line
     invite_code: str = Field(default_factory=generate_invite_code)
 
 class StoryBase(Model):
     story_id: Optional[int] = Field(default=None, primary_key=True)
     party_lead: int = Field(foreign_key="character.character_id")
-    join_code: Optional[str]
+    join_code: Optional[str] = Field(foreign_key="invite.invite_code")
     thread_id: Optional[int]
     party_member_1: Optional[int] = Field(foreign_key="character.character_id")
     party_member_2: Optional[int] = Field(foreign_key="character.character_id")
@@ -51,15 +51,8 @@ class StoryDelete(Model):
     story_id: int
 
 
-class StoryRead(Model):
-    story_id: int
-    has_started: bool = Field(default=False)
-    party_lead: int
-    party_member_1: Optional[int] = Field(default=None)
-    party_member_2: Optional[int] = Field(default=None)
-    genai_text_model: str = Field(default="nvidia")
-    genai_audio_model: str = Field(default="elevenlabs")
-    genai_image_model: str = Field(default="dalle3")
+class StoryRead(StoryBase):
+    pass
 
 
 class Story(StoryBase, table=True):  # type: ignore

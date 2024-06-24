@@ -58,16 +58,20 @@ imageModelSelector.addEventListener('change', updateStoryModels);
 
 async function checkPartyLead() {
     let current_char_id = JSON.parse(localStorage.getItem('selectedCharacter')).character_id;
-
+    const startButton = document.getElementById('start-button'); // Define startButton here
     try {
         let response = await fetch(`/story/${story_id}`);
         handleApiErrors(response, story => {
             if (story.party_lead === current_char_id) {
                 document.getElementById('dev-button').style.display = 'block';
                 document.getElementById('developer-options-container').style.display = 'block';
+                startButton.disabled = false;
+                startButton.textContent = 'Venture forth...';
             } else {
                 document.getElementById('dev-button').style.display = 'none';
                 document.getElementById('developer-options-container').style.display = 'none';
+                startButton.disabled = true;
+                startButton.textContent = 'Waiting for leader...';
             }
         });
     } catch (error) {
