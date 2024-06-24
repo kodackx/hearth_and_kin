@@ -31,8 +31,8 @@
                 </li>
             </ul>
         </div>
-        <button type="button" id="start-button">Let the adventure begin...</button>
-        <button type="button" id="dev-button">Session Options (WIP)</button>
+        <button type="button" id="start-button">Venture forth...</button>
+        <button type="button" id="dev-button">Session Options (Party Lead)</button>
         <div id="developer-options-container" class="developer-options slideInFromBottom">
             <h3>Session Options</h3>
             <div class="option">
@@ -116,6 +116,13 @@ body {
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 20px;
+}
+
+#start-button:disabled {
+    background-color: #252525;
+    color: #a9a9a9;
+    cursor: not-allowed;
+    opacity: 0.95;
 }
 
 #dev-button {

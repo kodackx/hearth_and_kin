@@ -39,7 +39,7 @@ async def story_websocket(websocket: WebSocket, story_id: int):
                 await socket_manager.broadcast('player_online', data, story_id)
     except Exception as e:
         socket_manager.disconnect(websocket, story_id)
-        print("Some error occurred in the lobby websocket: " + repr(e))
+        logger.error("Some error occurred in the lobby websocket: " + repr(e))
 
 # POST /story: Creates a new story and generates an invite code.
 @router.post('/story', status_code=201)
@@ -111,15 +111,13 @@ async def get_invite_code(story_id: int, session: Session = Depends(get_session)
     invite = session.exec(select(Invite).where(Invite.story_id == story_id)).first()
     if not invite:
         raise HTTPException(404, 'Invite code not found for the given story_id')
-    print(f'Invite code found below for story ID {story_id}:')
-    print(invite.invite_code)
+    logger.debug('Invite code retrieved. (' + str(invite) + ')')
     return invite.invite_code
 
 # POST /join_by_invite: Joins a story using an invite code.
 @router.post('/join_by_invite', status_code=200)
 async def join_by_invite(*, invite_code: str, session: Session = Depends(get_session)) -> StoryRead:
-    print("This is the invite_code the API received:")
-    print(invite_code)
+    logger.debug("This is the invite_code the API received:" + str(invite_code))
     invite = session.exec(select(Invite).where(Invite.invite_code == invite_code)).first()
     if not invite:
         raise HTTPException(404, 'Invalid invite code')
