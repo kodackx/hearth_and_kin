@@ -3,6 +3,8 @@ from src.models.character import Character
 
 from src.models.message import MessageBase
 from src.models.character import CharacterType
+from src.models.message import MessageBase
+from src.models.character import CharacterType
 from src.core.config import logger
 
 from typing import Dict

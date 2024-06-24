@@ -458,6 +458,7 @@ optional = false
 python-versions = "<4.0,>=3.8.1"
 
 [package.dependencies]
+anyio = ">=3,<5"
 jsonpatch = ">=1.33,<2.0"
 langsmith = ">=0.1.75,<0.2.0"
 packaging = ">=23.2,<25"
