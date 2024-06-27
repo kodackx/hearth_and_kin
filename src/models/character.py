@@ -34,16 +34,16 @@ class CharacterRead(CharacterBase):
 
 
 class CharacterUpdate(Model):
-    character_name: Optional[str]
-    character_race: Optional[str]
-    character_class: Optional[str]
-    description: Optional[str]
-    stat_str: Optional[int]
-    stat_dex: Optional[int]
-    stat_con: Optional[int]
-    stat_int: Optional[int]
-    stat_wis: Optional[int]
-    stat_cha: Optional[int]
+    character_name: Optional[str] = None
+    character_race: Optional[str] = None
+    character_class: Optional[str] = None
+    description: Optional[str] = None
+    stat_str: Optional[int] = None
+    stat_dex: Optional[int] = None
+    stat_con: Optional[int] = None
+    stat_int: Optional[int] = None
+    stat_wis: Optional[int] = None
+    stat_cha: Optional[int] = None
 
 class CharacterDetails(Model):
     character_id: int
