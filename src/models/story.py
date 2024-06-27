@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field
 import random
 import string
 import uuid
+from ..core.config import DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 
 def generate_invite_code(length=5):
     invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -32,9 +33,9 @@ class StoryBase(Model):
 
 class StoryModelsUpdate(Model):
     character_id: int = Field(foreign_key="character.character_id")
-    genai_text_model: Optional[str] = Field(default="nvidia")
-    genai_audio_model: Optional[str] = Field(default="elevenlabs")
-    genai_image_model: Optional[str] = Field(default="dalle3")
+    genai_text_model: Optional[str] = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: Optional[str] = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: Optional[str] = Field(default=DEFAULT_IMAGE_MODEL)
 
 
 class StoryCreate(Model):

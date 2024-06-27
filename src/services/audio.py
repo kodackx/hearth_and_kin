@@ -2,7 +2,8 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
-from ..core.config import ELEVENLABS_VOICE_ID
+from ..core.config import ELEVENLABS_VOICE_ID, logger
+
 
 def generate(text: str) -> bytes | Iterator[bytes]:
     audio = elevenlabs.generate(text, voice=ELEVENLABS_VOICE_ID, model="eleven_turbo_v2")
@@ -16,6 +17,6 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     file_path = os.path.join(dir_path, f'{filename}.wav')
     with open(file_path, 'wb') as f:
         f.write(audio_bytes)  # type: ignore
-    print(f"[GEN AUDIO] Audio file saved at: {file_path}")
+    logger.info(f"[GEN AUDIO] Audio file saved at: {file_path}")
 
     return filename, file_path

@@ -24,8 +24,8 @@ async def generate_audio(text: str) -> str:
     return audio_url
 
 async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narrator_model) -> tuple[list[str], list[str]]:
-    print('Will use audio model to generate?')
-    print(audio_narrator_model != 'none')
+    logger.info('Will use audio model to generate?')
+    logger.info(audio_narrator_model != 'none')
 
     sentence_endings = re.compile(r'(?<=[.!?]) +')
     # Split the text into sentences
@@ -46,8 +46,8 @@ async def handle_narration(narrator_reply, soundtrack_path, story_id, audio_narr
     return narration_chunks, audio_paths
 
 async def handle_image(narrator_reply, story_id, text_model: str, image_model: str) -> str | None:
-    print('Will use image model to generate?')
-    print(image_model != 'none')
+    logger.info('Will use image model to generate?')
+    logger.info(image_model != 'none')
 
     if (GENERATE_IMAGE and image_model != 'none'):
         image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model)
@@ -66,9 +66,9 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     audio_narrator_model = story.genai_audio_model or DEFAULT_AUDIO_NARRATOR_MODEL
     image_model = story.genai_image_model or DEFAULT_IMAGE_MODEL
 
-    print(f'Text Narrator Model: {text_narrator_model}')
-    print(f'Audio Narrator Model: {audio_narrator_model}')
-    print(f'Image Model: {image_model}')
+    logger.info(f'Text Narrator Model: {text_narrator_model}')
+    logger.info(f'Audio Narrator Model: {audio_narrator_model}')
+    logger.info(f'Image Model: {image_model}')
     
     
     # Broadcast the incoming message to all users

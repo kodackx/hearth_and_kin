@@ -64,7 +64,7 @@ prompt = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
-# print('Prompt is: ' + str(prompt))
+# logger.info('Prompt is: ' + str(prompt))
 memory = ChatMessageHistory()
 #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
@@ -73,9 +73,9 @@ memory = ChatMessageHistory()
 def gpt_character_creator(input: str, chain: RunnableWithMessageHistory, model: str) -> str:
 
     message_and_character_data = input  # TODO: get this from db + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
-    print('[Character Creator] Input is: ' + message_and_character_data)
+    logger.info('[Character Creator] Input is: ' + message_and_character_data)
     output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": "unused"}})
-    print('[Character Creator] Output is: ' + output)
+    logger.info('[Character Creator] Output is: ' + output)
     return output
 
 def initialize_character_stats(user_id: int, name: str, description: str, portrait_path: str, char_race: str, char_class: str):
