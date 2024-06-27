@@ -3,7 +3,6 @@ from src.models.user import User
 from pydantic import ValidationError
 from tests.conftest import user_test_data
 
-
 @pytest.mark.parametrize(
     'user_input',
     [
