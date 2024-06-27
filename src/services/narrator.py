@@ -66,7 +66,7 @@ You have access to three audiofiles. When the location changes or the mood of th
 2. [SOUNDTRACK: cozy_tavern.m4a]
 3. [SOUNDTRACK: wilderness.m4a]
 
-Don't blabber on. Keep your responses to a reasonable length and get to the point.
+Keep your responses to a reasonable length and get to the point.
 
 MOST IMPORTANTLY: 
 Respect your audience. Show, don't tell. 
@@ -82,7 +82,7 @@ Show, don't tell, as you transport the audience into a realm where dragons soar,
 
 Notes for API response:
 Limit your answers to two or three paragraphs, as you see fit. Be concise and direct about the narrative.
-Please do not use asterisks in your response, just newline characters (\n).
+Return plain text (not markdown), and just newline characters (\n) for new paragraphs.
 
 Story so far:
 {chat_history}
@@ -99,7 +99,7 @@ prompt = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
-# print('Prompt is: ' + str(prompt))
+# logger.info('Prompt is: ' + str(prompt))
 
 def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, text_model: str) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
@@ -109,12 +109,12 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
     if message_history:
         for message in message_history:
             # this will print a LOT!!!
-            print('[DEBUG] Currently processing message: ', str(message))
+            # logger.debug('Currently processing message: ', str(message))
             # finding a narrator messages does not warrant a dump into memory
             if message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
                 narrator_messages_list.append(message.message)
-                print('### The list of narrator_messages_list looks like this now:')
-                print(narrator_messages_list)
+                # logger.debug('### The list of narrator_messages_list looks like this now:')
+                # logger.debug(narrator_messages_list)
             # user messages require no concatenation (they are always singular)
             # but they should trigger the dump of all narrator messages gathered in the chunk so far
             # and these should be dumped first
@@ -126,11 +126,11 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
                     if text_model == 'nvidia':
                         memory.add_ai_message('assistant: ' + concatenated_narrator_message)
                         narrator_messages_list = []
-                        print('[DEBUG] Added a big narrator message.')
+                        logger.debug(' Added a big narrator message.')
                     else:
                         memory.add_ai_message(concatenated_narrator_message)
                         narrator_messages_list = []
-                        print('[DEBUG] Added a big narrator message.')
+                        logger.debug('Added a big narrator message.')
                 # now add the user message we found
                 if text_model == 'nvidia':
                     memory.add_user_message('user: ' + message.message)
@@ -144,7 +144,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
                 memory.add_ai_message('assistant: ' + concatenated_narrator_message)
             else:
                 memory.add_ai_message(concatenated_narrator_message)
-            print('[DEBUG] Added remaining narrator messages.')
+            logger.debug('Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
     
