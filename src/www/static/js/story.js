@@ -87,17 +87,6 @@ async function obtainInviteCode() {
     }
 }
 
-async function toggleDevPane() {
-    const devPane = document.getElementById('developer-options-container');
-    if (devPane.classList.contains('slideInFromBottom')) {
-        devPane.classList.remove('slideInFromBottom');
-        devPane.classList.add('slideOutToBottom'); // Assuming you have a CSS animation for sliding out
-    } else {
-        devPane.classList.remove('slideOutToBottom');
-        devPane.classList.add('slideInFromBottom'); // Slide in animation
-    }
-}
-
 async function drawStoryPage() {
     // Call this function when you want to populate the character sheet, for example, after loading the character data
     populateCharacterSheet();

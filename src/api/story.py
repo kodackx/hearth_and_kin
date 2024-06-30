@@ -8,6 +8,7 @@ from ..models.message import Message, MessageRead
 from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
+from ..models.story import StoryModelsUpdate
 from ..models.story import Invite
 from ..core.config import logger
 
@@ -38,7 +39,7 @@ async def story_websocket(websocket: WebSocket, story_id: int):
                 await socket_manager.broadcast('player_online', data, story_id)
     except Exception as e:
         socket_manager.disconnect(websocket, story_id)
-        print("Some error occurred in the lobby websocket: " + repr(e))
+        logger.error("Some error occurred in the lobby websocket: " + repr(e))
 
 # POST /story: Creates a new story and generates an invite code.
 @router.post('/story', status_code=201)
@@ -110,15 +111,13 @@ async def get_invite_code(story_id: int, session: Session = Depends(get_session)
     invite = session.exec(select(Invite).where(Invite.story_id == story_id)).first()
     if not invite:
         raise HTTPException(404, 'Invite code not found for the given story_id')
-    print(f'Invite code found below for story ID {story_id}:')
-    print(invite.invite_code)
+    logger.debug('Invite code retrieved. (' + str(invite) + ')')
     return invite.invite_code
 
 # POST /join_by_invite: Joins a story using an invite code.
 @router.post('/join_by_invite', status_code=200)
 async def join_by_invite(*, invite_code: str, session: Session = Depends(get_session)) -> StoryRead:
-    print("This is the invite_code the API received:")
-    print(invite_code)
+    logger.debug("This is the invite_code the API received:" + str(invite_code))
     invite = session.exec(select(Invite).where(Invite.invite_code == invite_code)).first()
     if not invite:
         raise HTTPException(404, 'Invalid invite code')
@@ -222,4 +221,29 @@ async def transfer_ownership(*, story: StoryTransferOwnership, session: Session 
     session.commit()
     session.refresh(db_story)
     await socket_manager.broadcast('transfer_ownership', StoryRead.model_validate(db_story), story.story_id)
+    return db_story
+
+# POST /story/{story_id}/update_models: Updates the generative models for a story.
+@router.post('/story/{story_id}/update_models', status_code=200, response_model=StoryRead)
+async def update_story_models(story_id: int, models_update: StoryModelsUpdate, session: Session = Depends(get_session)):
+    logger.info("Received this payload to update story models:")
+    logger.info(str(models_update))
+    
+    db_story = session.get(Story, story_id)
+    if not db_story:
+        raise HTTPException(404, 'Story not found')
+
+    current_character_id = models_update.character_id 
+    if db_story.party_lead != current_character_id:
+        raise HTTPException(403, 'Only the party lead can update the models')
+
+    db_story.genai_text_model = models_update.genai_text_model
+    db_story.genai_audio_model = models_update.genai_audio_model
+    db_story.genai_image_model = models_update.genai_image_model
+
+    session.add(db_story)
+    session.commit()
+    session.refresh(db_story)
+
+    await socket_manager.broadcast('update_models', StoryRead.model_validate(db_story), story_id)
     return db_story
