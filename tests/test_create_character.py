@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 from src.models.character import Character, CharacterRead
+from src.models.user import UserRead
 from tests.test_create_user import create_user
 
 
@@ -10,9 +11,11 @@ default_character_data = {
 }
 
 
-def create_character(client: TestClient, session: Session, character_data: dict | None = None) -> CharacterRead:
+def create_character(client: TestClient, session: Session, user: UserRead, character_data: dict | None = None) -> CharacterRead:
     # Create character
-    response = client.post('/createcharacter', json=character_data or default_character_data)
+    character_data = character_data or default_character_data
+    character_data['user_id'] = user.user_id
+    response = client.post('/createcharacter', json=character_data)
     assert response.status_code == 201, 'Character should be created successfully'
     character = response.json()
     character = session.get(Character, character['character_id'])
@@ -24,9 +27,8 @@ def test_create_character(session: Session, client: TestClient) -> CharacterRead
     character_data = default_character_data
     # Create a user first
     user = create_user(client, session)
-    character_data['user_id'] = user.user_id
     # Create character
-    character = create_character(client, session, character_data)
+    character = create_character(client, session, user, character_data)
     return character
 
 
