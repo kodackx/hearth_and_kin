@@ -30,7 +30,11 @@ def test_websocket(session: Session, client: TestClient, users: list[User], char
             'character_id': character1.character_id,
             'portrait_path': character1.portrait_path,
             'character': 'PC',
-            'message': player_message
+            'message': player_message,
+            'text_image_model': 'none',
+            'text_narrator_model': 'none',
+            'audio_model': 'none',
+            'image_model': 'none'
         })
         response = client.post('/message', json=message.model_dump(exclude={'timestamp'}))
         

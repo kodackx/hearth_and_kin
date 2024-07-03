@@ -51,7 +51,7 @@ class CharacterUpdate(Model):
 class CharacterDetails(Model):
     character_id: int
     character_name: str
-    portrait_path: str
+    portrait_path: Optional[str] = None
 
 
 class Character(CharacterBase, table=True):  # type: ignore

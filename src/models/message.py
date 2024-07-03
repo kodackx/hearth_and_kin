@@ -27,7 +27,7 @@ class MessagePC(MessageBase):
     character: CharacterType
     character_id: int
     character_name: str
-    portrait_path: str
+    portrait_path: Optional[str] = None
     text_image_model: TextModel
     image_model: ImageModel
     text_narrator_model: AudioModel
