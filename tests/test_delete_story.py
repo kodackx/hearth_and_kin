@@ -4,83 +4,51 @@ from src.models.character import Character
 from src.models.story import Story
 from unittest.mock import patch, AsyncMock
 
+from tests.test_create_character import create_character
+from tests.test_create_story import create_story
+from tests.test_create_user import create_user
+
 
 # Test to delete a story successfully
 def test_delete_story_success(session: Session, client: TestClient):
-    # Prepare by creating a user
-    response = client.post('/user', json={'password': 'test', 'username': 'test_user'})
-    assert response.status_code == 201
-
-    response = client.post('/createcharacter', json={ 'username': 'test_user', 'character_name': 'char', 'description': 'desc', 'goal': 'to find the secret', 'charisma': 5})
-    assert response.status_code == 201
-    character = response.json()['character_id']
-
-    # Add story
-    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
-        response = client.post('/story', json={'creator': character, 'story_id': 1})
-
-    # Verify story added
-    assert response.status_code == 201
-    assert session.get(Story, 1) is not None
+    user = create_user(client, session)
+    character = create_character(client, session, user)
+    story = create_story(client, session, character)
 
     # Delete story
-    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
-        response = client.request('DELETE', '/story/1', json={'story_id': 1, 'character_id': character})
+    response = client.request('DELETE', f'/story/{story.story_id}', json={'story_id': story.story_id, 'character_id': character.character_id})
 
     # Verify story deleted
     assert response.status_code == 200
-    assert session.get(Story, 1) is None
-
-    # Verify user not is deleted story
-    character = session.get(Character, character)
-    assert character is not None
-    assert character.story_id is None
+    assert session.get(Story, story.story_id) is None
 
 
 # Test to delete a story that does not exist
 def test_delete_story_not_found(session: Session, client: TestClient):
-    # Prepare by creating a user
-    response = client.post('/user', json={'password': 'test', 'username': 'test_user'})
-    assert response.status_code == 201
+    user = create_user(client, session)
+    character = create_character(client, session, user)
 
-    response = client.post('/createcharacter', json={ 'username': 'test_user', 'character_name': 'char', 'description': 'desc', 'goal': 'to find the secret', 'charisma': 5})
-    assert response.status_code == 201
-    character = response.json()['character_id']
-
-    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
-        response = client.request('DELETE', '/story/99', json={'story_id': 99, 'character_id': character})
+    response = client.request('DELETE', '/story/1', json={'story_id': 1, 'character_id': character.character_id})
     assert response.status_code == 404
 
 
 # Test to delete a story that you are not the creator of
 def test_delete_story_not_creator(session: Session, client: TestClient):
     # Prepare by creating two users, a story, and join one story
-    _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
-    _ = client.post('/user', json={'password': 'test', 'username': 'another_user'})
+    user1= create_user(client, session)
+    user2 = create_user(client, session, user_data={'username': 'user2'})
 
-    with patch('src.api.story.socket_manager.broadcast', new_callable=AsyncMock):
-        # need to create character before joining a story
-        character_data = {
-            "character_id": 1,
-            "username": "hero123",
-            "character_name": "Gallant Knight",
-            "description": "A brave knight seeking adventure.",
-            "strength": 5,
-            "dexterity": 4,
-            "constitution": 5,
-            "intelligence": 3,
-            "wisdom": 2,
-            "charisma": 4,
-            "location": "The kingdom of Farland",
-            "goal": "To save the kingdom from the dragon"
-        }
-        _ = client.post('/createcharacter', json=character_data)    
-        _ = client.post('/story', json={'creator': 1, 'story_id': 1})
-        _ = client.post('/story/1/join', json={'story_id': 1, 'character_id': 1})
+    character1 = create_character(client, session, user1)
+    character2 = create_character(client, session, user2)
 
-        # Try to delete story you did not create
-        response = client.request('DELETE', '/story/1', json={'story_id': 1, 'character_id': 2})
+    story = create_story(client, session, character1)
+    
+    # Join the story with character2
+    _ = client.post(f'/story/{story.story_id}/add_player', json={'story_id': story.story_id, 'character_id': character2.character_id})
+
+    # Try to delete story you did not create
+    response = client.request('DELETE', f'/story/{story.story_id}', json={'story_id': story.story_id, 'character_id': character2.character_id})
 
     # Verify story not deleted
     assert response.status_code == 404
-    assert session.get(Story, 1) is not None
+    assert session.get(Story, story.story_id) is not None

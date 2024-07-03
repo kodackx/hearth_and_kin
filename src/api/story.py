@@ -37,8 +37,9 @@ async def story_websocket(websocket: WebSocket, story_id: int):
                 # Handle existing player joining
                 await socket_manager.broadcast('player_online', data, story_id)
     except Exception as e:
-        socket_manager.disconnect(websocket, story_id)
         print("Some error occurred in the lobby websocket: " + repr(e))
+        await socket_manager.disconnect(websocket, story_id)
+        
 
 # POST /story: Creates a new story and generates an invite code.
 @router.post('/story', status_code=201)
@@ -125,7 +126,7 @@ async def join_by_invite(*, invite_code: str, session: Session = Depends(get_ses
     db_story = session.get(Story, invite.story_id)
     if not db_story:
         raise HTTPException(404, 'Story not found')
-    return db_story
+    return StoryRead.model_validate(db_story)
 
 # POST /story/{story_id}/add_player: Adds a player to a story.
 @router.post('/story/{story_id}/add_player')
@@ -153,7 +154,7 @@ async def add_player_to_story(*, story_join_data: StoryJoin, session: Session = 
     session.commit()
     session.refresh(db_story)
     # await socket_manager.broadcast('new_player', StoryRead.model_validate(db_story), story_join_data.story_id)
-    return db_story
+    return StoryRead.model_validate(db_story)
 
 # COSTI: I don't think this should exist. We either add players to a story party OR we manage the lobby
 # POST /story/{story_id}/play: Allows a character to join the story lobby if they are part of the story.
@@ -188,10 +189,10 @@ async def leave_story(*, story: StoryJoin, session: Session = Depends(get_sessio
         raise HTTPException(400, 'Party lead cannot leave the story. They must delete it.')
 
     # Check if the character is part of the story and remove them
-    if db_story.member_1 == db_character.character_id:
-        db_story.member_1 = None
-    elif db_story.member_2 == db_character.character_id:
-        db_story.member_2 = None
+    if db_story.party_member_1 == db_character.character_id:
+        db_story.party_member_1 = None
+    elif db_story.party_member_2 == db_character.character_id:
+        db_story.party_member_2 = None
     else:
         raise HTTPException(400, 'Character is not part of the story.')
 
@@ -214,7 +215,7 @@ async def transfer_ownership(*, story: StoryTransferOwnership, session: Session 
     if db_story.party_lead != current_lead.character_id:
         raise HTTPException(400, 'Only the current party lead can transfer ownership.')
 
-    if new_lead.character_id not in [db_story.member_1, db_story.member_2]:
+    if new_lead.character_id not in [db_story.party_member_1, db_story.party_member_2]:
         raise HTTPException(400, 'The new lead must be a member of the story.')
 
     db_story.party_lead = new_lead.character_id

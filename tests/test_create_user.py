@@ -1,5 +1,4 @@
 import pytest
-from typing import Generator
 from src.models.user import UserRead, UserBase
 from fastapi.testclient import TestClient
 from sqlmodel import Session
@@ -9,7 +8,11 @@ default_user_data = {'username': 'test', 'password': 'test'}
 
 
 def create_user(client: TestClient, session: Session, user_data: dict | None = None) -> UserRead:
-    response = client.post('/user', json=user_data or default_user_data)
+    user_data = user_data or {}
+    for key, value in default_user_data.items():
+        if key not in user_data:
+            user_data[key] = value
+    response = client.post('/user', json=user_data)
     assert response.status_code == 201  # Valid user info
     user = response.json()
     return UserRead.model_validate(user)
