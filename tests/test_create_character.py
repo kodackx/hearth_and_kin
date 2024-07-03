@@ -12,10 +12,14 @@ default_character_data = {
 
 
 def create_character(client: TestClient, session: Session, user: UserRead, character_data: dict | None = None) -> CharacterRead:
+    character_data = character_data or {}
     # Create character
-    character_data = character_data or default_character_data
+    for key, value in default_character_data.items():
+        if key not in character_data:
+            character_data[key] = value
     character_data['user_id'] = user.user_id
     response = client.post('/createcharacter', json=character_data)
+    
     assert response.status_code == 201, 'Character should be created successfully'
     character = response.json()
     character = session.get(Character, character['character_id'])
@@ -24,11 +28,10 @@ def create_character(client: TestClient, session: Session, user: UserRead, chara
 
 # Test to create a character
 def test_create_character(session: Session, client: TestClient) -> CharacterRead:
-    character_data = default_character_data
     # Create a user first
     user = create_user(client, session)
     # Create character
-    character = create_character(client, session, user, character_data)
+    character = create_character(client, session, user)
     return character
 
 
