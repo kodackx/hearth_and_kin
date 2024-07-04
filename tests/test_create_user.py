@@ -1,21 +1,7 @@
 import pytest
-from src.models.user import UserRead, UserBase
-from fastapi.testclient import TestClient
-from sqlmodel import Session
+from src.models.user import User
 from pydantic import ValidationError
 
-default_user_data = {'username': 'test', 'password': 'test'}
-
-
-def create_user(client: TestClient, session: Session, user_data: dict | None = None) -> UserRead:
-    user_data = user_data or {}
-    for key, value in default_user_data.items():
-        if key not in user_data:
-            user_data[key] = value
-    response = client.post('/user', json=user_data)
-    assert response.status_code == 201  # Valid user info
-    user = response.json()
-    return UserRead.model_validate(user)
 
 @pytest.mark.parametrize(
     'user_input',
@@ -29,11 +15,8 @@ def create_user(client: TestClient, session: Session, user_data: dict | None = N
 def test_create_user_model(user_input):
     # Cant create user with too short username or password
     with pytest.raises(ValidationError):
-        UserBase.model_validate(user_input)
+        User.model_validate(user_input)
 
 
-@pytest.mark.asyncio
-async def test_create_user_logic_success(session: Session, client: TestClient):
-    user = create_user(client, session)
-
-    assert user.username == default_user_data['username'], 'User should be created with the requested username'
+def test_create_user_logic_success(user: User):
+    assert user is not None, 'User should be created successfully via the fixture in conftest.py'

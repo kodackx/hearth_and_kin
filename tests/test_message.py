@@ -1,20 +1,15 @@
-from unittest.mock import AsyncMock, patch
-import asyncio
+from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
+from src.models.character import Character
 from src.models.message import Message, MessagePC
 from src.core.config import logger
-from tests.test_create_character import create_character
-from tests.test_create_story import create_story
-from tests.test_create_user import create_user
+from src.models.story import Story
+from src.models.user import User
 
 @pytest.mark.asyncio
-def test_websocket(session: Session, client: TestClient):
-    user = create_user(client, session)
-    character = create_character(client, session, user)
-    story = create_story(client, session, character)
-            
+def test_websocket(session: Session, client: TestClient, user: User, character: Character, story: Story):            
     # Define the mock return values for genAI mocks
     mock_image_path = '/path/to/mock/image.jpg'
     mock_narrator_reply = 'This is a mock reply'
