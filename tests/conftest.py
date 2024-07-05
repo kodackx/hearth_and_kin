@@ -4,9 +4,9 @@ from sqlmodel import create_engine, Session, SQLModel
 from src.main import app, get_session
 from fastapi.testclient import TestClient
 
-from src.models.character import Character, CharacterRead
+from src.models.character import Character
 from src.models.story import Story
-from src.models.user import User, UserRead
+from src.models.user import User
 
 
 @pytest.fixture(name='session')
@@ -37,73 +37,61 @@ def client_fixture(session: Session):
 
 
 
-default_user_data = {'username': 'user1', 'password': 'test'}
+user_test_data = [
+    {'username': 'user1', 'password': 'test'},
+    {'username': 'user2', 'password': 'test'}
+]
+
+character_test_data = [
+    {'description': 'desc','stat_cha': 5, 'character_name': 'character1'},
+    {'description': 'desc','stat_cha': 5, 'character_name': 'character2'}
+]
 
 @pytest.fixture()
-def user(client: TestClient, session: Session, user_data: dict | None = None) -> User:
+def users(client: TestClient, session: Session) -> list[User]:
+    """Creates two users using the parameters of user_test_data in conftest.py
+    """
+    _users = []
+    for user_data in user_test_data:
 
-    user_data = user_data or {}
+        response = client.post('/user', json=user_data)
+        assert response.status_code == 201, 'User should be created successfully'
 
-    # Create user with requested or default data
-    for key, value in default_user_data.items():
-        if key not in user_data:
-            user_data[key] = value
-    response = client.post('/user', json=user_data)
-    assert response.status_code == 201, 'User should be created successfully'
+        _user = session.get(User, response.json()['user_id'])
+        assert _user is not None
+        _users.append(_user)
 
-    _user = session.get(User, response.json()['user_id'])
-    assert _user is not None
-    assert _user.username == user_data['username'], 'User should be created with the requested username'
-
-    return _user
-
-@pytest.fixture()
-def user2(client: TestClient, session: Session) -> User:
-    response = client.post('/user', json={'username': 'user2', 'password': 'test'})
-    _user = session.get(User, response.json()['user_id'])
-    assert _user is not None
-    return _user
-
-default_character_data = {'description': 'desc','stat_cha': 5, 'character_name': 'character1'}
-
-@pytest.fixture()
-def character(client: TestClient, session: Session, user: User, character_data: dict | None = None) -> Character:
-    character_data = character_data or {}
-    
-    # Create character with requested or default data
-    for key, value in default_character_data.items():
-        if key not in character_data:
-            character_data[key] = value
-    character_data['user_id'] = user.user_id
-    response = client.post('/createcharacter', json=character_data)
-    assert response.status_code == 201, 'Character should be created successfully'
-
-    _character = session.get(Character, response.json()['character_id'])
-    
-    assert _character is not None
-    assert _character.description == character_data['description'], 'Character should be created with the requested description'
-    assert _character.character_name == character_data['character_name'], 'Character should be created with the requested name'
-    
-    return _character
-
-@pytest.fixture()
-def character2(client: TestClient, session: Session, user2: User, character_data: dict | None = None) -> Character:
-    response = client.post('/createcharacter', json={'description': 'desc','stat_cha': 5, 'character_name': 'character2', 'user_id': user2.user_id})
-    _character = session.get(Character, response.json()['character_id'])
-    assert _character is not None
-    return _character
+    return _users
 
 
 @pytest.fixture()
-def story(client: TestClient, session: Session, character: Character, story_data: dict | None = None) -> Story:
-    # Create story
-    story_data = story_data or {}
-    story_data['party_lead'] = character.character_id
+def characters(client: TestClient, session: Session, users: list[User]) -> list[Character]:
+    """"Creates characters for each user using the parameters of character_test_data in conftest.py
+    """
+    _characters = []
+    for i,user in enumerate(users):
+        character_data = character_test_data[i]
+        character_data['user_id'] = user.user_id
+        response = client.post('/createcharacter', json=character_data)
+        
+        assert response.status_code == 201, 'Character should be created successfully'
+        _character = session.get(Character, response.json()['character_id'])
+        assert _character is not None
+        _characters.append(_character)
     
-    response = client.post('/story', json=story_data)
-    
-    assert response.status_code == 201, 'Story should be created successfully'
-    story = response.json()
-    story = session.get(Story, story['story']['story_id'])
-    assert story is not None
-    return story
+    return _characters
+
+@pytest.fixture()
+def stories(client: TestClient, session: Session, characters: list[Character]) -> list[Story]:
+    """Creates two stories where the each character is the party lead
+    """
+    _stories = []
+    for character in characters:
+        response = client.post('/story', json={'party_lead': character.character_id})
+        
+        assert response.status_code == 201, 'Story should be created successfully'
+
+        _story = session.get(Story, response.json()['story']['story_id'])
+        assert _story is not None
+        _stories.append(_story)
+    return _stories

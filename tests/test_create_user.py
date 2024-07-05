@@ -1,6 +1,7 @@
 import pytest
 from src.models.user import User
 from pydantic import ValidationError
+from tests.conftest import user_test_data
 
 
 @pytest.mark.parametrize(
@@ -18,5 +19,6 @@ def test_create_user_model(user_input):
         User.model_validate(user_input)
 
 
-def test_create_user_logic_success(user: User):
-    assert user is not None, 'User should be created successfully via the fixture in conftest.py'
+def test_create_user(users: list[User]):
+    for i, user in enumerate(users):
+        assert user.username == user_test_data[i]['username'], 'User should be created with the requested username'
