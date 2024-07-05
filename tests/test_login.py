@@ -23,11 +23,11 @@ def test_login_model(user_input):
     'user_input, expected_status',
     [
         (default_user_data, 200), # Correct login
-        ({'username': 'user', 'password': 'wrong_pass'}, 401),
+        ({'username': default_user_data['username'], 'password': 'wrong_pass'}, 401),
     ],
 )
 @pytest.mark.asyncio
-async def test_login_logic(user_input, expected_status, session: Session, client: TestClient, user: User):
+async def test_login_logic(user_input, expected_status, client: TestClient, user: User):
     # Try logging in
     response = client.post('/login', data=user_input)
     assert response.status_code == expected_status, 'Logging in should return the expected status code'
