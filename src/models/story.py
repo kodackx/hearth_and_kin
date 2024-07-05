@@ -13,7 +13,7 @@ def generate_invite_code(length=5):
 
 class Invite(Model, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    story_id: int = Field(foreign_key="storybase.story_id")  # Updated line
+    story_id: int = Field(foreign_key="story.story_id")  # Updated line
     invite_code: str = Field(default_factory=generate_invite_code)
 
 class StoryBase(Model):
