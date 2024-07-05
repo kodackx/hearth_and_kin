@@ -37,7 +37,7 @@ def client_fixture(session: Session):
 
 
 
-default_user_data = {'username': 'test', 'password': 'test'}
+default_user_data = {'username': 'user1', 'password': 'test'}
 
 @pytest.fixture()
 def user(client: TestClient, session: Session, user_data: dict | None = None) -> User:
@@ -59,12 +59,12 @@ def user(client: TestClient, session: Session, user_data: dict | None = None) ->
 
 @pytest.fixture()
 def user2(client: TestClient, session: Session) -> User:
-    response = client.post('/user', json={'username': 'test2', 'password': 'test'})
+    response = client.post('/user', json={'username': 'user2', 'password': 'test'})
     _user = session.get(User, response.json()['user_id'])
     assert _user is not None
     return _user
 
-default_character_data = {'description': 'desc','stat_cha': 5, 'character_name': 'test_character'}
+default_character_data = {'description': 'desc','stat_cha': 5, 'character_name': 'character1'}
 
 @pytest.fixture()
 def character(client: TestClient, session: Session, user: User, character_data: dict | None = None) -> Character:
@@ -88,7 +88,7 @@ def character(client: TestClient, session: Session, user: User, character_data: 
 
 @pytest.fixture()
 def character2(client: TestClient, session: Session, user2: User, character_data: dict | None = None) -> Character:
-    response = client.post('/createcharacter', json={'description': 'desc','stat_cha': 5, 'character_name': 'test_character2', 'user_id': user2.user_id})
+    response = client.post('/createcharacter', json={'description': 'desc','stat_cha': 5, 'character_name': 'character2', 'user_id': user2.user_id})
     _character = session.get(Character, response.json()['character_id'])
     assert _character is not None
     return _character
