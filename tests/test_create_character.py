@@ -1,15 +1,19 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 from src.models.character import Character
+from tests.conftest import character_test_data
 
 
 # Test to create a character
-def test_create_character(character: Character):
-    assert character is not None, 'Character should be created successfully via the fixture in conftest.py'
+def test_create_character(characters: list[Character]):
+    for i, character in enumerate(characters):
+        assert character.character_name == character_test_data[i]['character_name'], 'Character should be created with the requested character_name'
+        assert character.description == character_test_data[i]['description'], 'Character should be created with the requested description'
 
 
 # Test to update a character
-def test_update_character(session: Session, client: TestClient, character: Character):
+def test_update_character(session: Session, client: TestClient, characters: list[Character]):
+    character = characters[0]
     new_character_data = character.model_dump()
     new_character_data['description'] = 'new desc'
     new_character_data['stat_cha'] = 1
