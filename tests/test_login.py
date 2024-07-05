@@ -1,9 +1,8 @@
 import pytest
-from sqlmodel import Session
-from src.models.user import UserBase
+from src.models.user import User, UserBase
+from tests.conftest import user_test_data
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-
 
 @pytest.mark.parametrize(
     'user_input',
@@ -22,15 +21,12 @@ def test_login_model(user_input):
 @pytest.mark.parametrize(
     'user_input, expected_status',
     [
-        ({'username': 'user', 'password': 'pass'}, 200),
-        ({'username': 'user', 'password': 'wrong_pass'}, 401),
+        (user_test_data[0], 200), # Correct login
+        ({'username': user_test_data[0]['username'], 'password': 'wrong_pass'}, 401),
     ],
 )
 @pytest.mark.asyncio
-async def test_login_logic(user_input, expected_status, session: Session, client: TestClient):
-    # Create the user first
-    response = client.post('/user', json={'username': 'user', 'password': 'pass'})
-    assert response.status_code == 201
+async def test_login_logic(user_input, expected_status, client: TestClient, users: list[User]):
     # Try logging in
-    response = client.post('/login', json=user_input)
-    assert response.status_code == expected_status
+    response = client.post('/login', data=user_input)
+    assert response.status_code == expected_status, 'Logging in should return the expected status code'

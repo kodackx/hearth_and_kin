@@ -1,68 +1,31 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 from src.models.character import Character
+from tests.conftest import character_test_data
 
 
 # Test to create a character
-def test_create_character(session: Session, client: TestClient):
-    _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
-
-    # Try create character
-    response = client.post(
-        '/createcharacter',
-        json={
-            'username': 'test_user',
-            'description': 'desc',
-            'goal': 'to find the secret',
-            'charisma': 5,
-        },
-    )
-
-    # Verify character added
-    assert response.status_code == 201
-    assert 'character_id' in response.json().keys(), response.json()
-    character_id = response.json()['character_id']
-    character = session.get(Character, character_id)
-    assert character is not None
-    # TODO:make this dynamic
-    assert character.charisma == 5
-    assert character.goal == 'to find the secret'
-
-    # Try add a cduplicate character
-    # response = client.post('/character', json={'username': 'test_user', 'user_description': 'desc'})
-    # assert response.status_code == 400
+def test_create_character(characters: list[Character]):
+    for i, character in enumerate(characters):
+        assert character.character_name == character_test_data[i]['character_name'], 'Character should be created with the requested character_name'
+        assert character.description == character_test_data[i]['description'], 'Character should be created with the requested description'
 
 
 # Test to update a character
-def test_update_character(session: Session, client: TestClient):
-    _ = client.post('/user', json={'password': 'test', 'username': 'test_user'})
+def test_update_character(session: Session, client: TestClient, characters: list[Character]):
+    character = characters[0]
+    new_character_data = character.model_dump()
+    new_character_data['description'] = 'new desc'
+    new_character_data['stat_cha'] = 1
 
-    # Create character
-    response = client.post(
-        '/createcharacter',
-        json={
-            'username': 'test_user',
-            'description': 'desc',
-            'goal': 'to find the secret',
-            'charisma': 5,
-        },
-    )
-    character_id = response.json()['character_id']
-    # Update character
     response = client.patch(
-        f'/character/{character_id}',
-        json={
-            'username': 'test_user',
-            'description': 'new desc',
-            'goal': 'to find the new secret',
-            'charisma': 1,
-        },
+        f'/character/{character.character_id}',
+        json=new_character_data,
     )
 
     # Verify character updated
-    assert response.status_code == 201, response.json()
-    character = session.get(Character, 1)
-    assert character is not None
-    # TODO:make this dynamic
-    assert character.charisma == 1
-    assert character.goal == 'to find the new secret'
+    assert response.status_code == 201, 'Character should be updated successfully'
+    updated_character = session.get(Character, character.character_id)
+    assert updated_character is not None
+    assert updated_character.stat_cha == new_character_data['stat_cha'], 'Character stat_cha should be updated'
+    assert updated_character.description == new_character_data['description'], 'Character description should be updated'
