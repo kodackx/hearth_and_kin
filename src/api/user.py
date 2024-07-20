@@ -2,9 +2,8 @@ from bcrypt import checkpw, hashpw, gensalt
 from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlmodel import Session, select
 
-from ..models.settings import SettingsBase, Settings, SettingsRead
 from ..core.database import get_session
-from ..models.user import User, UserBase, UserRead
+from ..models.user import User, UserBase, UserRead, UserUpdate
 from ..models.session import Token, LoginSession
 from ..core.config import logger
 import jwt
@@ -102,12 +101,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
 async def protected_route(current_user: User = Security(get_current_user)):
     return current_user
 
-@router.post('/settings', status_code=201, response_model=SettingsRead)
-async def update_settings(*, settings: SettingsBase, session: Session = Depends(get_session)):
-    new_settings = Settings.model_validate(settings)
-    logger.debug(f'UPDATE SETTINGS: {new_settings = }')
-    
-    session.add(new_settings)
+@router.patch('/user/{user_id}', status_code=201, response_model=UserRead)
+async def update_user(*, user: UserUpdate, user_id: int, session: Session = Depends(get_session)):
+    db_user = session.get(User, user_id)
+    if not db_user:
+        raise HTTPException(404, 'User not found')
+    user_data = user.model_dump(exclude_unset=True)
+    for key, value in user_data.items():
+        setattr(db_user, key, value)
+    session.add(db_user)
     session.commit()
-    session.refresh(new_settings)
-    return new_settings
+    session.refresh(db_user)
+    logger.debug(f'[CHARACTER]: updated user {db_user}')
+    return db_user

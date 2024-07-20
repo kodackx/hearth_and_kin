@@ -3,8 +3,6 @@ from sqlmodel import Session, select
 import asyncio
 import re
 
-from src.models.settings import Settings
-
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
@@ -101,14 +99,14 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     user_id = character.user_id
 
     #Retrieve the settings for the user
-    settings = session.get(Settings, user_id).model_dump()
+    user = session.get(User, user_id).model_dump()
 
     # Retrieve the message history for the story
     messages = session.exec(
         select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
     ).all()
 
-    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=settings['openai_api_key'])  # type: ignore
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=user['openai_api_key'])  # type: ignore
 
     
     character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
