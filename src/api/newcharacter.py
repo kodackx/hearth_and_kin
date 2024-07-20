@@ -1,26 +1,28 @@
 from fastapi import APIRouter, Response, status, Depends, HTTPException
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from ..core.database import get_session
 from sqlmodel import Session
-from ..models.message import Message, MessageBase
-from ..models.character import CharacterBase, Character, CharacterCreate, CharacterRead, CharacterUpdate, CharacterCreateMessage
-from ..core.config import logger
-from ..services import audio, imagery
-from ..core.database import engine
-from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
+from ..models.character import Character, CharacterCreate, CharacterRead, CharacterCreateMessage
+from ..core.config import logger, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
+from ..services import  imagery
 from langchain.memory import ConversationBufferMemory
-from langchain.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain.schema import SystemMessage
-from sqlmodel import Session
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 import random
 from pydantic import ValidationError
 import re
+from langchain_core.messages import SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableSerializable
 
 router = APIRouter()
+
+text_models = {
+    'gpt': ChatOpenAI(model_name='gpt-4o'),
+    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
+}
 
 prompt_narrator = """
 The player is starting a new journey in Hearth and Kin, a game inspired from Dungeons and Dragons.
@@ -62,28 +64,18 @@ prompt = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
-# print('Prompt is: ' + str(prompt))
-
-memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-
-llm = ChatOpenAI(
-    model_name='gpt-4o',
-    # max_tokens=max_length,
-    temperature=0.75,
-)
-chat_llm_chain = LLMChain(
-    llm=llm,
-    prompt=prompt,
-    verbose=True,
-    memory=memory,
-)
+# logger.info('Prompt is: ' + str(prompt))
+memory = ChatMessageHistory()
+#memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
 
-def gpt_character_creator(input: str, chain: LLMChain) -> str:
+
+def gpt_character_creator(input: str, chain: RunnableWithMessageHistory, model: str) -> str:
+
     message_and_character_data = input  # TODO: get this from db + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
-    print('[Character Creator] Input is: ' + message_and_character_data)
-    output = chain.predict(input=message_and_character_data)
-    print('[Character Creator] Output is: ' + output)
+    logger.info('[Character Creator] Input is: ' + message_and_character_data)
+    output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": "unused"}})
+    logger.info('[Character Creator] Output is: ' + output)
     return output
 
 def initialize_character_stats(user_id: int, name: str, description: str, portrait_path: str, char_race: str, char_class: str):
@@ -105,9 +97,21 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
 
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response):
+    # TODO: implement nvidia, does not work very well for it right now
+    text_model = 'gpt' #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
+    image_model = message.image_model or DEFAULT_IMAGE_MODEL
+    chain = prompt | text_models[text_model] | StrOutputParser()
+
+    chain_with_message_history = RunnableWithMessageHistory(
+        chain,
+        lambda session_id: memory,
+        input_messages_key="input",
+        history_messages_key="chat_history",
+    )
+
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
-        narrator_reply = gpt_character_creator(input=message.message, chain=chat_llm_chain)
+        narrator_reply = gpt_character_creator(input=message.message, chain=chain_with_message_history, model=text_model)
         
         final_character_creation_key = "EMERGING FROM THE MISTS..."
         portrait_path = None
@@ -123,7 +127,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
-            portrait_path = await imagery.generate_image(narrator_reply, 'character')
+            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model)
             logger.debug(f'[MESSAGE] {portrait_path = }')
             
             character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)

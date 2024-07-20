@@ -26,10 +26,6 @@ socket.addEventListener('error', (error) => {
     console.error('WebSocket error:', error);
 });
 
-if (socket.readyState === WebSocket.OPEN) {
-    notifyPresence(); // Notify others of your presence if the connection is already open
-}
-
 window.addEventListener('beforeunload', function () {
     closeWebSocket(webSocketEndpoint);
 });
@@ -42,11 +38,97 @@ window.addEventListener('beforeunload', function () {
 document.addEventListener('DOMContentLoaded', () => {
     obtainInviteCode();
     fetchStoryCharacters(story_id); // Add this line to call the function on DOM load
+    fetchStoryDetails(story_id);
+    if (socket.readyState === WebSocket.OPEN) {
+        notifyPresence(); // Notify others of your presence if the connection is already open
+    }
+    checkPartyLead();
 });
+
+const textModelSelector = document.getElementById('llm-model-selector');
+const audioModelSelector = document.getElementById('audio-generation-model');
+const imageModelSelector = document.getElementById('image-generation-model');
 
 document.getElementById('start-button').addEventListener('click', startGame);
 document.getElementById('dev-button').addEventListener('click', toggleDevPane);
 document.getElementById('developer-options-container').classList.add('slideInFromBottom');
+textModelSelector.addEventListener('change', updateStoryModels);
+audioModelSelector.addEventListener('change', updateStoryModels);
+imageModelSelector.addEventListener('change', updateStoryModels);
+
+async function checkPartyLead() {
+    let current_char_id = JSON.parse(localStorage.getItem('selectedCharacter')).character_id;
+    const startButton = document.getElementById('start-button'); // Define startButton here
+    try {
+        let response = await fetch(`/story/${story_id}`);
+        handleApiErrors(response, story => {
+            if (story.party_lead === current_char_id) {
+                document.getElementById('dev-button').style.display = 'block';
+                document.getElementById('developer-options-container').style.display = 'block';
+                startButton.disabled = false;
+                startButton.textContent = 'Venture forth...';
+            } else {
+                document.getElementById('dev-button').style.display = 'none';
+                document.getElementById('developer-options-container').style.display = 'none';
+                startButton.disabled = true;
+                startButton.textContent = 'Waiting for leader...';
+            }
+        });
+    } catch (error) {
+        console.error('Error checking party lead:', error);
+        showToast(`Error checking party lead: ${error.message}`);
+    }
+}
+
+async function fetchStoryDetails(story_id) {
+    try {
+        const response = await fetch(`/story/${story_id}`);
+        handleApiErrors(response, storyDetails => {
+            console.log('Story Details:', storyDetails);
+            // Set the dev panel options
+            textModelSelector.value = storyDetails.genai_text_model;
+            audioModelSelector.value = storyDetails.genai_audio_model;
+            imageModelSelector.value = storyDetails.genai_image_model;
+        });
+    } catch (error) {
+        console.error('Error fetching story model configuration:', error);
+        showToast(`Error fetching story model configuration: ${error.message}`);
+    }
+}
+
+function updateStoryModels() {
+    let currentCharacter = JSON.parse(localStorage.getItem('selectedCharacter'));
+    console.log(`Current Character pulled from localStorage: ${currentCharacter}`);
+    console.log('I will send a payload to update models. This is how I build it:');
+    console.log(`character_id: ${currentCharacter.character_id}`);
+    console.log(`genai_text_model: ${textModelSelector.value}`);
+    console.log(`genai_audio_model: ${audioModelSelector.value}`);
+    console.log(`genai_image_model: ${imageModelSelector.value}`);
+    const data = {
+        character_id: currentCharacter.character_id,
+        genai_text_model: textModelSelector.value,
+        genai_audio_model: audioModelSelector.value,
+        genai_image_model: imageModelSelector.value
+    };
+    console.log('Attempting to update the story models. Payload below...')
+    console.log(JSON.stringify(data))
+    const apiUrl = `/story/${story_id}/update_models`; // Replace with your actual API endpoint
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => handleApiErrors(response, data => {
+        console.log('Success:', data);
+        showToast('Story models updated successfully.');
+    }))
+    .catch((error) => {
+        console.error('Error:', error);
+        showToast(`Error updating story models: ${error.message}`);
+    });
+}
 
 async function obtainInviteCode() {
     try {

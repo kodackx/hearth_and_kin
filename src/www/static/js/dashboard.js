@@ -231,11 +231,18 @@ function loadStories(character_id) {
                 // All that remains to find out is if the story has started or not
                 // Remember, if this data is pulled, it already means the character is involved with
                 // this story either as a memeber or a leader
-                if (box.storyActive) {
+                if (box.party_lead === parseInt(localStorage.getItem('character_id'))) {
                     drawActiveStory(box);
-                } else {
+                }
+                else {
                     drawJoinedStory(box);
-                } 
+                }
+                // has_started property doesn't seem to work well for now
+                // if (box.storyActive) {
+                //     drawActiveStory(box);
+                // } else {
+                //     drawJoinedStory(box);
+                // } 
             }
         });
 

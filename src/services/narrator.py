@@ -1,22 +1,29 @@
-from langchain.chains import LLMChain
-from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import (
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    MessagesPlaceholder,
-)
-from langchain.schema import SystemMessage
+
 from src.models.character import Character
 
+from src.models.message import MessageBase
+from src.models.character import CharacterType
 from src.models.message import MessageBase
 from src.models.character import CharacterType
 from src.core.config import logger
 
 from typing import Dict
+from langchain_core.messages import SystemMessage
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Dictionary to store chains by story_id
-chains: Dict[str, LLMChain] = {}
+chains: Dict[str, RunnableWithMessageHistory] = {}
+
+models = {
+    'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.75),
+    'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75),
+}
 
 ################
 # OpenAI stuff #
@@ -59,7 +66,7 @@ You have access to three audiofiles. When the location changes or the mood of th
 2. [SOUNDTRACK: cozy_tavern.m4a]
 3. [SOUNDTRACK: wilderness.m4a]
 
-Don't blabber on. Keep your responses to a reasonable length and get to the point.
+Keep your responses to a reasonable length and get to the point.
 
 MOST IMPORTANTLY: 
 Respect your audience. Show, don't tell. 
@@ -75,7 +82,7 @@ Show, don't tell, as you transport the audience into a realm where dragons soar,
 
 Notes for API response:
 Limit your answers to two or three paragraphs, as you see fit. Be concise and direct about the narrative.
-Please do not use asterisks in your response, just newline characters (\n).
+Return plain text (not markdown), and just newline characters (\n) for new paragraphs.
 
 Story so far:
 {chat_history}
@@ -92,42 +99,74 @@ prompt = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
-# print('Prompt is: ' + str(prompt))
+# logger.info('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str) -> LLMChain:
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, text_model: str, api_key: str) -> RunnableWithMessageHistory:
+    #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+    memory = ChatMessageHistory()
+    narrator_messages_list = []
+    concatenated_narrator_message = ''
     if message_history:
         for message in message_history:
-            if message.character == CharacterType.PC:
-                memory.chat_memory.add_user_message(message.message)
-            elif message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
-                memory.chat_memory.add_ai_message(message.message)
+            # this will print a LOT!!!
+            # logger.debug('Currently processing message: ', str(message))
+            # finding a narrator messages does not warrant a dump into memory
+            if message.character in {CharacterType.NARRATOR, CharacterType.SYSTEM}:
+                narrator_messages_list.append(message.message)
+                # logger.debug('### The list of narrator_messages_list looks like this now:')
+                # logger.debug(narrator_messages_list)
+            # user messages require no concatenation (they are always singular)
+            # but they should trigger the dump of all narrator messages gathered in the chunk so far
+            # and these should be dumped first
+            elif message.character == CharacterType.PC:
+            # If there are accumulated narrator messages, add them to memory
+                if narrator_messages_list:
+                    for narrator_piece in narrator_messages_list:
+                        concatenated_narrator_message += narrator_piece
+                    if text_model == 'nvidia':
+                        memory.add_ai_message('assistant: ' + concatenated_narrator_message)
+                        narrator_messages_list = []
+                        logger.debug(' Added a big narrator message.')
+                    else:
+                        memory.add_ai_message(concatenated_narrator_message)
+                        narrator_messages_list = []
+                        logger.debug('Added a big narrator message.')
+                # now add the user message we found
+                if text_model == 'nvidia':
+                    memory.add_user_message('user: ' + message.message)
+                else:
+                    memory.add_user_message(message.message)       
+        # Ensure any remaining narrator messages are added to memory
+        if narrator_messages_list:
+            for narrator_piece in narrator_messages_list:
+                concatenated_narrator_message += narrator_piece
+            if text_model == 'nvidia':
+                memory.add_ai_message('assistant: ' + concatenated_narrator_message)
+            else:
+                memory.add_ai_message(concatenated_narrator_message)
+            logger.debug('Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
-    logger.debug(f'{api_key = }')
-    llm = ChatOpenAI(
-        model_name='gpt-4o',  # type: ignore
-        temperature=0.75,
+    
+    chat_llm_chain = prompt | models[text_model] | StrOutputParser()
+    chain_with_message_history = RunnableWithMessageHistory(
+        chat_llm_chain,
+        lambda session_id: memory,
+        input_messages_key="input",
+        history_messages_key="chat_history",
         api_key=api_key,
-    )
-    chat_llm_chain = LLMChain(
-        llm=llm,
-        prompt=prompt,
-        verbose=True,
-        memory=memory,
     )
 
     # Store the chain in the dictionary
-    chains[story_id] = chat_llm_chain
+    chains[story_id] = chain_with_message_history
 
-    return chat_llm_chain
+    return chain_with_message_history
 
-def get_chain(story_id: str) -> LLMChain | None: #dict[str, LLMChain] | None:
+def get_chain(story_id: str) -> RunnableWithMessageHistory | None:
     return chains.get(story_id)
 
 
-def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> str:
+def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, model: str, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
@@ -135,14 +174,22 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: LLMChain, p
 
     if party_info:
         message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
+    
+    if model == 'nvidia':
+       message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
-    output = chain.predict(input=message_and_character_data)
+    output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": message.story_id}})
     logger.debug(f'[GPT Narrator] {output = }')
     return output
 
-def generate_reply(character: Character, message: MessageBase, chain: LLMChain, party_info: str = '') -> tuple[str, str | None]:
-    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info)
+def generate_reply(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, model: str, party_info: str = '') -> tuple[str, str | None]:
+    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info, model=model)
+    # Remove "assistant: " prefix if present
+    if narrator_reply.startswith(" assistant: "):
+        narrator_reply = narrator_reply[len(" assistant: "):]
+    if narrator_reply.startswith("assistant: "):
+        narrator_reply = narrator_reply[len("assistant: "):]
     soundtrack_path = None
     soundtrack_directives = ['[SOUNDTRACK: ambiance.m4a]', '[SOUNDTRACK: cozy_tavern.m4a]', '[SOUNDTRACK: wilderness.m4a]']
     for directive in soundtrack_directives:
