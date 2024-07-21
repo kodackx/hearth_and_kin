@@ -108,6 +108,9 @@ async def update_user(*, user: UserUpdate, user_id: int, session: Session = Depe
         raise HTTPException(404, 'User not found')
     user_data = user.model_dump(exclude_unset=True)
     for key, value in user_data.items():
+        if key == 'password':
+            hashed_password = hashpw(value.encode('utf-8'), gensalt())
+            value = hashed_password.decode('utf-8')
         setattr(db_user, key, value)
     session.add(db_user)
     session.commit()
