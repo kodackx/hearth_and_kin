@@ -29,7 +29,7 @@ def test_websocket(session: Session, client: TestClient, users: list[User], char
             'character_name': character1.character_name,
             'character_id': character1.character_id,
             'portrait_path': character1.portrait_path,
-            'character': 'PC',
+            'character': 'player',
             'message': player_message,
             'text_image_model': 'none',
             'text_narrator_model': 'none',
@@ -49,7 +49,7 @@ def test_websocket(session: Session, client: TestClient, users: list[User], char
         narrator_message = session.get(Message, 2)  
         logger.debug(f'Narrator message: {narrator_message}')              
         assert narrator_message is not None, 'Narrator message should be created'
-        assert narrator_message.character == 'NARRATOR', 'Narrator message should be from the narrator'
+        assert narrator_message.character == 'narrator', 'Narrator message should be from the narrator'
         assert narrator_message.message == mock_narrator_reply, 'Narrator message should be the mock reply'
         assert narrator_message.story_id == story1.story_id, 'Narrator message should be in the story'
         assert narrator_message.audio_path == mock_audio, 'Narrator message should have an audio path'

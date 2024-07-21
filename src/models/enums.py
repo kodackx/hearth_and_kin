@@ -1,9 +1,9 @@
 from enum import StrEnum, auto
 
 class CharacterType(StrEnum):
-    PC = auto()
-    NARRATOR = auto()
-    SYSTEM = auto()
+    player = auto()
+    narrator = auto()
+    system = auto()
 
 class TextModel(StrEnum):
     nvidia = auto()
