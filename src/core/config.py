@@ -1,12 +1,11 @@
 import logging
 from dotenv import load_dotenv
+from ..models.enums import AudioModel, ImageModel, TextModel
 DEBUG = True
-GENERATE_IMAGE = True
-GENERATE_AUDIO = True
-GENERATE_REPLY = True
-DEFAULT_TEXT_NARRATOR_MODEL = 'nvidia'
-DEFAULT_AUDIO_NARRATOR_MODEL = 'elevenlabs'
-DEFAULT_IMAGE_MODEL = 'dalle3'
+
+DEFAULT_TEXT_NARRATOR_MODEL = TextModel.gpt
+DEFAULT_AUDIO_NARRATOR_MODEL = AudioModel.elevenlabs
+DEFAULT_IMAGE_MODEL = ImageModel.dalle3
 SENTENCES_PER_SUBTITLE = 2
 logger = logging.getLogger(__name__)
 

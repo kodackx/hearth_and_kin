@@ -4,6 +4,7 @@ import random
 import string
 import uuid
 from ..core.config import DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
+from .enums import AudioModel, ImageModel, TextModel
 
 def generate_invite_code(length=5):
     invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -26,15 +27,15 @@ class StoryBase(Model):
     has_started: Optional[bool] = Field(default=False)
     party_location: Optional[str]
     party_objective: Optional[str]
-    genai_text_model: str = Field(default="nvidia")
-    genai_audio_model: str = Field(default="elevenlabs")
-    genai_image_model: str = Field(default="dalle3")
+    genai_text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: AudioModel = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: ImageModel = Field(default=DEFAULT_IMAGE_MODEL)
 
 class StoryModelsUpdate(Model):
     character_id: int = Field(foreign_key="character.character_id")
-    genai_text_model: Optional[str] = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
-    genai_audio_model: Optional[str] = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
-    genai_image_model: Optional[str] = Field(default=DEFAULT_IMAGE_MODEL)
+    genai_text_model: Optional[TextModel] = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: Optional[AudioModel] = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: Optional[ImageModel] = Field(default=DEFAULT_IMAGE_MODEL)
 
 
 class StoryCreate(Model):
