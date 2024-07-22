@@ -8,7 +8,6 @@ from src.models.character import Character
 from src.models.story import Story
 from src.models.user import User
 
-
 @pytest.fixture(name='session')
 def session_fixture():
     """
@@ -56,8 +55,8 @@ def users(client: TestClient, session: Session) -> list[User]:
 
         response = client.post('/user', json=user_data)
         assert response.status_code == 201, 'User should be created successfully'
-        user_id = response.json()['user_id']
-        _user = session.get(User, user_id)
+
+        _user = session.get(User, response.json()['user_id'])
         assert _user is not None
         _users.append(_user)
 
@@ -67,6 +66,7 @@ def users(client: TestClient, session: Session) -> list[User]:
 def get_token(client: TestClient) -> list[dict[str, str]]:
     _headers = []
     for user in user_test_data:
+        #data = user.model_dump()
         r = client.post('/login', data=user)
         tokens = r.json()
         a_token = tokens["access_token"]
