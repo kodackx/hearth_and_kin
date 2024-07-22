@@ -8,7 +8,8 @@ class UserBase(Model):
     password: str = Field(min_length=1)
 
 
-class UserRead(UserBase):
+class UserRead(Model):
+    user_id: int
     username: str = Field(min_length=1, max_length=50, primary_key=True)
 
 
