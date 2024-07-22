@@ -20,13 +20,13 @@ class Invite(Model, table=True):
 class StoryBase(Model):
     story_id: Optional[int] = Field(default=None, primary_key=True)
     party_lead: int = Field(foreign_key="character.character_id")
-    join_code: Optional[str] = Field(foreign_key="invite.invite_code")
-    thread_id: Optional[int]
-    party_member_1: Optional[int] = Field(foreign_key="character.character_id")
-    party_member_2: Optional[int] = Field(foreign_key="character.character_id")
+    join_code: Optional[str] = Field(default=None, foreign_key="invite.invite_code")
+    thread_id: Optional[int] = None
+    party_member_1: Optional[int] = Field(default=None, foreign_key="character.character_id")
+    party_member_2: Optional[int] = Field(default=None, foreign_key="character.character_id")
     has_started: Optional[bool] = Field(default=False)
-    party_location: Optional[str]
-    party_objective: Optional[str]
+    party_location: Optional[str] = None
+    party_objective: Optional[str] = None
     genai_text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
     genai_audio_model: AudioModel = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
     genai_image_model: ImageModel = Field(default=DEFAULT_IMAGE_MODEL)

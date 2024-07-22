@@ -1,8 +1,7 @@
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from datetime import datetime
-from ..models.enums import CharacterType, TextModel, AudioModel, ImageModel
-
+from ..models.enums import CharacterType
 
 class MessageBase(Model):
     message_id: Optional[int] = Field(default=None, primary_key=True)
@@ -28,9 +27,6 @@ class MessagePC(MessageBase):
     character_id: int
     character_name: str
     portrait_path: Optional[str] = None
-    text_image_model: TextModel
-    image_model: ImageModel
-    text_narrator_model: AudioModel
 
 class MessageNARRATORorSYSTEM(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)

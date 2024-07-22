@@ -8,6 +8,7 @@ class UserBase(Model):
     username: str = Field(min_length=1, max_length=50, index=True)
     password: str = Field(min_length=1)
     openai_api_key: str = Field(default=os.getenv('OPENAI_API_KEY'))
+    nvidia_api_key: str | None = None
     anthropic_api_key: str | None = None
     groq_api_key: str | None = None
     elevenlabs_api_key: str = Field(default=os.getenv('ELEVENLABS_API_KEY'))
@@ -17,6 +18,7 @@ class UserUpdate(Model):
     user_id: int = Field(primary_key=True)
     password: str | None = Field(default=None, min_length=1)
     openai_api_key: str | None = None
+    nvidia_api_key: str | None = None
     anthropic_api_key: str | None = None
     groq_api_key: str | None = None
     elevenlabs_api_key: str | None = None
