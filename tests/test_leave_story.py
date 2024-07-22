@@ -5,14 +5,15 @@ from src.models.story import Story
 
 
 # Test to leave a story
-def test_leave_story(session: Session, client: TestClient, characters: list[Character], stories: list[Story]):
+def test_leave_story(session: Session, client: TestClient, characters: list[Character], stories: list[Story], get_token: list[dict[str, str]]):
     character1, character2 = characters
     story1, story2 = stories
-    _ = client.post(f'/story/{story1.story_id}/add_player', json={'story_id': story1.story_id, 'character_id': character1.character_id})
-    _ = client.post(f'/story/{story1.story_id}/add_player', json={'story_id': story1.story_id, 'character_id': character2.character_id})
+    header1, header2 = get_token
+    _ = client.post(f'/story/{story1.story_id}/add_player', json={'story_id': story1.story_id, 'character_id': character1.character_id}, headers=header1)
+    _ = client.post(f'/story/{story1.story_id}/add_player', json={'story_id': story1.story_id, 'character_id': character2.character_id}, headers=header2)
 
     # Try leave non-existent story
-    response = client.post(f'/story/{story1.story_id + 99}/leave', json={'story_id': story1.story_id + 99, 'character_id': character2.character_id})
+    response = client.post(f'/story/{story1.story_id + 99}/leave', json={'story_id': story1.story_id + 99, 'character_id': character2.character_id}, headers=header2)
 
     # Verify existent story not left
     assert response.status_code == 404
@@ -22,7 +23,7 @@ def test_leave_story(session: Session, client: TestClient, characters: list[Char
     assert non_empty_story.party_member_1 == character2.character_id, 'Story should not be left'
 
     # Leave story
-    response = client.post(f'/story/{story1.story_id}/leave', json={'story_id': story1.story_id, 'character_id': character2.character_id})
+    response = client.post(f'/story/{story1.story_id}/leave', json={'story_id': story1.story_id, 'character_id': character2.character_id}, headers=header2)
 
     # Verify story left
     assert response.status_code == 200

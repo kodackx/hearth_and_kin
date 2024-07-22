@@ -63,16 +63,27 @@ def users(client: TestClient, session: Session) -> list[User]:
 
     return _users
 
+@pytest.fixture()
+def get_token(client: TestClient) -> list[dict[str, str]]:
+    _headers = []
+    for user in user_test_data:
+        #data = user.model_dump()
+        r = client.post('/login', data=user)
+        tokens = r.json()
+        a_token = tokens["access_token"]
+        headers = {"Authorization": f"Bearer {a_token}"}
+        _headers.append(headers)
+    return _headers
 
 @pytest.fixture()
-def characters(client: TestClient, session: Session, users: list[User]) -> list[Character]:
+def characters(client: TestClient, session: Session, users: list[User], get_token: list[dict[str, str]]) -> list[Character]:
     """"Creates characters for each user using the parameters of character_test_data in conftest.py
     """
     _characters = []
     for i,user in enumerate(users):
         character_data = character_test_data[i]
         character_data['user_id'] = user.user_id
-        response = client.post('/createcharacter', json=character_data)
+        response = client.post('/createcharacter', json=character_data, headers=get_token[i])
         
         assert response.status_code == 201, 'Character should be created successfully'
         _character = session.get(Character, response.json()['character_id'])
@@ -82,12 +93,12 @@ def characters(client: TestClient, session: Session, users: list[User]) -> list[
     return _characters
 
 @pytest.fixture()
-def stories(client: TestClient, session: Session, characters: list[Character]) -> list[Story]:
+def stories(client: TestClient, session: Session, characters: list[Character], get_token: list[dict[str, str]]) -> list[Story]:
     """Creates two stories where the each character is the party lead
     """
     _stories = []
-    for character in characters:
-        response = client.post('/story', json={'party_lead': character.character_id})
+    for i, character in enumerate(characters):
+        response = client.post('/story', json={'party_lead': character.character_id}, headers=get_token[i])
         
         assert response.status_code == 201, 'Story should be created successfully'
 

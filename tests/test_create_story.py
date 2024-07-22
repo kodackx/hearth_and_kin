@@ -1,4 +1,5 @@
 from src.models.story import Story
+from src.models.user import User
 
 
 # Test to create a story
