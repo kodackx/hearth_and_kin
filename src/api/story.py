@@ -5,7 +5,6 @@ from src.models.character import Character
 
 from ..core.websocket import WebsocketManager
 from ..models.message import Message, MessageRead
-from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
 from ..models.story import StoryModelsUpdate
