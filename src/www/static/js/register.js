@@ -8,12 +8,13 @@ function register() {
     var password = document.getElementById('password').value;
 
     var openai_api_key = document.getElementById('openai_api_key').value || undefined;
+    var nvidia_api_key = document.getElementById('nvidia_api_key').value || undefined;
     var anthropic_api_key = document.getElementById('anthropic_api_key').value || undefined;
     var groq_api_key = document.getElementById('groq_api_key').value || undefined;
     var elevenlabs_api_key = document.getElementById('elevenlabs_api_key').value || undefined;
     var elevenlabs_voice_id = document.getElementById('elevenlabs_voice_id') || undefined;
     
-    var data = {'username': username, 'password': password, 'openai_api_key': openai_api_key, 'anthropic_api_key': anthropic_api_key, 'groq_api_key': groq_api_key, 'elevenlabs_api_key': elevenlabs_api_key, 'elevenlabs_voice_id': elevenlabs_voice_id};
+    var data = {'username': username, 'password': password, 'openai_api_key': openai_api_key, 'nvidia_api_key': nvidia_api_key, 'anthropic_api_key': anthropic_api_key, 'groq_api_key': groq_api_key, 'elevenlabs_api_key': elevenlabs_api_key, 'elevenlabs_voice_id': elevenlabs_voice_id};
     fetch('/user', {
         method: 'POST',
         headers: {
@@ -32,11 +33,12 @@ function register() {
 
 function updateSettings(user_id) {
     var openai_api_key = document.getElementById('openai_api_key').value || undefined;
+    var nvidia_api_key = document.getElementById('nvidia_api_key').value || undefined;
     var anthropic_api_key = document.getElementById('anthropic_api_key').value || undefined;
     var groq_api_key = document.getElementById('groq_api_key').value || undefined;
     var elevenlabs_api_key = document.getElementById('elevenlabs_api_key').value || undefined;
     var elevenlabs_voice_id = document.getElementById('elevenlabs_voice_id') || undefined;
-    var data = {'user_id': user_id, 'openai_api_key': openai_api_key, 'anthropic_api_key': anthropic_api_key, 'groq_api_key': groq_api_key, 'elevenlabs_api_key': elevenlabs_api_key, 'elevenlabs_voice_id': elevenlabs_voice_id};
+    var data = {'user_id': user_id, 'openai_api_key': openai_api_key, 'nvidia_api_key': nvidia_api_key, 'anthropic_api_key': anthropic_api_key, 'groq_api_key': groq_api_key, 'elevenlabs_api_key': elevenlabs_api_key, 'elevenlabs_voice_id': elevenlabs_voice_id};
     fetch('/settings', {
         method: 'POST',
         headers: {

@@ -30,18 +30,19 @@ def test_update_user_api_key(client: TestClient, session: Session, users: list[U
 
     data = {
         'user_id': user1.user_id,
-        'openai_api_key': 'new_key',
+        'openai_api_key': 'mock',
     }
 
     # Update user1
     response = client.patch(f'/user/{user1.user_id}', json=data)
 
     # Verify user updated
-    assert response.status_code == 201, 'User should be updated successfully'
+    assert response.status_code == 201, f'{response.json()}'#'User should be updated successfully'
     db_user = session.get(User, user1.user_id)
     assert db_user is not None
 
     assert db_user.openai_api_key == data['openai_api_key'], 'User should have updated openai_api_key'
+
 
 def test_update_user_password(client: TestClient, session: Session, users: list[User]):
     user1 = users[0]

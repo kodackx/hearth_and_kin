@@ -2,6 +2,8 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
+
+from src.models.enums import AudioModel
 from ..core.config import logger
 
 
@@ -26,3 +28,7 @@ async def generate_audio(narrator_reply: str, api_key: str, voice_id: str) -> st
     audio_data = generate(text=narrator_reply, api_key=api_key, voice_id=voice_id)
     _, audio_path = store(audio_bytes=audio_data)
     return audio_path
+
+def validate_api_key(model: AudioModel, api_key: str) -> None:
+    if model == AudioModel.elevenlabs:
+        res = elevenlabs.API.request('https://api.elevenlabs.io/v1/voices', 'get', api_key)

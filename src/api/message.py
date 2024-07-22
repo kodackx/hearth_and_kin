@@ -99,10 +99,19 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
     ).all()
 
-    # TODO: figure out how to use correct API key for requested model
-    if text_narrator_model == TextModel.gpt:
-        logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.openai_api_key}')
-        chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=party_lead_user.openai_api_key, text_model=text_narrator_model)  # type: ignore
+    # TODO: is this the best way of handling model + api key selection?
+    match text_narrator_model:
+        case TextModel.gpt:
+            logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.openai_api_key}')
+            text_model_api_key = party_lead_user.openai_api_key
+        case TextModel.nvidia:
+            logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.nvidia_api_key}')
+            if party_lead_user.nvidia_api_key is None:
+                raise HTTPException(400,'Party lead has no NVIDIA API key')
+            text_model_api_key = party_lead_user.nvidia_api_key
+        case _:
+            text_model_api_key = ''
+    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=text_model_api_key, text_model=text_narrator_model)  # type: ignore
 
     
     character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
@@ -110,7 +119,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
 
     
     logger.debug(f'[MESSAGE] {message.message = }')
-    # Not sure if we want to get this from the endpoint or just query the db here
+
     character = session.get(Character, message.character_id)
     if character is None:
         raise HTTPException(404, 'Character not found')

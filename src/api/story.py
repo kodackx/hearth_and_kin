@@ -5,12 +5,13 @@ from src.models.character import Character
 
 from ..core.websocket import WebsocketManager
 from ..models.message import Message, MessageRead
-from ..models.user import UserRead
+from ..models.user import User, UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
 from ..models.story import StoryModelsUpdate
 from ..models.story import Invite
 from ..core.config import logger
+from ..api.user import validate_api_key
 
 router = APIRouter()
 socket_manager = WebsocketManager()
@@ -46,7 +47,7 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 @router.post('/story', status_code=201)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
     logger.debug(f"Received story data: {story}")
-    new_story = Story(party_lead=story.party_lead)
+    new_story = Story.model_validate(story)
 
     session.add(new_story)
     session.commit()
@@ -57,6 +58,7 @@ async def create_story(*, story: StoryCreate, session: Session = Depends(get_ses
     session.add(invite)
     session.commit()
     session.refresh(invite)
+    logger.error(new_story)
 
     return {"story": {"story_id": new_story.story_id, "party_lead": new_story.party_lead}, "invite_code": invite.invite_code}
 
@@ -238,10 +240,34 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
     if db_story.party_lead != current_character_id:
         raise HTTPException(403, 'Only the party lead can update the models')
 
-    db_story.genai_text_model = models_update.genai_text_model
-    db_story.genai_audio_model = models_update.genai_audio_model
-    db_story.genai_image_model = models_update.genai_image_model
+    db_character = session.get(Character, db_story.party_lead)
+    db_user = session.get(User, db_character.user_id)
+    assert db_user is not None
 
+    # Check if the user has API keys for using the models
+    # TODO: is this the best way of handling model + api key selection? This is a bit messy
+    if models_update.genai_text_model:
+        if models_update.genai_text_model == 'nvidia' and not db_user.nvidia_api_key:
+            raise HTTPException(400, 'You need to add a NVIDIA API key to use the NVIDIA text model.')
+        if models_update.genai_text_model == 'gpt' and not db_user.openai_api_key:
+            raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
+        validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        db_story.genai_text_model = models_update.genai_text_model
+    
+    if models_update.genai_audio_model:
+        if models_update.genai_audio_model == 'elevenlabs' and not db_user.elevenlabs_api_key:
+            raise HTTPException(400, 'You need to add an Elevenlabs API key to use the Elevenlabs audio model.')
+        validate_api_key(models_update.genai_audio_model, models_update.genai_audio_model)
+        db_story.genai_audio_model = models_update.genai_audio_model
+    
+    if models_update.genai_image_model:
+        if models_update.genai_image_model == 'dalle3' and not db_user.openai_api_key:
+            raise HTTPException(400, 'You need to add an OPENAI API key to use the DALLE-3 image model.')
+        validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        db_story.genai_image_model = models_update.genai_image_model
+
+    
+    logger.info(str(db_story))
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
