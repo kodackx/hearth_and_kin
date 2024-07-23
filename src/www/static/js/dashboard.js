@@ -1,9 +1,8 @@
-import {handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
+import {handleApiErrors, showToast, getTokenHeaders} from './utils.js'
 document.getElementById('username').textContent = localStorage.getItem('username');
 let username = localStorage.getItem('username');
 let story_id = localStorage.getItem('story_id');
-
+let headers = getTokenHeaders();
 var boxes = [
     { boxElement: document.getElementById('story1'), boxId: 1, storyId: undefined, inviteCode: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
     { boxElement: document.getElementById('story2'), boxId: 2, storyId: undefined, inviteCode: undefined, storyCreated: false, party_lead: undefined, storyActive: false},
@@ -98,23 +97,14 @@ function InitializeInviteCodePopUp() {
 }
 
 async function getCharactersForUser() {
-    const user_id = localStorage.getItem('user_id');
-    if (!user_id) {
-        alert("No current user was identified. Please log in and try again.");
-        window.location.href = '/';
-        return;
-    }
+    let user_id = localStorage.getItem('user_id');
     const url = `/characters?current_user_id=${encodeURIComponent(user_id)}`;
-    try {
-        const response = await fetch(url);
-        return handleApiErrors(response, data => {
-            console.log('Received characters for this account:', data);
-            return data;
-        });
-    } catch (error) {
-        showToast(`Frontend Error: ${error.message}`);
-        throw error;
-    }
+    const response = await fetch(url, {
+        headers: headers});
+    return handleApiErrors(response, data => {
+        console.log('Received characters for this account:', data);
+        return data;
+    });
 }
 
 
@@ -184,6 +174,7 @@ function initializeDashboard(boxes) {
 function loadStories(character_id) {
     fetch(`/stories?character_id=${character_id}`, {
         method: 'GET',
+        headers: headers
     })
     .then(response => handleApiErrors(response, stories => {
         const character = JSON.parse(localStorage.getItem('selectedCharacter'))
@@ -253,24 +244,18 @@ function loadStories(character_id) {
             }
         };
     }))
-    .catch((error) => {
-        showToast(`Frontend Error: ${error.message}`);
-    });
 }
 
 function createStory(box) {
     const character_id = parseInt(localStorage.getItem('character_id'));
     fetch('/story', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify({
             party_lead: character_id
         }),
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(response => handleApiErrors(response, data => {
         console.log('API response:', data);
         const { story, invite_code } = data;
 
@@ -289,11 +274,7 @@ function createStory(box) {
             console.error('Error: storyId is undefined or API response is malformed');
             showToast('Error: Failed to create story. Please try again.');
         }
-    })
-    .catch((error) => {
-        console.error('Fetch error:', error);
-        showToast(`Frontend Error: ${error.message}`);
-    });
+    }))
 }
 
 // function joinStory(box) {
@@ -319,29 +300,24 @@ function createStory(box) {
 // }
 
 async function joinStoryByInviteCode(inviteCode) {
-    try {
-        const response = await fetch(`/join_by_invite?invite_code=${inviteCode}`, {
+    await fetch(`/join_by_invite?invite_code=${inviteCode}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify({ invite_code: inviteCode }),
-        });
+        }).then(response => handleApiErrors(response, async story => {
 
-        handleApiErrors(response, async story => {
+        //handleApiErrors(response, async story => {
             const storyId = story.story_id;
             const character_id = parseInt(localStorage.getItem('character_id'));
 
             // Make another API call to add the player to the story
-            const addPlayerResponse = await fetch(`/story/${storyId}/add_player`, {
+            await fetch(`/story/${storyId}/add_player`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify({ character_id: character_id , story_id: storyId}),
-            });
+            }).then(response => handleApiErrors(response, () => {
 
-            handleApiErrors(addPlayerResponse, () => {
+            //handleApiErrors(addPlayerResponse, () => {
                 // Find the appropriate box and draw it as a joined story
                 const box = boxes.find(box => box.storyId === undefined); // Find the first empty box
                 if (box) {
@@ -352,11 +328,8 @@ async function joinStoryByInviteCode(inviteCode) {
                     // TODO, stop player BEFORE joining a story if all boxes are full!
                     showToast('No available box to display the joined story.');
                 }
-            });
-        });
-    } catch (error) {
-        showToast(`Error: ${error.message}`);
-    }
+            }))
+        }))
 }
 
 function goToLobby(box) {
@@ -374,13 +347,12 @@ function goToLobby(box) {
 
 function deleteStory(box) {
     const character_id = parseInt(localStorage.getItem('character_id'));
+    
     console.log("Attempting to DELETE '/story/'" + box.storyId);
     console.log("Character ID: " + character_id);
     fetch('/story/' + box.storyId, {
         method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify({
             character_id: character_id,
             story_id: box.storyId
@@ -391,19 +363,15 @@ function deleteStory(box) {
         showToast('Story deleted!');
         drawDeletedStory(box);
     }))
-    .catch((error) => {
-        showToast(`Frontend Error: ${error.message}`);
-    });
 };
 
 
 function leaveStory(box) {
+    
     const character_id = parseInt(localStorage.getItem('character_id'))
     fetch('/story/' + box.storyId + '/leave', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify({
             story_id: box.storyId,
             character_id: character_id
@@ -413,9 +381,6 @@ function leaveStory(box) {
         localStorage.setItem('story_id', undefined);
         drawLeftStory(box);
     }))
-    .catch((error) => {
-        showToast(`Frontend Error: ${error.message}`);
-    });
 };
 
 function addDeleteButton(box) {

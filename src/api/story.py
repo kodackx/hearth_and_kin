@@ -12,15 +12,16 @@ from ..models.story import Invite
 from ..core.config import logger
 
 router = APIRouter()
+public_router = APIRouter()
 socket_manager = WebsocketManager()
 
 # Manages WebSocket connections for the dashboard.
-@router.websocket('/ws/dashboard')
+@public_router.websocket('/ws/dashboard')
 async def dashboard_websocket(websocket: WebSocket):
     await socket_manager.endpoint(websocket, 0)
 
 # Manages WebSocket connections for a specific story lobby, handling actions like new player joining and starting the game.
-@router.websocket('/ws/lobby/{story_id}')
+@public_router.websocket('/ws/lobby/{story_id}')
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
     try:

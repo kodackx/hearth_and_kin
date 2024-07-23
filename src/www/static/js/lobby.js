@@ -1,10 +1,8 @@
-import { handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
-import * as messageApi from './api/message.js'
+import { handleApiErrors, showToast, getTokenHeaders} from './utils.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 const story_id = localStorage.getItem('story_id');
-
+let headers = getTokenHeaders();
 const hostname = window.location.hostname;
 const port = hostname === '127.0.0.1' ? ':8000' : '';
 export const webSocketEndpoint = `ws://${hostname}${port}/ws/lobby/${story_id}`;
@@ -24,10 +22,6 @@ socket.addEventListener('open', () => {
 
 socket.addEventListener('error', (error) => {
     console.error('WebSocket error:', error);
-});
-
-window.addEventListener('beforeunload', function () {
-    closeWebSocket(webSocketEndpoint);
 });
 
 window.addEventListener('beforeunload', function () {
@@ -59,30 +53,27 @@ imageModelSelector.addEventListener('change', updateStoryModels);
 async function checkPartyLead() {
     let current_char_id = JSON.parse(localStorage.getItem('selectedCharacter')).character_id;
     const startButton = document.getElementById('start-button'); // Define startButton here
-    try {
-        let response = await fetch(`/story/${story_id}`);
-        handleApiErrors(response, story => {
-            if (story.party_lead === current_char_id) {
-                document.getElementById('dev-button').style.display = 'block';
-                document.getElementById('developer-options-container').style.display = 'block';
-                startButton.disabled = false;
-                startButton.textContent = 'Venture forth...';
-            } else {
-                document.getElementById('dev-button').style.display = 'none';
-                document.getElementById('developer-options-container').style.display = 'none';
-                startButton.disabled = true;
-                startButton.textContent = 'Waiting for leader...';
-            }
-        });
-    } catch (error) {
-        console.error('Error checking party lead:', error);
-        showToast(`Error checking party lead: ${error.message}`);
-    }
+    let response = await fetch(`/story/${story_id}`,
+    {headers: headers}
+    );
+    handleApiErrors(response, story => {
+        if (story.party_lead === current_char_id) {
+            document.getElementById('dev-button').style.display = 'block';
+            document.getElementById('developer-options-container').style.display = 'block';
+            startButton.disabled = false;
+            startButton.textContent = 'Venture forth...';
+        } else {
+            document.getElementById('dev-button').style.display = 'none';
+            document.getElementById('developer-options-container').style.display = 'none';
+            startButton.disabled = true;
+            startButton.textContent = 'Waiting for leader...';
+        }
+    })
 }
 
 async function fetchStoryDetails(story_id) {
     try {
-        const response = await fetch(`/story/${story_id}`);
+        const response = await fetch(`/story/${story_id}`, {headers: headers});
         handleApiErrors(response, storyDetails => {
             console.log('Story Details:', storyDetails);
             // Set the dev panel options
@@ -115,9 +106,7 @@ function updateStoryModels() {
     const apiUrl = `/story/${story_id}/update_models`; // Replace with your actual API endpoint
     fetch(apiUrl, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(data)
     })
     .then(response => handleApiErrors(response, data => {
@@ -132,7 +121,7 @@ function updateStoryModels() {
 
 async function obtainInviteCode() {
     try {
-        const response = await fetch(`/story/${story_id}/invite`);
+        const response = await fetch(`/story/${story_id}/invite`, {headers: headers});
         handleApiErrors(response, inviteCode => {
             console.log('Invite Code:', inviteCode);
             // You can use the inviteCode here, for example, display it in the UI
@@ -147,7 +136,7 @@ async function obtainInviteCode() {
 async function fetchStoryCharacters(story_id) {
     console.log('fetchStoryCharacters called with story_id:', story_id);
     try {
-        const response = await fetch(`/story/${story_id}/characters`);
+        const response = await fetch(`/story/${story_id}/characters`, {headers: headers});
         handleApiErrors(response, characters => {
             console.log('Characters:', characters);
             const partyList = document.getElementById('party-list');

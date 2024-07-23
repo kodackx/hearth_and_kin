@@ -20,30 +20,36 @@
 //     return data;
 // }
 
-export function fetchData(method, endpoint, body) {
+
+export function getTokenHeaders() {
+    console.log('Checking if user is logged in...');
+    const token = localStorage.getItem('access_token');
+    if (token === null) {
+        showToast('Please login to continue.');
+        localStorage.clear();
+        //window.location.href = '/';
+    }
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    }
+}
+
+export async function callApi(method, endpoint, body, successCallback) {
     var query = {
         method: method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
     }
     if (body) {
         query.body = JSON.stringify(body);
     }
-    return fetch(endpoint, query)
-        .then(response => handleResponse(response))
-        .catch(error => {
-            console.error(`Error fetching data from ${endpoint}:`, error);
-            throw error; // Re-throw the error to be handled by the caller
-        });
+    return fetch(endpoint, query).then(response => handleApiErrors(response, successCallback))
 }
 
 export async function fetchDataAsync(method, endpoint, body) {
     var query = {
         method: method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers
     }
     if (body) {
         query.body = JSON.stringify(body);
@@ -63,20 +69,26 @@ export function handleApiErrors(response, successCallback) {
         return response.json().then(data => {
             if (Array.isArray(data.detail)) {
                 // Handle FastAPI validation errors
-                data.detail.forEach(error => {
+                const errorMessages = data.detail.map(error => {
                     const errorField = error.loc.join(" > ");
                     const errorMessage = error.msg;
-                    showToast(`FastAPI Error - ${errorField}: ${errorMessage}`);
+                    return `${errorField}: ${errorMessage}`;
                 });
+                showToast(`FastAPI Error - ${errorMessages.join('\n')}`);
             } else {
-                // Handle general FastAPI error
-                showToast(`FastAPI Error: ${data.detail}`);
-                throw new Error(data.detail);
+                // Handle general API errors
+                showToast(`Error: ${data.detail}`);
+                if (data.detail == 'Could not validate credentials') {
+                    // Token was invalid, clear local storage and redirect to login page
+                    localStorage.clear();
+                    window.location.href = '/';
+                    alert(`Could not authorize user, please log in again`);
+                }
             }
         }).catch(error => {
             // Handle frontend errors
             showToast(`Frontend Error: ${error.message}`);
-            throw error;
+            //throw error;
         });
     }
 
@@ -103,5 +115,5 @@ export function showToast(message) {
         }, 500);
     }, 5000);
 
-    console.log("Showing toast message for error: " + message);
+    console.log("Showing toast message: " + message);
 }

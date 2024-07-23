@@ -1,5 +1,4 @@
-import { handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
+import { handleApiErrors, showToast } from './utils.js'
 document.getElementById('registerBtn').addEventListener('click', register);
 
 
@@ -14,7 +13,7 @@ function register() {
         },
         body: JSON.stringify(data)
     })
-    .then(response => handleApiResponse(response, data => {
+    .then(response => handleApiErrors(response, data => {
         alert('User successfully created!');
         window.location.href = '/'; // Redirect to login page
     }))

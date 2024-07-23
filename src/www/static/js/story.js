@@ -1,6 +1,4 @@
-import { handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
-import * as messageApi from './api/message.js'
+import { handleApiErrors, getTokenHeaders} from './utils.js'
 import { connectToWebSocket, closeWebSocket } from './websocketManager.js';
 
 let currentSoundtrack = new Audio("static/soundtrack/ambiance.m4a"); // Default ambiance audio
@@ -11,6 +9,7 @@ let system_portrait = 'static/img/system.png';
 let narrator_portrait = 'static/img/narrator.png';
 let character_id = parseInt(selectedCharacter.character_id);
 let character_name = selectedCharacter.character_name;
+let headers = getTokenHeaders();
 
 const replayLastMessages = 2; // Number of last messages to replay when a player joins a story
 
@@ -75,16 +74,12 @@ document.getElementById('message-input').addEventListener('keypress', function(e
 });
 
 async function obtainInviteCode() {
-    try {
-        const response = await fetch(`/story/${story_id}/invite`);
-        handleApiErrors(response, inviteCode => {
-            console.log('Invite Code:', inviteCode);
-            // You can use the inviteCode here, for example, display it in the UI
-            // document.getElementById('invite-code').textContent = inviteCode;
-        });
-    } catch (error) {
-        showToast(`Error fetching invite code: ${error.message}`);
-    }
+    const response = await fetch(`/story/${story_id}/invite`, {headers: headers});
+    handleApiErrors(response, inviteCode => {
+        console.log('Invite Code:', inviteCode);
+        // You can use the inviteCode here, for example, display it in the UI
+        // document.getElementById('invite-code').textContent = inviteCode;
+    })
 }
 
 async function drawStoryPage() {
@@ -98,7 +93,7 @@ async function drawStoryPage() {
     currentSoundtrack.play();
 
     // Call the /story/{story_id}/messages endpoint to retrieve previously sent messages
-    await fetch(`/story/${story_id}/messages`)
+    await fetch(`/story/${story_id}/messages`, {headers: headers})
         .then(response => handleApiErrors(response, messages => {
 
             if (messages.length === 0) {
@@ -150,9 +145,6 @@ async function drawStoryPage() {
             processNextNarration();
         }
     }))
-    .catch((error) => {
-        showToast(`Frontend Error: ${error.message}`);
-    })
 }
 
 function populateCharacterSheet() {
@@ -173,6 +165,7 @@ function populateCharacterSheet() {
     document.getElementById('stat-cha').textContent = character.charisma;
 }
 
+
 async function sendMessage() {
     // read and append message
     const message = document.getElementById('message-input').value;
@@ -185,7 +178,24 @@ async function sendMessage() {
     document.getElementById('spinner').style.display = 'flex';
 
     // Send data to the server
-    messageApi.sendMessage(message, story_id, character_id, character_name)
+    fetch('/message', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+            message: message,
+            story_id: story_id,
+            character: "PC",
+            character_id: parseInt(character_id),
+            character_name: character_name,
+            portrait_path: avatarPath,
+            text_image_model: 'none', // this should be tuned on the story level instead
+            image_model: 'none', // this should be tuned on the story level instead
+            text_narrator_model: 'none', // this should be tuned on the story level instead
+        }),
+    })
+    .then(response => handleApiErrors(response, data => {
+        // processMessage(data)
+    }))
 }
 
 function handleMessage(message) {

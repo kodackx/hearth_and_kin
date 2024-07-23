@@ -1,11 +1,11 @@
-import { handleApiErrors} from './utils.js'
-import {showToast} from './utils.js'
+import { handleApiErrors, getTokenHeaders} from './utils.js'
 // Start flow
 document.getElementById('main-content').style.display = 'none';
 document.getElementById('send-button').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
 document.getElementById('message-input').value = 'I listen to the mists of creation... Help me shape my character into reality.';
 const firstTimeButton = document.querySelector('.first-time-button');
+let headers = getTokenHeaders();
 firstTimeButton.addEventListener('click', handleFirstClick);
 document.getElementById('send-button').addEventListener('click', sendMessage);
 
@@ -38,41 +38,30 @@ document.addEventListener('click', function(event) {
         console.log('Sending character data to API:', characterData);
         fetch('/createcharacter', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: headers,
             body: JSON.stringify(characterData),
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('POST request sent successfully:', data);
-            let overlay = document.createElement('div');
-            overlay.style.position = 'fixed';
-            overlay.style.top = '0';
-            overlay.style.left = '0';
-            overlay.style.width = '100%';
-            overlay.style.height = '100%';
-            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-            overlay.style.color = 'white';
-            overlay.style.display = 'flex';
-            overlay.style.justifyContent = 'center';
-            overlay.style.alignItems = 'center';
-            overlay.style.fontSize = '24px';
-            overlay.style.zIndex = '1000';
-            overlay.innerHTML = 'Character created. Click here to go to your dashboard and start a story.';
-            overlay.addEventListener('click', function() {
-                window.location.href = '/dashboard';
-            });
-            document.body.appendChild(overlay);
-        })
-        .catch(error => {
-            console.error('Failed to send POST request:', error);
-        });
+        .then(response => handleApiErrors(response, data => {
+                console.log('POST request sent successfully:', data);
+                let overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                overlay.style.color = 'white';
+                overlay.style.display = 'flex';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.fontSize = '24px';
+                overlay.style.zIndex = '1000';
+                overlay.innerHTML = 'Character created. Click here to go to your dashboard and start a story.';
+                overlay.addEventListener('click', function() {
+                    window.location.href = '/dashboard';
+                });
+                document.body.appendChild(overlay);
+        }))
     }
 });
 
@@ -104,15 +93,12 @@ function sendMessage() {
     scrollToBottom();
     fetch('/charactermessage', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: headers,
         body: JSON.stringify({
             message: message,
         }),
     })
-    .then(response => response.json())
-    .then(data => {
+    .then(response => handleApiErrors(response, data => {
         // check for finalized characters stats
         if (data.character_data) {
             let characterData = data.character_data;
@@ -153,15 +139,7 @@ function sendMessage() {
         } else {
             appendMessage('[ERROR] Failed to send message.');
         }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('send-button').style.display = 'block';
-        document.getElementById('input-group').classList.remove('waiting-state');
-        document.getElementById('message-input').disabled = false; // Enable input
-        document.getElementById('message-input').placeholder = "Shape your character into reality.";
-    });
+    }))
 };
 
 //function to wait
