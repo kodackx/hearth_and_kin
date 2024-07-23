@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
+
+from src.api.user import validate_jwt_token
+from src.models.user import UserRead
 from ..core.database import get_session
 from sqlmodel import Session, select
 from ..models.character import Character, CharacterRead, CharacterUpdate
@@ -20,10 +23,19 @@ async def get_character(*, character_id: int, session: Session = Depends(get_ses
 
 
 @router.patch('/character/{character_id}', status_code=201, response_model=CharacterRead)
-async def update_character(*, character: CharacterUpdate, character_id: int, session: Session = Depends(get_session)):
+async def update_character(
+    *, 
+    character: CharacterUpdate, 
+    character_id: int, 
+    session: Session = Depends(get_session),
+    user: UserRead = Depends(validate_jwt_token)
+):
+    logger.info(f'User {user} is updating character {character_id}')
     db_character = session.get(Character, character_id)
     if not db_character:
         raise HTTPException(404, 'Character not found')
+    if db_character.user_id != user.user_id:
+        raise HTTPException(403, 'Only the owner of the character can update it')
     character_data = character.model_dump(exclude_unset=True)
     for key, value in character_data.items():
         setattr(db_character, key, value)

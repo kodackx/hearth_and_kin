@@ -3,9 +3,8 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from ..core.database import get_session
 from sqlmodel import Session
 from ..models.character import Character, CharacterCreate, CharacterRead, CharacterCreateMessage
-from ..core.config import logger, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
+from ..core.config import logger, DEFAULT_IMAGE_MODEL
 from ..services import  imagery
-from langchain.memory import ConversationBufferMemory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 import random
@@ -15,7 +14,6 @@ from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableSerializable
 
 router = APIRouter()
 

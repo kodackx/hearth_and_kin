@@ -3,6 +3,9 @@ from sqlmodel import Session, select
 import asyncio
 import re
 
+from src.api.user import validate_jwt_token
+from src.models.user import UserRead
+
 from ..core.config import GENERATE_AUDIO, GENERATE_IMAGE, logger, SENTENCES_PER_SUBTITLE, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 from ..core.database import get_session
 from ..core.websocket import WebsocketManager
@@ -12,9 +15,10 @@ from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
 
 router = APIRouter()
+public_router = APIRouter()
 socket_manager = WebsocketManager()
 
-@router.websocket('/ws/story/{story_id}')
+@public_router.websocket('/ws/story/{story_id}')
 async def story_websocket(websocket: WebSocket, story_id: int):
     await socket_manager.endpoint(websocket, story_id)
 
@@ -56,11 +60,18 @@ async def handle_image(narrator_reply, story_id, text_model: str, image_model: s
     return None
 
 @router.post('/message', response_model=MessageNARRATORorSYSTEM)
-async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
+async def generate_message(*, message: MessagePC, session: Session = Depends(get_session), user: UserRead = Depends(validate_jwt_token)):
     # Retrieve the story to get model information (that was set in the lobby!)
+    # Validate that the user is the owner of the character and the user has permissions to post in the story
     story = session.get(Story, message.story_id)
-    if not story:
+    if story is None:
         raise HTTPException(404, 'Story not found')
+    
+    character = session.get(Character, message.character_id)
+    if character is None:
+        raise HTTPException(404, 'Character not found')
+    if character.user_id != user.user_id:
+        raise HTTPException(403, 'User does not own this character')
 
     text_narrator_model = story.genai_text_model or DEFAULT_TEXT_NARRATOR_MODEL
     audio_narrator_model = story.genai_audio_model or DEFAULT_AUDIO_NARRATOR_MODEL
@@ -79,10 +90,6 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
     ).all()
     chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, text_narrator_model)  # type: ignore
     
-    # Retrieve the story to get character IDs
-    story = session.get(Story, message.story_id)
-    if not story:
-        raise HTTPException(404, 'Story not found')
 
     character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
     characters = session.exec(
@@ -94,11 +101,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
 
     
     logger.debug(f'[MESSAGE] {message.message = }')
-    # Not sure if we want to get this from the endpoint or just query the db here
-    character = session.get(Character, message.character_id)
-    if character is None:
-        raise HTTPException(404, 'Character not found')
-
+    
     try:
         # Generate the reply first
         narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context, model=text_narrator_model)

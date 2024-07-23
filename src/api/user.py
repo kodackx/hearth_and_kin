@@ -75,7 +75,7 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def validate_jwt_token(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)):
+async def validate_jwt_token(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> UserRead:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -93,4 +93,4 @@ async def validate_jwt_token(token: str = Depends(oauth2_scheme), session: Sessi
     user = session.exec(statement).first()
     if user is None:
         raise credentials_exception
-    return user
+    return UserRead.model_validate(user)
