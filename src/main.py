@@ -28,7 +28,7 @@ app.include_router(story.public_router)
 app.include_router(character.router, dependencies=[Depends(get_session)])
 app.include_router(message.router, dependencies=[Depends(get_session), Security(user.validate_jwt_token)])
 app.include_router(message.public_router, dependencies=[Depends(get_session)])
-app.include_router(newcharacter.router, dependencies=Security(user.validate_jwt_token))
+app.include_router(newcharacter.router, dependencies=[Security(user.validate_jwt_token)])
 
 @app.get('/')
 async def home(request: Request):

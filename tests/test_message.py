@@ -9,7 +9,14 @@ from src.models.story import Story
 from src.models.user import User
 
 @pytest.mark.asyncio
-def test_websocket(session: Session, client: TestClient, users: list[User], characters: list[Character], stories: list[Story]):            
+def test_websocket(
+    session: Session, 
+    client: TestClient, 
+    get_token: list[dict[str, str]],
+    users: list[User], 
+    characters: list[Character], 
+    stories: list[Story]
+):            
     character1, character2 = characters
     story1 = stories[0]
     # Define the mock return values for genAI mocks
@@ -36,7 +43,11 @@ def test_websocket(session: Session, client: TestClient, users: list[User], char
             'audio_model': 'none',
             'image_model': 'none'
         })
-        response = client.post('/message', json=message.model_dump(exclude={'timestamp'}))
+        response = client.post(
+            '/message', 
+            json=message.model_dump(exclude={'timestamp'}),
+            headers=get_token[0]
+        )
         
         assert response.status_code == 200, 'Message should be created successfully'
 
@@ -55,3 +66,20 @@ def test_websocket(session: Session, client: TestClient, users: list[User], char
         assert narrator_message.audio_path == mock_audio, 'Narrator message should have an audio path'
         assert narrator_message.soundtrack_path == mock_soundtrack_path, 'Narrator message should have a soundtrack path'
         assert narrator_message.image_path == mock_image_path, 'Narrator message should have an image path'
+
+
+        response = client.post(
+            '/message', 
+            json=message.model_dump(exclude={'timestamp'}),
+            headers={'Authorization': 'Bearer invalid_token'}
+        )
+        
+        assert response.status_code == 401, 'Message endpoint should refuse to create a message for an invalid token'
+
+        response = client.post(
+            '/message', 
+            json=message.model_dump(exclude={'timestamp'}),
+            headers=get_token[1]
+        )
+        
+        assert response.status_code == 403, 'Message endpoint should refuse to create a message for a user who does not have control of the character'
