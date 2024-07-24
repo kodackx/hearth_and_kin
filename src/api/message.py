@@ -45,9 +45,9 @@ async def handle_narration(narrator_reply: str, soundtrack_path: str, story_id: 
         await socket_manager.broadcast('reply', payload, story_id)
     return narration_chunks, audio_paths
 
-async def handle_image(narrator_reply, story_id, text_model: TextModel, image_model: ImageModel, api_key: str) -> str | None:
+async def handle_image(narrator_reply, story_id, text_model: TextModel, image_model: ImageModel, text_api_key: str, image_api_key: str) -> str | None:
     if image_model != ImageModel.none:
-        image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model, api_key=api_key)
+        image_path = await imagery.generate_image(narrator_reply, 'story', text_model=text_model, image_model=image_model, text_api_key=text_api_key, image_api_key=image_api_key)
         await socket_manager.broadcast('reply', {'image_path': image_path}, story_id)
         return image_path
     return None
@@ -99,7 +99,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
     ).all()
 
-    # TODO: is this the best way of handling model + api key selection?
+    # TODO: is this the best way of handling model + api key selection?. Add match statements for image and audio
     match text_narrator_model:
         case TextModel.gpt:
             logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.openai_api_key}')
@@ -129,8 +129,9 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context, text_model=text_narrator_model)
 
         # Generate narration and image concurrently and broadcast results as they complete
+        # TODO: fix which api keys are passed here by extending the switch statement above to include audio and image models
         narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_narrator_model, api_key=party_lead_user.elevenlabs_api_key, voice_id=party_lead_user.elevenlabs_voice_id))
-        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model, api_key = party_lead_user.openai_api_key))
+        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model, text_api_key = text_model_api_key, image_api_key = party_lead_user.openai_api_key))
 
         narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
         subtitles, audio_paths = narration_tuple

@@ -8,6 +8,8 @@ from PIL import Image
 from io import BytesIO
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
+
+from src.models.enums import ImageModel, TextModel
 from ..core.config import logger
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.prompts import PromptTemplate
@@ -15,15 +17,22 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
 
-def _generate_blocking(prompt_text: str, text_model: str, image_model: str, api_key: str) -> str:
-    text_models = {
-        'gpt': ChatOpenAI(model_name='gpt-4o', api_key=api_key),
-        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=api_key),
-    }
+def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
+    match text_model:
+        case TextModel.gpt:
+            text_llm = ChatOpenAI(model_name='gpt-4o', api_key=text_api_key)
+        case TextModel.nvidia:
+            text_llm = ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=text_api_key)
+        case _:
+            raise ValueError(f'Invalid text model: {text_model}')
 
-    image_models = {
-        'dalle3': DallEAPIWrapper(model='dall-e-3', size='1024x1024', api_key=api_key),
-    }
+    match image_model:
+        case ImageModel.dalle3:
+            image_llm = DallEAPIWrapper(model='dall-e-3', size='1024x1024', api_key=image_api_key)
+        case ImageModel.none:
+            return
+        case _:
+            raise ValueError(f'Invalid image model: {image_model}')
 
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
@@ -39,7 +48,7 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str, api_
         {prompt_text}
         """,
     )
-    chain = prompt_gpt_helper | text_models[text_model] | StrOutputParser()
+    chain = prompt_gpt_helper | text_llm | StrOutputParser()
     result = chain.invoke({'prompt_text': prompt_text})
     logger.debug('[GEN IMAGE]: ' + result)
     image_url = ''
@@ -53,9 +62,9 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str, api_
         """
         + result
     )
-    if image_model == 'dalle3':
+    if image_model == ImageModel.dalle3:
         try:
-            image_url = image_models[image_model].run(prompt_dalle)  # type: ignore
+            image_url = image_llm.run(prompt_dalle)  # type: ignore
         except Exception as e:
             logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
             image_url = None
@@ -98,18 +107,18 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def _generate(prompt_text: str, text_model: str, image_model: str, api_key: str) -> str:
+async def _generate(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str:
     """
     Needed to not let the image generation block the event loop
     """
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model, api_key)
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model, text_api_key, image_api_key)
     return result
 
 
-async def generate_image(prompt: str, type: str, text_model: str, image_model: str, api_key: str) -> str:
-    image_url = await _generate(prompt, text_model, image_model, api_key)
+async def generate_image(prompt: str, type: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str:
+    image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
     image_path = 'static/img/login1.png'
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)

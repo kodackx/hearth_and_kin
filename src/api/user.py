@@ -30,8 +30,8 @@ def validate_api_key(model: AudioModel | TextModel, api_key: str) -> None:
         except Exception as e:
             logger.error(f'Error validating {model} API key: {e}')
             raise HTTPException(400, str(e))
-        
-    elif model in [TextModel.nvidia, TextModel.gpt] and os.environ.get('TEST_ENV') != 'True':
+    # TODO: add more models here, e.g. nvidia
+    elif model in [TextModel.gpt] and os.environ.get('TEST_ENV') != 'True':
         try:
             narrator_validate_api_key(model, api_key)
         except Exception as e:

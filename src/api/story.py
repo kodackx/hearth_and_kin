@@ -257,7 +257,7 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
     if models_update.genai_audio_model:
         if models_update.genai_audio_model == 'elevenlabs' and not db_user.elevenlabs_api_key:
             raise HTTPException(400, 'You need to add an Elevenlabs API key to use the Elevenlabs audio model.')
-        validate_api_key(models_update.genai_audio_model, models_update.genai_audio_model)
+        validate_api_key(models_update.genai_audio_model, db_user.elevenlabs_api_key)
         db_story.genai_audio_model = models_update.genai_audio_model
     
     if models_update.genai_image_model:

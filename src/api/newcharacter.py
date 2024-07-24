@@ -102,7 +102,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
     logger.debug(f'[MESSAGE] {user = }')
     text_models = {
         'gpt': ChatOpenAI(model_name='gpt-4o', api_key=user.openai_api_key), # api_key=user.openai_api_key or os.getenv('OPENAI_API_KEY')),
-        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.anthropic_api_key),
+        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.nvidia_api_key),
     }
     
     chain = prompt | text_models[text_model] | StrOutputParser()
@@ -132,7 +132,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
-            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model)
+            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model, api_key=user.openai_api_key)
             logger.debug(f'[MESSAGE] {portrait_path = }')
             
             character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)
