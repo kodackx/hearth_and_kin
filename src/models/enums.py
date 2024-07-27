@@ -1,19 +1,18 @@
-from enum import Enum
+from enum import StrEnum, auto
 
-class CharacterType(str, Enum):
-    PC = "PC"
-    NARRATOR = "NARRATOR"
-    SYSTEM = "SYSTEM"
+class CharacterType(StrEnum):
+    player = auto()
+    narrator = auto()
+    system = auto()
 
-class TextModel(str, Enum):
-    nvidia = "nvidia"
-    gpt = "gpt"
-    none = "none"
+class TextModel(StrEnum):
+    nvidia = auto()
+    gpt = auto()
 
-class AudioModel(str, Enum):
-    elevenlabs = "elevenlabs"
-    none = "none"
+class AudioModel(StrEnum):
+    elevenlabs = auto()
+    none = auto()
 
-class ImageModel(str, Enum):
-    dalle3 = "dalle3"
-    none = "none"
+class ImageModel(StrEnum):
+    dalle3 = auto()
+    none = auto()

@@ -112,13 +112,13 @@ async function drawStoryPage() {
                 // Iterate through the array of messages and append them to the main-content
                 messages.forEach(message => {
                     switch(message.character) {
-                        case 'PC':
+                        case 'player':
                             appendMessage('',`${message.character_name}: ${message.message}`, 'user');
                             break;
-                        case 'NARRATOR':
+                        case 'narrator':
                             appendMessage(narrator_portrait, `${message.character_name}: ${message.message}`, 'narrator');
                             break;
-                        case 'SYSTEM':
+                        case 'system':
                             appendMessage(system_portrait, `${message.character_name}: ${message.message}`, 'system');
                             break;
                         default:
@@ -126,7 +126,7 @@ async function drawStoryPage() {
                     }
                 });
 
-            const narratorMessages = messages.filter(message => message.character === "NARRATOR");
+            const narratorMessages = messages.filter(message => message.character === "narrator");
             const lastCoupleNarratorMessages = narratorMessages.slice(-replayLastMessages);
             // print lastMessage to check object for debugging
             console.log("Resuming from previous play...")

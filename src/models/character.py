@@ -23,6 +23,7 @@ class CharacterBase(Model):
     stat_cha: Optional[int] = Field(default=10)
 
 class CharacterCreateMessage(Model):
+    user_id: int = Field(foreign_key="user.user_id")
     message: str
 
     text_model: str | None = None

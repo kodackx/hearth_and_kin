@@ -13,7 +13,7 @@ export function sendMessage(message, story_id, character_id, character_name) {
         body: JSON.stringify({
             message: message,
             story_id: story_id,
-            character: "PC",
+            character: "player",
             character_id: parseInt(character_id),
             character_name: character_name,
             portrait_path: portraitPath
