@@ -260,10 +260,12 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
     # Check if the user has API keys for using the models
     # TODO: is this the best way of handling model + api key selection? This is a bit messy
     if models_update.genai_text_model:
-        if models_update.genai_text_model == 'nvidia' and not db_user.nvidia_api_key:
+        if models_update.genai_text_model == 'nvidia_llama' and not db_user.nvidia_api_key:
             raise HTTPException(400, 'You need to add a NVIDIA API key to use the NVIDIA text model.')
         if models_update.genai_text_model == 'gpt' and not db_user.openai_api_key:
             raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
+        if models_update.genai_text_model == 'claude' and not db_user.anthropic_api_key:
+            raise HTTPException(400, 'You need to add an Anthropic API key to use the Anthropic text model.')
         validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
         db_story.genai_text_model = models_update.genai_text_model
     

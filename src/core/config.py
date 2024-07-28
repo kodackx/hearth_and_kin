@@ -1,6 +1,9 @@
 import logging
 from dotenv import load_dotenv
 from ..models.enums import AudioModel, ImageModel, TextModel
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_openai import ChatOpenAI
+
 DEBUG = True
 
 DEFAULT_TEXT_NARRATOR_MODEL = TextModel.gpt

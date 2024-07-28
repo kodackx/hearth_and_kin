@@ -24,14 +24,14 @@ def test_update_story(client: TestClient, stories: list[Story], users: list[User
     story1 = stories[0]
     response = client.patch(f'/user/{user1.user_id}', json={'user_id': user1.user_id, 'nvidia_api_key': 'mock'})
 
-    response = client.post(f'/story/{story1.story_id}/update_models', json={'character_id': story1.party_lead, 'story_id': story1.story_id, 'genai_text_model': 'nvidia'})
+    response = client.post(f'/story/{story1.story_id}/update_models', json={'character_id': story1.party_lead, 'story_id': story1.story_id, 'genai_text_model': 'nvidia_llama'})
     assert response.status_code == 200, 'Story should be updated successfully'
 
     story = response.json()
-    assert story['genai_text_model'] == 'nvidia', 'Story should have the updated text model'
+    assert story['genai_text_model'] == 'nvidia_llama', 'Story should have the updated text model'
 
 
 def test_update_story_no_api_key(client: TestClient, stories: list[Story]):
     story1 = stories[0]
-    response = client.post(f'/story/{story1.story_id}/update_models', json={'character_id': story1.party_lead, 'story_id': story1.story_id, 'genai_text_model': 'nvidia'})
+    response = client.post(f'/story/{story1.story_id}/update_models', json={'character_id': story1.party_lead, 'story_id': story1.story_id, 'genai_text_model': 'nvidia_llama'})
     assert response.status_code == 400, 'Model update should be rejected if the user has no API key added'

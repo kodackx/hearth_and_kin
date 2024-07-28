@@ -6,8 +6,9 @@ class CharacterType(StrEnum):
     system = auto()
 
 class TextModel(StrEnum):
-    nvidia = auto()
+    nvidia_llama = auto()
     gpt = auto()
+    claude = auto()
 
 class AudioModel(StrEnum):
     elevenlabs = auto()

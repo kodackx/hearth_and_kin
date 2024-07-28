@@ -104,11 +104,16 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         case TextModel.gpt:
             logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.openai_api_key}')
             text_model_api_key = party_lead_user.openai_api_key
-        case TextModel.nvidia:
+        case TextModel.nvidia_llama:
             logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.nvidia_api_key}')
             if party_lead_user.nvidia_api_key is None:
                 raise HTTPException(400,'Party lead has no NVIDIA API key')
             text_model_api_key = party_lead_user.nvidia_api_key
+        case TextModel.claude:
+            logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.anthropic_api_key}')
+            if party_lead_user.anthropic_api_key is None:
+                raise HTTPException(400,'Party lead has no Anthropic API key')
+            text_model_api_key = party_lead_user.anthropic_api_key
         case _:
             text_model_api_key = ''
     chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=text_model_api_key, text_model=text_narrator_model)  # type: ignore

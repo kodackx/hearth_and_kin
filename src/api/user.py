@@ -146,7 +146,7 @@ async def update_user(*, user: UserUpdate, user_id: int, session: Session = Depe
         if key == 'elevenlabs_api_key':
             validate_api_key(AudioModel.elevenlabs, value)
         if key == 'nvidia_api_key':
-            validate_api_key(TextModel.nvidia, value)
+            validate_api_key(TextModel.nvidia_llama, value)
         if key == 'openai_api_key':
             validate_api_key(TextModel.gpt, value)
         

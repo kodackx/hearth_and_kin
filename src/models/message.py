@@ -16,9 +16,9 @@ class MessageBase(Model):
     image_path: Optional[str] = Field(default=None)
     character_id: Optional[int] = Field(default=None, foreign_key="character.character_id")
     character_name: str = Field(foreign_key='character.character_name')
-    genai_text_model: Optional[TextModel] = None
-    genai_audio_model: Optional[AudioModel] = None
-    genai_image_model: Optional[ImageModel] = None
+    genai_text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: Optional[AudioModel] = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: Optional[ImageModel] = Field(default=DEFAULT_IMAGE_MODEL)
     
 class MessageCreate(MessageBase):
     pass
