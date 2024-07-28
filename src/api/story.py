@@ -47,11 +47,16 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 @router.post('/story', status_code=201)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
     logger.debug(f"Received story data: {story}")
-    # Get the next available story ID from the counter
-    counter = session.get(Counter, 1)
-    new_story_id = counter.next_story_id
-    new_story = Story.model_validate(story)
 
+    # Check if a Counter instance exists, if not create one.
+    counter = session.get(Counter, 1)
+    if not counter:
+        counter = Counter(id=1, next_story_id=1)
+        session.add(counter)
+        session.commit()
+        session.refresh(counter)
+
+    new_story = Story.model_validate(story)
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
