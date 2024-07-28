@@ -122,7 +122,10 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         narrator_reply=None,
         audio_path=None,
         image_path=None,
-        soundtrack_path=None
+        soundtrack_path=None,
+        genai_text_model=text_narrator_model,
+        genai_audio_model=audio_narrator_model,
+        genai_image_model=image_model
     )
     session.add(human_message)
     for i in range(len(subtitles)):
@@ -136,12 +139,14 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
             narrator_reply=None,
             audio_path=audio_paths[i] if i < len(audio_paths) else None,
             image_path=image_path,
-            soundtrack_path=soundtrack_path
+            soundtrack_path=soundtrack_path,
+            genai_text_model=text_narrator_model,
+            genai_audio_model=audio_narrator_model,
+            genai_image_model=image_model
         )
         session.add(narrator_message)
         
     session.commit()
     session.refresh(human_message)
-
-
+    
     return human_message

@@ -9,7 +9,7 @@ from ..models.user import UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
 from ..models.story import StoryModelsUpdate
-from ..models.story import Invite
+from ..models.story import Invite, Counter
 from ..core.config import logger
 
 router = APIRouter()
@@ -46,11 +46,18 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 @router.post('/story', status_code=201)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
     logger.debug(f"Received story data: {story}")
-    new_story = Story(party_lead=story.party_lead)
-
+    # Get the next available story ID from the counter
+    counter = session.get(Counter, 1)
+    new_story_id = counter.next_story_id
+    new_story = Story(story_id=new_story_id, party_lead=story.party_lead)
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
+
+    # Increment the counter
+    counter.next_story_id += 1
+    session.add(counter)
+    session.commit()
 
     # Generate invite code
     invite = Invite(story_id=new_story.story_id)

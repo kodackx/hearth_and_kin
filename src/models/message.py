@@ -2,6 +2,7 @@ from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from datetime import datetime
 from ..models.enums import CharacterType, TextModel, AudioModel, ImageModel
+from ..core.config import DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 
 
 class MessageBase(Model):
@@ -15,6 +16,9 @@ class MessageBase(Model):
     image_path: Optional[str] = Field(default=None)
     character_id: Optional[int] = Field(default=None, foreign_key="character.character_id")
     character_name: str = Field(foreign_key='character.character_name')
+    genai_text_model: Optional[TextModel] = None
+    genai_audio_model: Optional[AudioModel] = None
+    genai_image_model: Optional[ImageModel] = None
     
 class MessageCreate(MessageBase):
     pass
@@ -28,9 +32,7 @@ class MessagePC(MessageBase):
     character_id: int
     character_name: str
     portrait_path: Optional[str] = None
-    text_image_model: TextModel
-    image_model: ImageModel
-    text_narrator_model: AudioModel
+
 
 class MessageNARRATORorSYSTEM(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)

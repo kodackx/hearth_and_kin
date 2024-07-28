@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel as Model, Field
+from ..models.enums import TextModel, AudioModel, ImageModel
 from typing import Optional
 import random
 import string
@@ -13,8 +14,12 @@ def generate_invite_code(length=5):
 
 class Invite(Model, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    story_id: int = Field(foreign_key="story.story_id")  # Updated line
+    story_id: int # Updated line
     invite_code: str = Field(default_factory=generate_invite_code)
+
+class Counter(Model, table=True):
+    id: int = Field(default=1, primary_key=True)
+    next_story_id: int = Field(default=1)
 
 class StoryBase(Model):
     story_id: Optional[int] = Field(default=None, primary_key=True)
@@ -26,15 +31,15 @@ class StoryBase(Model):
     has_started: Optional[bool] = Field(default=False)
     party_location: Optional[str]
     party_objective: Optional[str]
-    genai_text_model: str = Field(default="nvidia")
-    genai_audio_model: str = Field(default="elevenlabs")
-    genai_image_model: str = Field(default="dalle3")
+    genai_text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: AudioModel = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: ImageModel = Field(default=DEFAULT_IMAGE_MODEL)
 
 class StoryModelsUpdate(Model):
     character_id: int = Field(foreign_key="character.character_id")
-    genai_text_model: Optional[str] = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
-    genai_audio_model: Optional[str] = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
-    genai_image_model: Optional[str] = Field(default=DEFAULT_IMAGE_MODEL)
+    genai_text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    genai_audio_model: AudioModel = Field(default=DEFAULT_AUDIO_NARRATOR_MODEL)
+    genai_image_model: ImageModel = Field(default=DEFAULT_IMAGE_MODEL)
 
 
 class StoryCreate(Model):
