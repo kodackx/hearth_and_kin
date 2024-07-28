@@ -3,11 +3,14 @@ from sqlalchemy import StaticPool
 from sqlmodel import create_engine, Session, SQLModel
 from src.main import app, get_session
 from fastapi.testclient import TestClient
+import os
 
 from src.models.character import Character
 from src.models.story import Story
 from src.models.user import User
 
+def pytest_configure():
+    os.environ['TEST_ENV'] = 'True'
 
 @pytest.fixture(name='session')
 def session_fixture():
@@ -90,7 +93,7 @@ def stories(client: TestClient, session: Session, characters: list[Character]) -
         response = client.post('/story', json={'party_lead': character.character_id})
         
         assert response.status_code == 201, 'Story should be created successfully'
-
+        
         _story = session.get(Story, response.json()['story']['story_id'])
         assert _story is not None
         _stories.append(_story)

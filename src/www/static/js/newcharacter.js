@@ -6,6 +6,7 @@ document.getElementById('send-button').style.display = 'none';
 document.getElementById('start-button').style.display = 'block';
 document.getElementById('message-input').value = 'I listen to the mists of creation... Help me shape my character into reality.';
 const firstTimeButton = document.querySelector('.first-time-button');
+const user_id = localStorage.getItem('user_id');
 firstTimeButton.addEventListener('click', handleFirstClick);
 document.getElementById('send-button').addEventListener('click', sendMessage);
 
@@ -109,6 +110,7 @@ function sendMessage() {
         },
         body: JSON.stringify({
             message: message,
+            user_id: user_id,
         }),
     })
     .then(response => response.json())
@@ -117,7 +119,7 @@ function sendMessage() {
         if (data.character_data) {
             let characterData = data.character_data;
             const userId = localStorage.getItem('user_id'); // Retrieve user_id from localStorage
-            characterData.user_id = userId; // Add user_id to character_data
+            characterData.user_id = user_id;
             localStorage.setItem('characterData', JSON.stringify(characterData));
             console.log('Character saved:', characterData);
         }

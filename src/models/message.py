@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from datetime import datetime
-from ..models.enums import CharacterType, TextModel, AudioModel, ImageModel
+from ..models.enums import CharacterType,TextModel, AudioModel, ImageModel
 from ..core.config import DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
 
 
@@ -32,7 +32,6 @@ class MessagePC(MessageBase):
     character_id: int
     character_name: str
     portrait_path: Optional[str] = None
-
 
 class MessageNARRATORorSYSTEM(MessageBase):
     message_id: Optional[int] = Field(default=None, primary_key=True)

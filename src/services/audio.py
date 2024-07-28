@@ -2,16 +2,13 @@ import base64
 import os
 from typing import Iterator, Optional
 import elevenlabs
-from ..core.config import ELEVENLABS_VOICE_ID, logger
-from dotenv import load_dotenv
 
-# Load environment variables from a .env file
-# load_dotenv()
+from src.models.enums import AudioModel
+from ..core.config import logger
 
-def generate(text: str) -> bytes | Iterator[bytes]:
-    #ELEVENLABS_VOICE_ID = os.getenv('ELEVENLABS_VOICE_ID')
-    # logger.debug("Will use voiceID " + ELEVENLABS_VOICE_ID)
-    audio = elevenlabs.generate(text, voice=ELEVENLABS_VOICE_ID, model="eleven_turbo_v2_5")
+
+def generate(text: str, api_key: str, voice_id: str) -> bytes | Iterator[bytes]:
+    audio = elevenlabs.generate(text, api_key=api_key, voice=voice_id, model="eleven_turbo_v2_5")
     return audio
 
 def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
@@ -27,7 +24,11 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     return filename, file_path
 
 
-async def generate_audio(narrator_reply) -> str:
-    audio_data = generate(narrator_reply)
+async def generate_audio(narrator_reply: str, api_key: str, voice_id: str) -> str:
+    audio_data = generate(text=narrator_reply, api_key=api_key, voice_id=voice_id)
     _, audio_path = store(audio_bytes=audio_data)
     return audio_path
+
+def validate_api_key(model: AudioModel, api_key: str) -> None:
+    if model == AudioModel.elevenlabs:
+        res = elevenlabs.API.request('https://api.elevenlabs.io/v1/voices', 'get', api_key)
