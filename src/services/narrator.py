@@ -1,20 +1,19 @@
 
-from openai import AuthenticationError
 from src.models.character import Character
 
 from src.models.message import MessageBase
 from src.core.config import logger
-from ..models.enums import CharacterType, TextModel
+from ..core.models import CharacterType, TextModel, get_model_instance
+from langchain_core.runnables import RunnableSerializable
+
 
 from typing import Dict
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Dictionary to store chains by story_id
 chains: Dict[str, RunnableWithMessageHistory] = {}
@@ -141,12 +140,13 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
             logger.debug('Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
-    models = {
-        'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.75, api_key=api_key),
-        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=api_key),
-    }
     
-    chat_llm_chain = prompt | models[text_model] | StrOutputParser()
+    text_model_instance = get_model_instance(text_model, api_key)
+
+    # The RunnableSerializable assertion is needed for the langchain pipes to work
+    assert text_model_instance is not None and isinstance(text_model_instance.model, RunnableSerializable), 'A text model needs to be selected for image generation'
+
+    chat_llm_chain = prompt | text_model_instance.model | StrOutputParser()
     chain_with_message_history = RunnableWithMessageHistory(
         chat_llm_chain,
         lambda session_id: memory,
@@ -203,8 +203,3 @@ def generate_reply(character: Character, message: MessageBase, chain: RunnableWi
             narrator_reply = narrator_reply.replace(directive, '').strip()
             break  # Assuming only one soundtrack directive per reply, break after handling the first one found
     return narrator_reply, soundtrack_path
-
-def validate_api_key(model: TextModel, api_key: str) -> None:
-    llm = ChatOpenAI(model='gpt-4o', temperature=0.75, api_key=api_key)
-
-    llm.invoke('Hello, world!')

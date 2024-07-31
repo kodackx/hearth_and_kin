@@ -1,6 +1,6 @@
 import logging
 from dotenv import load_dotenv
-from ..models.enums import AudioModel, ImageModel, TextModel
+from .models import AudioModel, ImageModel, TextModel
 DEBUG = True
 
 DEFAULT_TEXT_NARRATOR_MODEL = TextModel.gpt

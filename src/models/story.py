@@ -4,7 +4,7 @@ import random
 import string
 import uuid
 from ..core.config import DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_AUDIO_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
-from .enums import AudioModel, ImageModel, TextModel
+from ..core.models import AudioModel, ImageModel, TextModel
 
 def generate_invite_code(length=5):
     invite_code =  ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))

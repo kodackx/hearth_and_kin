@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from datetime import datetime
-from ..models.enums import CharacterType
+from ..core.models import CharacterType
 
 class MessageBase(Model):
     message_id: Optional[int] = Field(default=None, primary_key=True)

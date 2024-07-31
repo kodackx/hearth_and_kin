@@ -6,9 +6,7 @@ from ..core.database import get_session
 from ..models.user import User, UserBase, UserRead, UserUpdate
 from ..models.session import Token, LoginSession
 from ..core.config import logger
-from ..services.narrator import validate_api_key as narrator_validate_api_key
-from ..services.audio import validate_api_key as audio_validate_api_key
-from ..models.enums import AudioModel, TextModel
+from ..core.models import AudioModel, TextModel
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -26,14 +24,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 def validate_api_key(model: AudioModel | TextModel, api_key: str) -> None:
     if model == AudioModel.elevenlabs and os.environ.get('TEST_ENV') != 'True':
         try:
-            audio_validate_api_key(model, api_key)
+            pass
+            #audio_validate_api_key(model, api_key)
         except Exception as e:
             logger.error(f'Error validating {model} API key: {e}')
             raise HTTPException(400, str(e))
     # TODO: add more models here, e.g. nvidia
     elif model in [TextModel.gpt] and os.environ.get('TEST_ENV') != 'True':
         try:
-            narrator_validate_api_key(model, api_key)
+            pass
+            #narrator_validate_api_key(model, api_key)
         except Exception as e:
             logger.error(f'Error validating {model} API key: {e}')
             raise HTTPException(400, str(e))

@@ -7,32 +7,21 @@ import httpx
 from PIL import Image
 from io import BytesIO
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
-from src.models.enums import ImageModel, TextModel
 from ..core.config import logger
-from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
+from ..core.models import ImageModelInstance, ImageModel, get_model_instance
+from langchain_core.runnables import RunnableSerializable
 
 
 def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
-    match text_model:
-        case TextModel.gpt:
-            text_llm = ChatOpenAI(model_name='gpt-4o', api_key=text_api_key)
-        case TextModel.nvidia:
-            text_llm = ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=text_api_key)
-        case _:
-            raise ValueError(f'Invalid text model: {text_model}')
+    text_model_instance = get_model_instance(text_model, text_api_key)
+    image_model_instance = get_model_instance(image_model, image_api_key)
 
-    match image_model:
-        case ImageModel.dalle3:
-            image_llm = DallEAPIWrapper(model='dall-e-3', size='1024x1024', api_key=image_api_key)
-        case ImageModel.none:
-            return
-        case _:
-            raise ValueError(f'Invalid image model: {image_model}')
+    # The RunnableSerializable assertion is needed for the langchain pipes to work
+    assert text_model_instance is not None and isinstance(text_model_instance.model, RunnableSerializable), 'A text model needs to be selected for image generation'
+    assert image_model_instance is not None and type(image_model_instance.model) is ImageModelInstance, 'An image model needs to be selected for image generation'
 
     prompt_gpt_helper = PromptTemplate(
         input_variables=['prompt_text'],
@@ -48,7 +37,7 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text
         {prompt_text}
         """,
     )
-    chain = prompt_gpt_helper | text_llm | StrOutputParser()
+    chain = prompt_gpt_helper | text_model_instance.model | StrOutputParser()
     result = chain.invoke({'prompt_text': prompt_text})
     logger.debug('[GEN IMAGE]: ' + result)
     image_url = ''
@@ -64,7 +53,7 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text
     )
     if image_model == ImageModel.dalle3:
         try:
-            image_url = image_llm.run(prompt_dalle)  # type: ignore
+            image_url = image_model_instance.model.run(prompt_dalle)  # type: ignore
         except Exception as e:
             logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
             image_url = None
@@ -107,7 +96,7 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def _generate(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str:
+async def _generate(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
     """
     Needed to not let the image generation block the event loop
     """
@@ -117,7 +106,7 @@ async def _generate(prompt_text: str, text_model: str, image_model: str, text_ap
     return result
 
 
-async def generate_image(prompt: str, type: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str:
+async def generate_image(prompt: str, type: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
     image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
     image_path = 'static/img/login1.png'
     if image_url is not None:

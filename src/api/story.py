@@ -5,13 +5,12 @@ from src.models.character import Character
 
 from ..core.websocket import WebsocketManager
 from ..models.message import Message, MessageRead
-from ..models.user import User, UserRead
+from ..models.user import User
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
 from ..models.story import StoryModelsUpdate
 from ..models.story import Invite
 from ..core.config import logger
-from ..api.user import validate_api_key
 
 router = APIRouter()
 socket_manager = WebsocketManager()
@@ -251,19 +250,19 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
             raise HTTPException(400, 'You need to add a NVIDIA API key to use the NVIDIA text model.')
         if models_update.genai_text_model == 'gpt' and not db_user.openai_api_key:
             raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
-        validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        #validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
         db_story.genai_text_model = models_update.genai_text_model
     
     if models_update.genai_audio_model:
         if models_update.genai_audio_model == 'elevenlabs' and not db_user.elevenlabs_api_key:
             raise HTTPException(400, 'You need to add an Elevenlabs API key to use the Elevenlabs audio model.')
-        validate_api_key(models_update.genai_audio_model, db_user.elevenlabs_api_key)
+        #validate_api_key(models_update.genai_audio_model, db_user.elevenlabs_api_key)
         db_story.genai_audio_model = models_update.genai_audio_model
     
     if models_update.genai_image_model:
         if models_update.genai_image_model == 'dalle3' and not db_user.openai_api_key:
             raise HTTPException(400, 'You need to add an OPENAI API key to use the DALLE-3 image model.')
-        validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        #validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
         db_story.genai_image_model = models_update.genai_image_model
 
     

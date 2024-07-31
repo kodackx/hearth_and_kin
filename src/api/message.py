@@ -12,7 +12,7 @@ from ..models.character import Character
 from ..models.story import Story
 from ..models.message import Message, MessagePC, MessageNARRATORorSYSTEM
 from ..services import audio, imagery, narrator
-from ..models.enums import CharacterType, TextModel, AudioModel, ImageModel
+from ..core.models import CharacterType, TextModel, AudioModel, ImageModel
 
 router = APIRouter()
 socket_manager = WebsocketManager()
@@ -145,7 +145,6 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         character_name=message.character_name,
         character=message.character,
         message=message.message,
-        narrator_reply=None,
         audio_path=None,
         image_path=None,
         soundtrack_path=None
@@ -159,7 +158,7 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
             character_name=CharacterType.narrator,
             character=CharacterType.narrator,
             message=subtitles[i],
-            narrator_reply=None,
+
             audio_path=audio_paths[i] if i < len(audio_paths) else None,
             image_path=image_path,
             soundtrack_path=soundtrack_path
