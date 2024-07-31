@@ -1,4 +1,4 @@
-from sqlmodel import Relationship, SQLModel as Model, Field
+from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from enum import Enum
 
