@@ -1,15 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, WebSocket, Query
 from sqlmodel import Session, select
 
-from src.models.character import Character
+from ..models.character import Character
 
 from ..core.websocket import WebsocketManager
+from ..core.models import get_model_instance
 from ..models.message import Message, MessageRead
 from ..models.user import User
 from ..core.database import get_session
-from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
-from ..models.story import StoryModelsUpdate
-from ..models.story import Invite
+from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership, StoryModelsUpdate, Invite
 from ..core.config import logger
 
 router = APIRouter()
@@ -53,6 +52,7 @@ async def create_story(*, story: StoryCreate, session: Session = Depends(get_ses
     session.refresh(new_story)
 
     # Generate invite code
+    assert new_story.story_id is not None
     invite = Invite(story_id=new_story.story_id)
     session.add(invite)
     session.commit()
@@ -99,7 +99,7 @@ async def get_story(*, story_id: int, session: Session = Depends(get_session)) -
     db_story = session.get(Story, story_id)
     if db_story is None:
         raise HTTPException(404, 'Story not found')
-    return db_story
+    return StoryRead.model_validate(db_story)
 
 # GET /story/{story_id}/messages: Retrieves messages associated with a specific story.
 @router.get('/story/{story_id}/messages')
@@ -218,12 +218,13 @@ async def transfer_ownership(*, story: StoryTransferOwnership, session: Session 
     if new_lead.character_id not in [db_story.party_member_1, db_story.party_member_2]:
         raise HTTPException(400, 'The new lead must be a member of the story.')
 
+    assert new_lead.character_id
     db_story.party_lead = new_lead.character_id
     session.add(db_story)
     session.commit()
     session.refresh(db_story)
     await socket_manager.broadcast('transfer_ownership', StoryRead.model_validate(db_story), story.story_id)
-    return db_story
+    return StoryRead.model_validate(db_story)
 
 # POST /story/{story_id}/update_models: Updates the generative models for a story.
 @router.post('/story/{story_id}/update_models', status_code=200, response_model=StoryRead)
@@ -240,29 +241,23 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
         raise HTTPException(403, 'Only the party lead can update the models')
 
     db_character = session.get(Character, db_story.party_lead)
+    assert db_character
     db_user = session.get(User, db_character.user_id)
-    assert db_user is not None
+    assert db_user
 
+    user_keys = db_user.model_dump()
+    
     # Check if the user has API keys for using the models
-    # TODO: is this the best way of handling model + api key selection? This is a bit messy
     if models_update.genai_text_model:
-        if models_update.genai_text_model == 'nvidia' and not db_user.nvidia_api_key:
-            raise HTTPException(400, 'You need to add a NVIDIA API key to use the NVIDIA text model.')
-        if models_update.genai_text_model == 'gpt' and not db_user.openai_api_key:
-            raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
-        #validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        get_model_instance(models_update.genai_text_model, user_keys, validate=True)
         db_story.genai_text_model = models_update.genai_text_model
-    
+
     if models_update.genai_audio_model:
-        if models_update.genai_audio_model == 'elevenlabs' and not db_user.elevenlabs_api_key:
-            raise HTTPException(400, 'You need to add an Elevenlabs API key to use the Elevenlabs audio model.')
-        #validate_api_key(models_update.genai_audio_model, db_user.elevenlabs_api_key)
+        get_model_instance(models_update.genai_audio_model, user_keys, validate=True)
         db_story.genai_audio_model = models_update.genai_audio_model
-    
+
     if models_update.genai_image_model:
-        if models_update.genai_image_model == 'dalle3' and not db_user.openai_api_key:
-            raise HTTPException(400, 'You need to add an OPENAI API key to use the DALLE-3 image model.')
-        #validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
+        get_model_instance(models_update.genai_image_model, user_keys, validate=True)
         db_story.genai_image_model = models_update.genai_image_model
 
     

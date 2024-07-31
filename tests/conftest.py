@@ -1,16 +1,14 @@
 import pytest
 from sqlalchemy import StaticPool
 from sqlmodel import create_engine, Session, SQLModel
+from src.core.models import Dalle3Model, ElevenLabsModel, GPTModel, LlamaNvidiaModel
 from src.main import app, get_session
 from fastapi.testclient import TestClient
-import os
+from unittest.mock import patch
 
 from src.models.character import Character
 from src.models.story import Story
 from src.models.user import User
-
-def pytest_configure():
-    os.environ['TEST_ENV'] = 'True'
 
 @pytest.fixture(name='session')
 def session_fixture():
@@ -21,6 +19,16 @@ def session_fixture():
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
+
+@pytest.fixture(autouse=True)
+def patch_validate():
+    """Skip any API key validation in the tests
+    """
+    with patch.object(GPTModel, 'validate', return_value=None), \
+         patch.object(LlamaNvidiaModel, 'validate', return_value=None), \
+         patch.object(Dalle3Model, 'validate', return_value=None), \
+         patch.object(ElevenLabsModel, 'validate', return_value=None):
+        yield
 
 
 @pytest.fixture(name='client')
@@ -58,7 +66,7 @@ def users(client: TestClient, session: Session) -> list[User]:
     for user_data in user_test_data:
 
         response = client.post('/user', json=user_data)
-        assert response.status_code == 201, 'User should be created successfully'
+        assert response.status_code == 201, f'User should be created successfully: {response.json()}'
 
         _user = session.get(User, response.json()['user_id'])
         assert _user is not None

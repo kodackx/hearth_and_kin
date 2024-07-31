@@ -6,7 +6,7 @@ from ..core.database import get_session
 from ..models.user import User, UserBase, UserRead, UserUpdate
 from ..models.session import Token, LoginSession
 from ..core.config import logger
-from ..core.models import AudioModel, TextModel
+from ..core.models import GPTModel, LlamaNvidiaModel, ElevenLabsModel
 import jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -20,23 +20,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-
-def validate_api_key(model: AudioModel | TextModel, api_key: str) -> None:
-    if model == AudioModel.elevenlabs and os.environ.get('TEST_ENV') != 'True':
-        try:
-            pass
-            #audio_validate_api_key(model, api_key)
-        except Exception as e:
-            logger.error(f'Error validating {model} API key: {e}')
-            raise HTTPException(400, str(e))
-    # TODO: add more models here, e.g. nvidia
-    elif model in [TextModel.gpt] and os.environ.get('TEST_ENV') != 'True':
-        try:
-            pass
-            #narrator_validate_api_key(model, api_key)
-        except Exception as e:
-            logger.error(f'Error validating {model} API key: {e}')
-            raise HTTPException(400, str(e))
                                   
 @router.post('/user', status_code=201, response_model=UserRead)
 async def create_user(*, user: UserBase, session: Session = Depends(get_session)):
@@ -50,13 +33,13 @@ async def create_user(*, user: UserBase, session: Session = Depends(get_session)
 
     # Check that the API keys are valid
     if new_user.nvidia_api_key:
-        validate_api_key(TextModel.nvidia, new_user.nvidia_api_key)
+        LlamaNvidiaModel(api_key=new_user.nvidia_api_key).validate()
     
     if new_user.openai_api_key:
-        validate_api_key(TextModel.gpt, new_user.openai_api_key)
+        GPTModel(api_key=new_user.openai_api_key).validate()
     
     if new_user.elevenlabs_api_key:
-        validate_api_key(AudioModel.elevenlabs, new_user.elevenlabs_api_key)
+        ElevenLabsModel(api_key=new_user.elevenlabs_api_key).validate()
 
     logger.debug(f'CREATE_USER: {user = }')
     
@@ -144,11 +127,11 @@ async def update_user(*, user: UserUpdate, user_id: int, session: Session = Depe
             value = hashed_password.decode('utf-8')
         
         if key == 'elevenlabs_api_key':
-            validate_api_key(AudioModel.elevenlabs, value)
+            ElevenLabsModel(api_key=value).validate()
         if key == 'nvidia_api_key':
-            validate_api_key(TextModel.nvidia, value)
+            LlamaNvidiaModel(api_key=value).validate()
         if key == 'openai_api_key':
-            validate_api_key(TextModel.gpt, value)
+            GPTModel(api_key=value).validate()
         
         setattr(db_user, key, value)
     session.add(db_user)

@@ -34,4 +34,4 @@ def test_update_story(client: TestClient, stories: list[Story], users: list[User
 def test_update_story_no_api_key(client: TestClient, stories: list[Story]):
     story1 = stories[0]
     response = client.post(f'/story/{story1.story_id}/update_models', json={'character_id': story1.party_lead, 'story_id': story1.story_id, 'genai_text_model': 'nvidia'})
-    assert response.status_code == 400, 'Model update should be rejected if the user has no API key added'
+    assert response.status_code == 401, 'Model update should be rejected if the user has no API key added'
