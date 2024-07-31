@@ -63,10 +63,13 @@ def users(client: TestClient, session: Session) -> list[User]:
     return _users
 
 @pytest.fixture()
-def get_token(client: TestClient) -> list[dict[str, str]]:
+def get_token(client: TestClient, users: list[User]) -> list[dict[str, str]]:
+    """Logs in each user and returns the access token
+    """
     _headers = []
     for user in user_test_data:
         r = client.post('/login', data=user)
+        assert r.status_code == 200, 'User should be logged in successfully'
         tokens = r.json()
         a_token = tokens["access_token"]
         headers = {"Authorization": f"Bearer {a_token}"}
@@ -75,7 +78,7 @@ def get_token(client: TestClient) -> list[dict[str, str]]:
 
 @pytest.fixture()
 def characters(client: TestClient, session: Session, users: list[User], get_token: list[dict[str, str]]) -> list[Character]:
-    """"Creates characters for each user using the parameters of character_test_data in conftest.py
+    """Creates characters for each user using the parameters of character_test_data in conftest.py
     """
     _characters = []
     for i,user in enumerate(users):
