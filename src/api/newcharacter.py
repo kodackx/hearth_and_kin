@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Response, status, Depends, HTTPException
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
-from src.models.user import User
+from ..core.models import TextModel, get_model_instance
+
+from ..datamodels.user import User
 from ..core.database import get_session
 from sqlmodel import Session
-from ..models.character import Character, CharacterCreate, CharacterRead, CharacterCreateMessage
-from ..core.config import logger, DEFAULT_TEXT_NARRATOR_MODEL, DEFAULT_IMAGE_MODEL
-from ..services import  imagery
-from langchain.memory import ConversationBufferMemory
+from ..datamodels.character import Character, CharacterCreate, CharacterRead, CharacterCreateMessage
+from ..core.config import logger
+from ..services import imagery
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 import random
@@ -15,7 +15,6 @@ from pydantic import ValidationError
 import re
 from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableSerializable
 
@@ -96,16 +95,19 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response, session: Session = Depends(get_session)):
     # TODO: implement nvidia, does not work very well for it right now
-    text_model = 'gpt' #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
-    image_model = message.image_model or DEFAULT_IMAGE_MODEL
+    text_model = TextModel.gpt
+    image_model = message.image_model
     user = session.get(User, message.user_id)
+    assert user
     logger.debug(f'[MESSAGE] {user = }')
-    text_models = {
-        'gpt': ChatOpenAI(model_name='gpt-4o', api_key=user.openai_api_key), # api_key=user.openai_api_key or os.getenv('OPENAI_API_KEY')),
-        'nvidia': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.nvidia_api_key),
-    }
     
-    chain = prompt | text_models[text_model] | StrOutputParser()
+    user_keys = user.model_dump()
+    text_model_instance = get_model_instance(text_model, user_keys)
+    
+    # The RunnableSerializable assertion is needed for the langchain pipes to work
+    assert text_model_instance is not None and isinstance(text_model_instance.model, RunnableSerializable), 'A text model needs to be selected for image generation'
+
+    chain = prompt | text_model_instance.model | StrOutputParser()
 
     chain_with_message_history = RunnableWithMessageHistory(
         chain,
@@ -132,7 +134,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
             
             logger.debug(f'[CREATION IMAGE] {character_description}')
             # Will send to dalle3 and obtain image
-            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model, api_key=user.openai_api_key)
+            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model, text_api_key=user.openai_api_key, image_api_key=user.openai_api_key)
             logger.debug(f'[MESSAGE] {portrait_path = }')
             
             character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)

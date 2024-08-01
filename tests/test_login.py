@@ -1,5 +1,5 @@
 import pytest
-from src.models.user import User, UserBase
+from src.datamodels.user import User, UserBase
 from tests.conftest import user_test_data
 from fastapi.testclient import TestClient
 from pydantic import ValidationError

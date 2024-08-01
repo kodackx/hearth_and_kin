@@ -6,10 +6,11 @@ from ..core.models import AudioModel, ElevenLabsModel, get_model_instance
 from ..core.config import logger
 
 
-def generate(text: str, api_key: str, voice_id: str) -> bytes | Iterator[bytes]:
-    model_instance = get_model_instance(AudioModel.elevenlabs, api_key)
+def generate(model: AudioModel, text: str, api_key: str | dict[str, str]) -> bytes | Iterator[bytes]:
+    model_instance = get_model_instance(model, api_key)
+    assert isinstance(api_key, dict), 'API key must be a dictionary'
     if type(model_instance) is ElevenLabsModel:
-        audio = model_instance.model.generate(text=text, voice=voice_id, model=model_instance.model_name)
+        audio = model_instance.model.generate(text=text, voice=api_key['elevenlabs_voice_id'], model=model_instance.model_name)
     return audio
 
 def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
@@ -25,7 +26,7 @@ def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) 
     return filename, file_path
 
 
-async def generate_audio(narrator_reply: str, api_key: str, voice_id: str) -> str:
-    audio_data = generate(text=narrator_reply, api_key=api_key, voice_id=voice_id)
+async def generate_audio(model: AudioModel, narrator_reply: str, api_key: str | dict[str, str]) -> str:
+    audio_data = generate(model, text=narrator_reply, api_key=api_key)
     _, audio_path = store(audio_bytes=audio_data)
     return audio_path

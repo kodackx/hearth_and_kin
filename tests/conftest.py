@@ -6,9 +6,9 @@ from src.main import app, get_session
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
-from src.models.character import Character
-from src.models.story import Story
-from src.models.user import User
+from src.datamodels.character import Character
+from src.datamodels.story import Story
+from src.datamodels.user import User
 
 @pytest.fixture(name='session')
 def session_fixture():

@@ -1,6 +1,9 @@
-from sqlmodel import Relationship, SQLModel as Model, Field
+from sqlmodel import SQLModel as Model, Field
 from typing import Optional
 from enum import Enum
+
+from ..core.config import DEFAULT_IMAGE_MODEL, DEFAULT_TEXT_NARRATOR_MODEL
+from ..core.models import ImageModel, TextModel
 
 class CharacterType(str, Enum):
     PC = "PC"
@@ -26,8 +29,8 @@ class CharacterCreateMessage(Model):
     user_id: int = Field(foreign_key="user.user_id")
     message: str
 
-    text_model: str | None = None
-    image_model: str | None = None
+    text_model: TextModel = Field(default=DEFAULT_TEXT_NARRATOR_MODEL)
+    image_model: ImageModel = Field(default=DEFAULT_IMAGE_MODEL)
 
 class CharacterCreate(CharacterBase):
     pass

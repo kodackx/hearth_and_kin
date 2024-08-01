@@ -1,4 +1,4 @@
-from src.models.story import Story
+from src.datamodels.story import Story
 
 
 # Test to create a story

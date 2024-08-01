@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Security
 from sqlmodel import Session, select
 
 from ..core.database import get_session
-from ..models.user import User, UserBase, UserRead, UserUpdate
-from ..models.session import Token, LoginSession
+from ..datamodels.user import User, UserBase, UserRead, UserUpdate
+from ..datamodels.session import Token, LoginSession
 from ..core.config import logger
 from ..core.models import GPTModel, LlamaNvidiaModel, ElevenLabsModel
 import jwt

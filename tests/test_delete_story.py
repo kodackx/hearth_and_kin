@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from src.models.character import Character
-from src.models.story import Story
+from src.datamodels.character import Character
+from src.datamodels.story import Story
 
 
 # Test to delete a story successfully

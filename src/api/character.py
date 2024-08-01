@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from ..core.database import get_session
 from sqlmodel import Session, select
-from ..models.character import Character, CharacterRead, CharacterUpdate
-from ..models.character import CharacterDetails
-from ..models.story import Story
+from ..datamodels.character import Character, CharacterRead, CharacterUpdate
+from ..datamodels.character import CharacterDetails
+from ..datamodels.story import Story
 from ..core.config import logger
 from typing import List
 

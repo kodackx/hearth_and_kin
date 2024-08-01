@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from src.models.character import Character
+from src.datamodels.character import Character
 from tests.conftest import character_test_data
 
 

@@ -1,5 +1,4 @@
-from sqlmodel import SQLModel as Model
-from sqlmodel import Field
+from sqlmodel import SQLModel as Model, Field
 from datetime import datetime
 
 class Token(Model):

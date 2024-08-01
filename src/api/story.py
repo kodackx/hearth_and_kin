@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, WebSocket, Query
 from sqlmodel import Session, select
 
-from ..models.character import Character
+from ..datamodels.character import Character
 
 from ..core.websocket import WebsocketManager
 from ..core.models import get_model_instance
-from ..models.message import Message, MessageRead
-from ..models.user import User
+from ..datamodels.message import Message, MessageRead
+from ..datamodels.user import User
 from ..core.database import get_session
-from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership, StoryModelsUpdate, Invite
+from ..datamodels.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership, StoryModelsUpdate, Invite
 from ..core.config import logger
 
 router = APIRouter()

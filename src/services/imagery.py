@@ -11,13 +11,13 @@ from io import BytesIO
 from ..core.config import logger
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from ..core.models import ImageModelInstance, ImageModel, get_model_instance
+from ..core.models import ImageModelInstance, ImageModel, TextModel, get_model_instance
 from langchain_core.runnables import RunnableSerializable
 
 
-def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
-    text_model_instance = get_model_instance(text_model, text_api_key)
-    image_model_instance = get_model_instance(image_model, image_api_key)
+def _generate_blocking(prompt_text: str, text_model: TextModel, image_model: ImageModel, api_key: str | dict[str, str]) -> str | None:
+    text_model_instance = get_model_instance(text_model, api_key)
+    image_model_instance = get_model_instance(image_model, api_key)
 
     # The RunnableSerializable assertion is needed for the langchain pipes to work
     assert text_model_instance is not None and isinstance(text_model_instance.model, RunnableSerializable), 'A text model needs to be selected for image generation'
@@ -96,18 +96,18 @@ async def _store(image_url: str, type: str, filename: Optional[str] = None) -> t
         error = 'Invalid store image type. Can only store `character` or `story` images'
         return '0', error
 
-async def _generate(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
+async def _generate(prompt_text: str, text_model: TextModel, image_model: ImageModel, api_key: str | dict[str, str]) -> str | None:
     """
     Needed to not let the image generation block the event loop
     """
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
-        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model, text_api_key, image_api_key)
+        result = await loop.run_in_executor(pool, _generate_blocking, prompt_text, text_model, image_model, api_key)
     return result
 
 
-async def generate_image(prompt: str, type: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
-    image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
+async def generate_image(prompt: str, type: str, text_model: TextModel, image_model: ImageModel, api_key: str | dict[str, str]) -> str | None:
+    image_url = await _generate(prompt, text_model, image_model, api_key)
     image_path = 'static/img/login1.png'
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)

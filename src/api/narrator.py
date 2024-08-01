@@ -94,7 +94,7 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # logger.info('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str | dict[str, str], text_model: TextModel) -> RunnableWithMessageHistory:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str, text_model: TextModel) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     memory = ChatMessageHistory()
     narrator_messages_list = []

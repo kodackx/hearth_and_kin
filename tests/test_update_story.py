@@ -1,7 +1,7 @@
-from src.models.story import Story
+from src.datamodels.story import Story
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from src.models.user import User
+from src.datamodels.user import User
 
 # Test to remove the image model from a story
 def test_update_story_model(client: TestClient, session: Session, stories: list[Story]):

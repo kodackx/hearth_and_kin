@@ -2,11 +2,11 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
-from src.models.character import Character
-from src.models.message import Message, MessagePC
+from src.datamodels.character import Character
+from src.datamodels.message import Message, MessagePC
 from src.core.config import logger
-from src.models.story import Story
-from src.models.user import User
+from src.datamodels.story import Story
+from src.datamodels.user import User
 
 @pytest.mark.asyncio
 def test_websocket(session: Session, client: TestClient, users: list[User], characters: list[Character], stories: list[Story]):            
