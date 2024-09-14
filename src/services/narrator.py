@@ -3,6 +3,7 @@ from openai import AuthenticationError
 from src.models.character import Character
 from src.models.user import User
 from src.models.message import MessageBase
+from src.models.story import Story
 from src.core.config import logger
 from ..models.enums import CharacterType, TextModel
 from typing import Dict
@@ -16,6 +17,9 @@ from ..services.prompts.scenario_1 import scenario
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from ..models.utils import get_text_models
+from ..core.database import get_session
+from fastapi import HTTPException
 
 # Dictionary to store chains by story_id
 chains: Dict[str, RunnableWithMessageHistory] = {}
@@ -39,20 +43,24 @@ prompt = ChatPromptTemplate.from_messages(
 )
 # logger.info('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str, api_key: str, text_model: TextModel) -> RunnableWithMessageHistory:
+def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> RunnableWithMessageHistory:
     #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
+    session = get_session()
+    story = session.get(Story, story_id)
+    if not story:
+        raise HTTPException(404, 'Story not found')
+    
+    text_model = story.genai_text_model
+    party_lead_user_id = story.party_lead
+
     memory = ChatMessageHistory()
     narrator_messages_list = []
     concatenated_narrator_message = ''
     if message_history:
         for message in message_history:
-            # this will print a LOT!!!
-            # logger.debug('Currently processing message: ', str(message))
             # finding a narrator messages does not warrant a dump into memory
             if message.character in {CharacterType.narrator, CharacterType.system}:
                 narrator_messages_list.append(message.message)
-                # logger.debug('### The list of narrator_messages_list looks like this now:')
-                # logger.debug(narrator_messages_list)
             # user messages require no concatenation (they are always singular)
             # but they should trigger the dump of all narrator messages gathered in the chunk so far
             # and these should be dumped first
@@ -61,7 +69,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
                 if narrator_messages_list:
                     for narrator_piece in narrator_messages_list:
                         concatenated_narrator_message += narrator_piece
-                    if text_model == TextModel.nvidia:
+                    if text_model == TextModel.nvidia_llama:
                         memory.add_ai_message('assistant: ' + concatenated_narrator_message)
                         narrator_messages_list = []
                         logger.debug(' Added a big narrator message.')
@@ -70,7 +78,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
                         narrator_messages_list = []
                         logger.debug('Added a big narrator message.')
                 # now add the user message we found
-                if text_model == TextModel.nvidia:
+                if text_model == TextModel.nvidia_llama:
                     memory.add_user_message('user: ' + message.message)
                 else:
                     memory.add_user_message(message.message)       
@@ -78,7 +86,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
         if narrator_messages_list:
             for narrator_piece in narrator_messages_list:
                 concatenated_narrator_message += narrator_piece
-            if text_model == TextModel.nvidia:
+            if text_model == TextModel.nvidia_llama:
                 memory.add_ai_message('assistant: ' + concatenated_narrator_message)
             else:
                 memory.add_ai_message(concatenated_narrator_message)
@@ -86,12 +94,7 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
     else:
         logger.debug("No message history. Will start story from scratch.")
     
-    # TODO: Can we have a centralized place to store the models? Even if we have to do it for different API keys?
-    models = {
-        'gpt': ChatOpenAI(model_name='gpt-4o', temperature=0.5, api_key=api_key), 
-        'nvidia_llama': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.5, api_key=api_key),
-        'claude': ChatAnthropic(model_name='claude-3.5-sonnet', temperature=0.5, api_key=api_key)
-    }
+    models = get_text_models(text_model, party_lead_user_id)
 
     chat_llm_chain = prompt | models[text_model] | StrOutputParser()
     chain_with_message_history = RunnableWithMessageHistory(
@@ -119,7 +122,7 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWit
     if party_info:
         message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
     
-    if text_model == TextModel.nvidia:
+    if text_model == TextModel.nvidia_llama:
        message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)

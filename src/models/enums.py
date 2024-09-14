@@ -9,6 +9,7 @@ class TextModel(StrEnum):
     nvidia_llama = auto()
     gpt = auto()
     claude = auto()
+    groq = auto()
 
 class AudioModel(StrEnum):
     elevenlabs = auto()

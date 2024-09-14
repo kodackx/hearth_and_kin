@@ -106,10 +106,10 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
         'claude': ChatAnthropic(model_name='claude-3.5-sonnet', api_key=user.anthropic_api_key)
     }
     
-    chain = prompt | models[text_model] | StrOutputParser()
+    character_creation_chain = prompt | models[text_model] | StrOutputParser()
 
     chain_with_message_history = RunnableWithMessageHistory(
-        chain,
+        character_creation_chain,
         lambda session_id: memory,
         input_messages_key="input",
         history_messages_key="chat_history",
