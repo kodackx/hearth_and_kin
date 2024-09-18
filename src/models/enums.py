@@ -10,6 +10,8 @@ class TextModel(StrEnum):
     gpt = auto()
     claude = auto()
     groq = auto()
+    gpt4o = auto()
+    gpto1 = auto()
 
 class AudioModel(StrEnum):
     elevenlabs = auto()
@@ -17,4 +19,5 @@ class AudioModel(StrEnum):
 
 class ImageModel(StrEnum):
     dalle3 = auto()
+    stablediffusion = auto()
     none = auto()

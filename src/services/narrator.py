@@ -1,10 +1,10 @@
-
-from openai import AuthenticationError
+from functools import lru_cache
 from src.models.character import Character
 from src.models.user import User
 from src.models.message import MessageBase
 from src.models.story import Story
 from src.core.config import logger
+from src.models.utils import get_or_create_uuid
 from ..models.enums import CharacterType, TextModel
 from typing import Dict
 from langchain_core.messages import SystemMessage
@@ -17,9 +17,10 @@ from ..services.prompts.scenario_1 import scenario
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from ..models.utils import get_text_models
 from ..core.database import get_session
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
+from sqlmodel import Session
+from uuid import uuid4
 
 # Dictionary to store chains by story_id
 chains: Dict[str, RunnableWithMessageHistory] = {}
@@ -41,17 +42,33 @@ prompt = ChatPromptTemplate.from_messages(
         HumanMessagePromptTemplate.from_template('{input}'),  # Where the human input will injected
     ]
 )
-# logger.info('Prompt is: ' + str(prompt))
 
-def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBase], story_id: str) -> RunnableWithMessageHistory:
-    #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    session = get_session()
-    story = session.get(Story, story_id)
-    if not story:
-        raise HTTPException(404, 'Story not found')
+def initialize_or_get_runnable(prompt: ChatPromptTemplate, 
+                               message_history: list[MessageBase], 
+                               story_id: str, 
+                               text_model: TextModel, 
+                               api_key: str, 
+                               session) -> RunnableWithMessageHistory:
+    """
+    Initialize the runnable with the given prompt, message history, story id, text model, and API key.
+    """
+    # Check if the chain already exists for this story id
+
+    if not isinstance(session, Session):
+        raise HTTPException(status_code=400, detail="[NARRATOR - initialize_or_get_runnable] Session is not a valid SQLModel Session")
     
-    text_model = story.genai_text_model
-    party_lead_user_id = story.party_lead
+    if story_id in chains:
+        return chains[story_id]
+    
+    # Initialize the appropriate text model
+    if text_model in [TextModel.gpto1, TextModel.gpt4o, TextModel.gpt]:
+        chat_model = ChatOpenAI(model=text_model, temperature=0.7, api_key=api_key)
+    elif text_model == TextModel.claude:
+        chat_model = ChatAnthropic(model=text_model, temperature=0.7, api_key=api_key)
+    elif text_model == TextModel.nvidia_llama:
+        chat_model = ChatNVIDIA(model=text_model, temperature=0.7, api_key=api_key)
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported text model: {text_model}")
 
     memory = ChatMessageHistory()
     narrator_messages_list = []
@@ -93,27 +110,31 @@ def initialize_chain(prompt: ChatPromptTemplate, message_history: list[MessageBa
             logger.debug('Added remaining narrator messages.')
     else:
         logger.debug("No message history. Will start story from scratch.")
-    
-    models = get_text_models(text_model, party_lead_user_id)
 
-    chat_llm_chain = prompt | models[text_model] | StrOutputParser()
+    chat_llm_chain = prompt | chat_model | StrOutputParser()
+    run_id=get_or_create_uuid(story_id, session)
+    logger.debug(f'[NARRATOR] Run ID: {run_id}')
     chain_with_message_history = RunnableWithMessageHistory(
         chat_llm_chain,
         lambda session_id: memory,
         input_messages_key="input",
         history_messages_key="chat_history",
-    )
+    ).with_config(run_id=run_id)
 
     # Store the chain in the dictionary
     chains[story_id] = chain_with_message_history
-
+    logger.debug(f'[NARRATOR] Initialized or got runnable for story {story_id}')
+    
     return chain_with_message_history
 
 def get_chain(story_id: str) -> RunnableWithMessageHistory | None:
+    """
+    Get the chain for the given story id.
+    """
     return chains.get(story_id)
 
 
-def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, text_model: TextModel, party_info: str = '') -> str:
+def _gpt_narrator(character: Character, message: MessageBase, runnable: RunnableWithMessageHistory, runnable_uuid: str, text_model: TextModel, party_info: str = '') -> str:
     message_and_character_data = message.message
     
     if character.character_name:
@@ -126,12 +147,12 @@ def _gpt_narrator(character: Character, message: MessageBase, chain: RunnableWit
        message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
-    output = chain.invoke({'input': message_and_character_data}, {"configurable": {"session_id": message.story_id}})
+    output = runnable.invoke({"input": message_and_character_data}, {"configurable": {"session_id": runnable_uuid}})
     logger.debug(f'[GPT Narrator] {output = }')
     return output
 
-def generate_reply(character: Character, message: MessageBase, chain: RunnableWithMessageHistory, text_model: TextModel, party_info: str = '') -> tuple[str, str | None]:
-    narrator_reply = _gpt_narrator(character=character, message=message, chain=chain, party_info=party_info, text_model=text_model)
+def generate_reply(character: Character, message: MessageBase, runnable: RunnableWithMessageHistory, runnable_uuid: str, text_model: TextModel, party_info: str = '') -> tuple[str, str | None]:
+    narrator_reply = _gpt_narrator(character=character, message=message, runnable=runnable, runnable_uuid=runnable_uuid, party_info=party_info, text_model=text_model)
     # Remove "assistant: " prefix if present
     if narrator_reply.startswith(" assistant: "):
         narrator_reply = narrator_reply[len(" assistant: "):]
@@ -152,6 +173,7 @@ def generate_reply(character: Character, message: MessageBase, chain: RunnableWi
             # Remove the directive from the narrator_reply to clean up the final message
             narrator_reply = narrator_reply.replace(directive, '').strip()
             break  # Assuming only one soundtrack directive per reply, break after handling the first one found
+        # TODO: We shouldn't always have a soundtrack, so we should handle that case
     return narrator_reply, soundtrack_path
 
 def validate_api_key(model: TextModel, api_key: str) -> None:

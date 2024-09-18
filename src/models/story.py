@@ -24,6 +24,7 @@ class Counter(Model, table=True):
 
 class StoryBase(Model):
     story_id: Optional[int] = Field(default=None, primary_key=True)
+    story_uuid: Optional[uuid.UUID] = Field(default=None)
     party_lead: int = Field(foreign_key="character.character_id")
     join_code: Optional[str] = Field(default=None, foreign_key="invite.invite_code")
     thread_id: Optional[int] = None
