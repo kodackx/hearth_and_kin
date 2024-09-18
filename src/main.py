@@ -1,15 +1,31 @@
 from pathlib import Path
-
+from sqlmodel import Session, select
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from fastapi.responses import FileResponse
 from fastapi import APIRouter
-
+from contextlib import asynccontextmanager
 from .api import character, message, story, user, newcharacter
-from .core.database import create_db_and_tables, get_session
+from .core.database import create_db_and_tables, get_session, engine
+from .models.story import Counter
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup event
+    create_db_and_tables()
+    # manage the story counter
+    with Session(engine) as session:
+        counter = session.get(Counter, 1)
+        if not counter:
+            counter = Counter(next_story_id=1)
+            session.add(counter)
+            session.commit()
+    yield
+    # Shutdown event
+    # Add any shutdown logic here if needed
+
+app = FastAPI(lifespan=lifespan)
 app.mount('/static', StaticFiles(directory=Path('src/www/static')), name='static')
 app.mount('/data', StaticFiles(directory=Path('data')), name='data')
 app.mount('/js', StaticFiles(directory=Path('src/www/static/js')), name='js')
@@ -20,15 +36,10 @@ favicon_path = 'src/www/static/img/favicon.ico'
 def favicon():
     return FileResponse(favicon_path)
 
-# router = APIRouter(prefix="/favicon.ico")
-favicon_path = 'src/www/static/img/favicon.ico'
-@app.get("/favicon.ico", include_in_schema=False)
-def favicon():
-    return FileResponse(favicon_path)
-
-@app.router.on_startup.append
-async def on_startup():
-    create_db_and_tables()
+# this will be taken care of by the lifespan handler
+# @app.router.on_startup.append
+# async def on_startup():
+#     create_db_and_tables()
 
 @app.get('/')
 async def home(request: Request):

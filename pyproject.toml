@@ -24,6 +24,8 @@ langchain-nvidia-ai-endpoints = "^0.1.2"
 langchain = "^0.2.5"
 langchain-openai = "^0.1.8"
 langchain-community = "^0.2.5"
+alembic = "^1.13.2"
+langchain-anthropic = "^0.1.21"
 
 
 [tool.poetry.group.dev.dependencies]

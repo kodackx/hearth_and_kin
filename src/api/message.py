@@ -4,6 +4,7 @@ import asyncio
 import re
 
 from src.models.user import User
+from src.models.utils import get_characters_for_story, get_model_configs, get_or_create_uuid
 
 from ..core.config import logger, SENTENCES_PER_SUBTITLE
 from ..core.database import get_session
@@ -54,66 +55,63 @@ async def handle_image(narrator_reply, story_id, text_model: TextModel, image_mo
 
 @router.post('/message', response_model=MessageNARRATORorSYSTEM)
 async def generate_message(*, message: MessagePC, session: Session = Depends(get_session)):
-    # Retrieve the story to get model information (that was set in the lobby!)
-    story = session.get(Story, message.story_id)
-    if not story:
-        raise HTTPException(404, 'Story not found')
+    """
+    Handle the generation of a message response from the AI narrator.
 
-    text_narrator_model = story.genai_text_model
-    audio_narrator_model = story.genai_audio_model
-    image_model = story.genai_image_model
+    Parameters:
+    - message: The message sent by the player character.
+    - session: The database session dependency.
 
-    logger.info(f'Text Narrator Model: {text_narrator_model}')
-    logger.info(f'Audio Narrator Model: {audio_narrator_model}')
-    logger.info(f'Image Model: {image_model}')
-    
+    Returns:
+    - The stored human message instance.
+    """
     
     # Broadcast the incoming message to all users
     await socket_manager.broadcast('message', message, message.story_id)
-
-    # Retrieve the story to get character IDs
-    story = session.get(Story, message.story_id)
-    if not story:
-        raise HTTPException(404, 'Story not found')
     
-    character_ids = [story.party_lead, story.party_member_1, story.party_member_2]
-    characters = session.exec(
-        select(Character).where(Character.character_id.in_(character_ids))
-    ).all()
+    # Get the list of characters in the story
+    characters = get_characters_for_story(message.story_id, session)
+    
+    try:
+        # Get the model configurations
+        model_configs = get_model_configs(message.story_id, session)
+    except HTTPException as e:
+        # Log the error and re-raise it
+        logger.error(f"Error getting model configs: {e.detail}")
+        raise
 
-    # Retrieve the user_id from the message
-    character = session.exec(
-        select(Character).where(Character.character_id == message.character_id)
-    ).first()
-    if not character:
-        raise HTTPException(404, 'Character not found')
+    # Log model information
+    logger.info(f'Text Narrator Model: {model_configs["text"]["model"]}')
+    logger.info(f'Audio Narrator Model: {model_configs["audio"]["model"]}')
+    logger.info(f'Image Model: {model_configs["image"]["model"]}')
 
-    # Retrieve the api keys from the party lead
-    party_lead_character = session.get(Character, story.party_lead)
-    assert party_lead_character is not None
-    party_lead_user = session.get(User, party_lead_character.user_id)
-    assert party_lead_user is not None
-
+    # Assign model configurations to variables
+    text_model = model_configs["text"]["model"]
+    text_model_api_key = model_configs["text"]["api_key"]
+    audio_model = model_configs["audio"]["model"]
+    audio_model_api_key = model_configs["audio"]["api_key"]
+    image_model = model_configs["image"]["model"]
+    image_model_api_key = model_configs["image"]["api_key"]
+    elevenlabs_voice_id = model_configs["audio"]["voice_id"]
+    
     # Retrieve the message history for the story
-    messages = session.exec(
-        select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
-    ).all()
+    try:
+        messages = session.exec(
+            select(Message).where(Message.story_id == message.story_id).order_by(Message.timestamp)
+        ).all()
+    except Exception as e:
+        logger.exception(f'[MESSAGE] {e}')
+        raise HTTPException(500, f'An error occurred while retrieving the message history: {e}')
 
-    # TODO: is this the best way of handling model + api key selection?. Add match statements for image and audio
-    match text_narrator_model:
-        case TextModel.gpt:
-            logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.openai_api_key}')
-            text_model_api_key = party_lead_user.openai_api_key
-        case TextModel.nvidia:
-            logger.debug(f'[MESSAGE] Initializing chain using party lead API key {party_lead_user.nvidia_api_key}')
-            if party_lead_user.nvidia_api_key is None:
-                raise HTTPException(400,'Party lead has no NVIDIA API key')
-            text_model_api_key = party_lead_user.nvidia_api_key
-        case _:
-            text_model_api_key = ''
-    chain = narrator.initialize_chain(narrator.prompt, messages, message.story_id, api_key=text_model_api_key, text_model=text_narrator_model)  # type: ignore
-
+    runnable = narrator.initialize_or_get_runnable(narrator.prompt, 
+                                                   messages, 
+                                                   message.story_id, 
+                                                   text_model=text_model, 
+                                                   api_key=text_model_api_key,
+                                                   session=session)    
     
+    # if we just ran initialize_runnable, we will most likely have a runnable_uuid
+    runnable_uuid = get_or_create_uuid(message.story_id, session)
     character_details = [{"name": character.character_name, "race": character.character_race, "class": character.character_class} for character in characters]
     party_context = ', '.join([f"{detail['name']} (Race: {detail['race']}, Class: {detail['class']})" for detail in character_details])
 
@@ -126,12 +124,11 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
 
     try:
         # Generate the reply first
-        narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, chain=chain, party_info=party_context, text_model=text_narrator_model)
+        narrator_reply, soundtrack_path = narrator.generate_reply(character=character, message=message, runnable=runnable, runnable_uuid=runnable_uuid, party_info=party_context, text_model=text_model)
 
         # Generate narration and image concurrently and broadcast results as they complete
-        # TODO: fix which api keys are passed here by extending the switch statement above to include audio and image models
-        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_narrator_model, api_key=party_lead_user.elevenlabs_api_key, voice_id=party_lead_user.elevenlabs_voice_id))
-        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_narrator_model, image_model=image_model, text_api_key = text_model_api_key, image_api_key = party_lead_user.openai_api_key))
+        narration_task = asyncio.create_task(handle_narration(narrator_reply, soundtrack_path, message.story_id, audio_model, api_key=audio_model_api_key, voice_id=elevenlabs_voice_id))
+        image_task = asyncio.create_task(handle_image(narrator_reply, message.story_id, text_model=text_model, image_model=image_model, text_api_key=text_model_api_key, image_api_key=image_model_api_key))
 
         narration_tuple, image_path = await asyncio.gather(narration_task, image_task)
         subtitles, audio_paths = narration_tuple
@@ -148,7 +145,10 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
         narrator_reply=None,
         audio_path=None,
         image_path=None,
-        soundtrack_path=None
+        soundtrack_path=None,
+        genai_text_model=text_model,
+        genai_audio_model=audio_model,
+        genai_image_model=image_model
     )
     session.add(human_message)
     for i in range(len(subtitles)):
@@ -162,12 +162,14 @@ async def generate_message(*, message: MessagePC, session: Session = Depends(get
             narrator_reply=None,
             audio_path=audio_paths[i] if i < len(audio_paths) else None,
             image_path=image_path,
-            soundtrack_path=soundtrack_path
+            soundtrack_path=soundtrack_path,
+            genai_text_model=text_model,
+            genai_audio_model=audio_model,
+            genai_image_model=image_model
         )
         session.add(narrator_message)
         
     session.commit()
     session.refresh(human_message)
-
-
+    
     return human_message

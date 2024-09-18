@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, Depends, WebSocket, Query
 from sqlmodel import Session, select
 
 from src.models.character import Character
-
+from src.models.enums import TextModel
 from ..core.websocket import WebsocketManager
 from ..models.message import Message, MessageRead
 from ..models.user import User, UserRead
 from ..core.database import get_session
 from ..models.story import Story, StoryCreate, StoryJoin, StoryDelete, StoryRead, StoryTransferOwnership
 from ..models.story import StoryModelsUpdate
-from ..models.story import Invite
+from ..models.story import Invite, Counter
 from ..core.config import logger
 from ..api.user import validate_api_key
 
@@ -47,11 +47,24 @@ async def story_websocket(websocket: WebSocket, story_id: int):
 @router.post('/story', status_code=201)
 async def create_story(*, story: StoryCreate, session: Session = Depends(get_session)):
     logger.debug(f"Received story data: {story}")
-    new_story = Story.model_validate(story)
 
+    # Check if a Counter instance exists, if not create one.
+    counter = session.get(Counter, 1)
+    if not counter:
+        counter = Counter(id=1, next_story_id=1)
+        session.add(counter)
+        session.commit()
+        session.refresh(counter)
+
+    new_story = Story.model_validate(story)
     session.add(new_story)
     session.commit()
     session.refresh(new_story)
+
+    # Increment the counter
+    counter.next_story_id += 1
+    session.add(counter)
+    session.commit()
 
     # Generate invite code
     invite = Invite(story_id=new_story.story_id)
@@ -157,25 +170,6 @@ async def add_player_to_story(*, story_join_data: StoryJoin, session: Session = 
     # await socket_manager.broadcast('new_player', StoryRead.model_validate(db_story), story_join_data.story_id)
     return StoryRead.model_validate(db_story)
 
-# COSTI: I don't think this should exist. We either add players to a story party OR we manage the lobby
-# POST /story/{story_id}/play: Allows a character to join the story lobby if they are part of the story.
-# @router.post('/story/{story_id}/play')
-# async def play_story(*, story_join_data: StoryJoin, session: Session = Depends(get_session)) -> StoryRead:
-#     db_story = session.get(Story, story_join_data.story_id)
-#     db_character = session.get(Character, story_join_data.character_id)
-#     logger.debug(f'[STORY ID]: {db_story}')
-#     logger.debug(f'[CHARACTER ID]: {db_character}')
-#     if not db_story or not db_character:
-#         raise HTTPException(404, 'Story or character does not exist')
-
-#     if db_story.party_lead == db_character.character_id or db_story.party_member_1 == db_character.character_id or db_story.party_member_2 == db_character.character_id:
-#         # Character is part of the story, proceed to join the lobby
-#         await socket_manager.broadcast('player_joined_lobby', {'character_name': db_character.name}, story_join_data.story_id)
-#     else:
-#         raise HTTPException(400, 'Character is not part of the story.')
-
-#     return db_story
-
 # POST /story/{story_id}/leave: Allows a character to leave a story, except the party lead.
 @router.post('/story/{story_id}/leave')
 async def leave_story(*, story: StoryJoin, session: Session = Depends(get_session)) -> StoryJoin:
@@ -247,9 +241,17 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
     # Check if the user has API keys for using the models
     # TODO: is this the best way of handling model + api key selection? This is a bit messy
     if models_update.genai_text_model:
-        if models_update.genai_text_model == 'nvidia' and not db_user.nvidia_api_key:
+        if models_update.genai_text_model == TextModel.nvidia and not db_user.nvidia_api_key:
             raise HTTPException(400, 'You need to add a NVIDIA API key to use the NVIDIA text model.')
-        if models_update.genai_text_model == 'gpt' and not db_user.openai_api_key:
+        if models_update.genai_text_model == TextModel.gpt and not db_user.openai_api_key:
+            raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
+        if models_update.genai_text_model == TextModel.claude and not db_user.anthropic_api_key:
+            raise HTTPException(400, 'You need to add an Anthropic API key to use the Anthropic text model.')
+        if models_update.genai_text_model == TextModel.groq and not db_user.groq_api_key:
+            raise HTTPException(400, 'You need to add a Groq API key to use the Groq text model.')
+        if models_update.genai_text_model == TextModel.gpt4o and not db_user.openai_api_key:
+            raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
+        if models_update.genai_text_model == TextModel.gpto1 and not db_user.openai_api_key:
             raise HTTPException(400, 'You need to add a OPENAI API key to use the OPENAI text model.')
         validate_api_key(models_update.genai_text_model, db_user.openai_api_key)
         db_story.genai_text_model = models_update.genai_text_model
@@ -274,3 +276,7 @@ async def update_story_models(story_id: int, models_update: StoryModelsUpdate, s
 
     await socket_manager.broadcast('update_models', StoryRead.model_validate(db_story), story_id)
     return db_story
+
+@router.get("/available-llm-models")
+async def get_available_llm_models():
+    return [model.value for model in TextModel]

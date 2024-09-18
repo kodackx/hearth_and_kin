@@ -1,0 +1,119 @@
+:root {
+    --primary-bg: #310e06;
+    --primary-text: #f4e8c1;
+    --button-bg: #ffcf86;
+    --button-text: #3b372a;
+    --button-hover: #d79736;
+    --button-active: #7f571d;
+    --input-bg: #3b372a;
+    --toast-bg: #f8d7da;
+    --toast-text: #721c24;
+    --toast-border: #f5c6cb;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--primary-text);
+}
+
+#logo {
+    width: 400px;
+    height: auto;
+}
+
+#auth {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 20px;
+    color: var(--button-text);
+    background-color: var(--button-bg);
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+button:active {
+    background-color: var(--button-active);
+}
+
+input[type="text"], input[type="password"] {
+    padding: 10px;
+    font-size: 18px;
+    color: var(--primary-text);
+    background-color: var(--input-bg);
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+input[type="text"]:focus, input[type="password"]:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--primary-text);
+    width: 50%;
+    margin: 20px auto;
+}
+
+.register-text {
+    font-size: 14px;
+    text-align: center;
+}
+
+.register-link {
+    color: var(--button-bg);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
+#toastContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    max-width: 600px;
+    pointer-events: none;
+}
+
+.toast {
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
+    border: 1px solid var(--toast-border);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.toast.show {
+    opacity: 1;
+}
