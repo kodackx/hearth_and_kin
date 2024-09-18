@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Response, status, Depends, HTTPException
+from langchain_groq import ChatGroq
+from src.models.enums import ImageModel, TextModel
 from src.models.user import User
 from ..core.database import get_session
 from sqlmodel import Session
@@ -66,7 +68,7 @@ prompt = ChatPromptTemplate.from_messages(
 memory = ChatMessageHistory()
 #memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
 
-def gpt_character_creator(input: str, chain: RunnableWithMessageHistory, model: str) -> str:
+def gpt_character_creator(input: str, chain: RunnableWithMessageHistory) -> str:
 
     message_and_character_data = input  # TODO: get this from db + '(Character Data: ' + session.get('character_data') + ')' + '(Location: ' + session.get('location') + ')' + '(Current Goal: ' + session.get('goal') + ')'
     logger.info('[Character Creator] Input is: ' + message_and_character_data)
@@ -94,19 +96,30 @@ def initialize_character_stats(user_id: int, name: str, description: str, portra
 @router.post('/charactermessage')
 async def generate_character_message(message: CharacterCreateMessage, response: Response, session: Session = Depends(get_session)):
     # TODO: implement nvidia, does not work very well for it right now
-    text_model = 'gpt' #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
-    image_model = message.image_model or DEFAULT_IMAGE_MODEL
+    text_model = TextModel.gpt #message.text_model or DEFAULT_TEXT_NARRATOR_MODEL
+    image_model = ImageModel.dalle3 #message.image_model or DEFAULT_IMAGE_MODEL
     user = session.get(User, message.user_id)
     logger.debug(f'[MESSAGE] {user = }')
     
     # need to revise if character creation
-    models = {
-        'gpt': ChatOpenAI(model_name='gpt-4o', api_key=user.openai_api_key), 
-        'nvidia_llama': ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.nvidia_api_key),
-        'claude': ChatAnthropic(model_name='claude-3.5-sonnet', api_key=user.anthropic_api_key)
-    }
+    match text_model:
+        case TextModel.gpt:
+            text_llm = ChatOpenAI(model_name=TextModel.gpt.value, api_key=user.openai_api_key)
+        case TextModel.nvidia:
+            text_llm = ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=user.nvidia_api_key)
+        case TextModel.claude:
+            text_llm = ChatAnthropic(model_name=TextModel.claude.value, api_key=user.anthropic_api_key)
+        case TextModel.groq:
+            text_llm = ChatGroq(model_name=TextModel.groq.value, api_key=user.groq_api_key)
+        case TextModel.gpt4o:
+            text_llm = ChatOpenAI(model_name=TextModel.gpt4o.value, api_key=user.openai_api_key)
+        case TextModel.gpto1:
+            text_llm = ChatOpenAI(model_name=TextModel.gpto1.value, api_key=user.openai_api_key)
+        case _:
+            logger.error(f'Invalid text model: {text_model}')
+            raise ValueError(f'Invalid text model: {text_model}')
     
-    character_creation_chain = prompt | models[text_model] | StrOutputParser()
+    character_creation_chain = prompt | text_llm | StrOutputParser()
 
     chain_with_message_history = RunnableWithMessageHistory(
         character_creation_chain,
@@ -117,7 +130,7 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
 
     try:
         logger.debug(f'[MESSAGE] {message.message = }')
-        narrator_reply = gpt_character_creator(input=message.message, chain=chain_with_message_history, model=text_model)
+        narrator_reply = gpt_character_creator(input=message.message, chain=chain_with_message_history)
         
         final_character_creation_key = "EMERGING FROM THE MISTS..."
         portrait_path = None
@@ -125,24 +138,35 @@ async def generate_character_message(message: CharacterCreateMessage, response: 
         character_data = None
         
         if final_character_creation_key in narrator_reply:
-            character_name = re.search(r"CHARACTER NAME: (.+?)\n", narrator_reply).group(1)
-            character_race = re.search(r"CHARACTER RACE: (.+?)\n", narrator_reply).group(1)
-            character_class = re.search(r"CHARACTER CLASS: (.+?)\n", narrator_reply).group(1)
+            # Use .search() instead of .match() for more flexibility
+            character_name = re.search(r"CHARACTER NAME:\s*(.+?)(?:\n|$)", narrator_reply)
+            character_race = re.search(r"CHARACTER RACE:\s*(.+?)(?:\n|$)", narrator_reply)
+            character_class = re.search(r"CHARACTER CLASS:\s*(.+?)(?:\n|$)", narrator_reply)
             character_description_match = re.search(r"CHARACTER DESCRIPTION:(.+?)\n---", narrator_reply, re.DOTALL)
-            character_description = character_description_match.group(1).strip() if character_description_match else None
             
-            logger.debug(f'[CREATION IMAGE] {character_description}')
-            # Will send to dalle3 and obtain image
-            portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model, api_key=user.openai_api_key)
-            logger.debug(f'[MESSAGE] {portrait_path = }')
-            
-            character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)
+            # Check if all required fields are present
+            if character_name and character_race and character_class and character_description_match:
+                character_name = character_name.group(1).strip()
+                character_race = character_race.group(1).strip()
+                character_class = character_class.group(1).strip()
+                character_description = character_description_match.group(1).strip()
+                
+                logger.debug(f'[CREATION IMAGE] {character_description}')
+                # Will send to dalle3 and obtain image
+                portrait_path = await imagery.generate_image(narrator_reply, 'character', text_model=text_model, image_model=image_model, text_api_key=user.openai_api_key, image_api_key=user.openai_api_key)
+                logger.debug(f'[MESSAGE] {portrait_path = }')
+                
+                character_data = initialize_character_stats(0, character_name, character_description, portrait_path, character_race, character_class)
+            else:
+                logger.error(f'[CREATION MESSAGE] Missing required character information in narrator reply')
+                raise ValueError("Incomplete character information in narrator's reply")
         
         response.status_code = status.HTTP_201_CREATED
     except Exception as e:
         logger.error(f'[CREATION MESSAGE] {e}')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {'error': f'An error occurred while generating the response: {e}'}
+    
     return {
             'message': 'Narrator: ' + narrator_reply,
             'image': portrait_path,

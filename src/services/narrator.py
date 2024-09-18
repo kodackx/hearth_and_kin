@@ -65,7 +65,7 @@ def initialize_or_get_runnable(prompt: ChatPromptTemplate,
         chat_model = ChatOpenAI(model=text_model, temperature=0.7, api_key=api_key)
     elif text_model == TextModel.claude:
         chat_model = ChatAnthropic(model=text_model, temperature=0.7, api_key=api_key)
-    elif text_model == TextModel.nvidia_llama:
+    elif text_model == TextModel.nvidia:
         chat_model = ChatNVIDIA(model=text_model, temperature=0.7, api_key=api_key)
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported text model: {text_model}")
@@ -86,7 +86,7 @@ def initialize_or_get_runnable(prompt: ChatPromptTemplate,
                 if narrator_messages_list:
                     for narrator_piece in narrator_messages_list:
                         concatenated_narrator_message += narrator_piece
-                    if text_model == TextModel.nvidia_llama:
+                    if text_model == TextModel.nvidia:
                         memory.add_ai_message('assistant: ' + concatenated_narrator_message)
                         narrator_messages_list = []
                         logger.debug(' Added a big narrator message.')
@@ -95,7 +95,7 @@ def initialize_or_get_runnable(prompt: ChatPromptTemplate,
                         narrator_messages_list = []
                         logger.debug('Added a big narrator message.')
                 # now add the user message we found
-                if text_model == TextModel.nvidia_llama:
+                if text_model == TextModel.nvidia:
                     memory.add_user_message('user: ' + message.message)
                 else:
                     memory.add_user_message(message.message)       
@@ -103,7 +103,7 @@ def initialize_or_get_runnable(prompt: ChatPromptTemplate,
         if narrator_messages_list:
             for narrator_piece in narrator_messages_list:
                 concatenated_narrator_message += narrator_piece
-            if text_model == TextModel.nvidia_llama:
+            if text_model == TextModel.nvidia:
                 memory.add_ai_message('assistant: ' + concatenated_narrator_message)
             else:
                 memory.add_ai_message(concatenated_narrator_message)
@@ -143,7 +143,7 @@ def _gpt_narrator(character: Character, message: MessageBase, runnable: Runnable
     if party_info:
         message_and_character_data += f'\n(SYSTEM NOTE - Party Info: {party_info})'
     
-    if text_model == TextModel.nvidia_llama:
+    if text_model == TextModel.nvidia:
        message_and_character_data = 'user: ' + message_and_character_data
 
     logger.debug('[GPT Narrator] Input is: ' + message_and_character_data)
