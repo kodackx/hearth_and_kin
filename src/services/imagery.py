@@ -7,6 +7,8 @@ import httpx
 from PIL import Image
 from io import BytesIO
 
+from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from src.models.enums import ImageModel, TextModel
@@ -17,20 +19,31 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
 
-def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str | None:
+def _generate_blocking(prompt_text: str, text_model: str, image_model: ImageModel, text_api_key: str, image_api_key: str) -> str | None:
     match text_model:
         case TextModel.gpt:
-            text_llm = ChatOpenAI(model_name='gpt-4o', api_key=text_api_key)
+            text_llm = ChatOpenAI(model_name=TextModel.gpt.value, api_key=text_api_key)
         case TextModel.nvidia:
             text_llm = ChatNVIDIA(model_name='meta/llama3-8b-instruct', temperature=0.75, api_key=text_api_key)
+        case TextModel.claude:
+            text_llm = ChatAnthropic(model_name=TextModel.claude.value, api_key=text_api_key)
+        case TextModel.groq:
+            text_llm = ChatGroq(model_name=TextModel.groq.value, api_key=text_api_key)
+        case TextModel.gpt4o:
+            text_llm = ChatOpenAI(model_name=TextModel.gpt4o.value, api_key=text_api_key)
+        case TextModel.gpto1:
+            text_llm = ChatOpenAI(model_name=TextModel.gpto1.value, api_key=text_api_key)
         case _:
             raise ValueError(f'Invalid text model: {text_model}')
 
     match image_model:
         case ImageModel.dalle3:
             image_llm = DallEAPIWrapper(model='dall-e-3', size='1024x1024', api_key=image_api_key)
+        case ImageModel.stablediffusion:
+            # Implement Stable Diffusion logic here
+            raise NotImplementedError("Stable Diffusion not yet implemented")
         case ImageModel.none:
-            return
+            return None
         case _:
             raise ValueError(f'Invalid image model: {image_model}')
 
@@ -64,7 +77,7 @@ def _generate_blocking(prompt_text: str, text_model: str, image_model: str, text
     )
     if image_model == ImageModel.dalle3:
         try:
-            image_url = image_llm.run(prompt_dalle)  # type: ignore
+            image_url = image_llm.run(prompt_dalle)
         except Exception as e:
             logger.debug('[GEN IMAGE] Image generation failed: ' + repr(e))
             image_url = None
@@ -117,8 +130,16 @@ async def _generate(prompt_text: str, text_model: str, image_model: str, text_ap
     return result
 
 
+
+
 async def generate_image(prompt: str, type: str, text_model: str, image_model: str, text_api_key: str, image_api_key: str) -> str:
-    image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
+    logger.debug('[GEN IMAGE] Generating image for ' + prompt)
+    if type == 'character':
+        image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
+    elif type == 'story':
+        image_url = await _generate(prompt, text_model, image_model, text_api_key, image_api_key)
+    else:
+        raise ValueError('Invalid image type. Can only generate `character` or `story` images')
     image_path = 'static/img/login1.png'
     if image_url is not None:
         _, image_path = await _store(image_url=image_url, type=type)

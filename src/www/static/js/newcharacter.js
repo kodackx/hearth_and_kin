@@ -1,26 +1,14 @@
 import { handleApiErrors} from './utils.js'
 import {showToast} from './utils.js'
 // Start flow
-document.getElementById('main-content').style.display = 'none';
+// document.getElementById('main-content').style.display = 'none';
 document.getElementById('send-button').style.display = 'none';
-document.getElementById('start-button').style.display = 'block';
+// document.getElementById('start-button').style.display = 'block';
 document.getElementById('message-input').value = 'I listen to the mists of creation... Help me shape my character into reality.';
 const firstTimeButton = document.querySelector('.first-time-button');
 const user_id = localStorage.getItem('user_id');
 firstTimeButton.addEventListener('click', handleFirstClick);
 document.getElementById('send-button').addEventListener('click', sendMessage);
-
-document.getElementById('start-button').addEventListener('click', function() {
-    document.getElementById('main-content').style.display = 'flex';
-    this.style.display = 'none';
-    // displayIntroText()
-    var imageUrl = "";
-    // changeBackgroundImage(imageUrl);
-    var ambiance = "static/soundtrack/wilderness.m4a";
-    let audio = new Audio(ambiance);
-    audio.volume = 0.5; // 50% volume
-    audio.play();
-});
 
 document.getElementById('message-input').addEventListener('keypress', function(e) {
     var key = e.which || e.keyCode;
@@ -80,14 +68,15 @@ document.addEventListener('click', function(event) {
 // define first click to initiate dialogue with the mists of creation
 function handleFirstClick() {
     // Remove the one-time use class to revert to normal styling
+    document.getElementById('main-content').style.display = 'flex';
+    var ambiance = "static/soundtrack/wilderness.m4a";
+    let audio = new Audio(ambiance);
+    audio.volume = 0.5; // 50% volume
+    audio.play();
     document.getElementById('first-time-text').style.display = 'none';
     firstTimeButton.classList.remove('first-time-button');
     document.getElementById('send-button').style.display = 'block';
-
-    // You may want to add additional logic here to handle the first-time interaction
     sendMessage();
-
-    // Remove the event listener since it's no longer needed
     firstTimeButton.removeEventListener('click', handleFirstClick);
 }
 

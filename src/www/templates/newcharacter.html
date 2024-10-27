@@ -11,11 +11,16 @@
 </head>
 <body>
     <div id="toastContainer"></div>
-    <button id="start-button">Create your character...</button>
-    <video autoplay muted loop playsinline id="background-video">
-        <source src="static/img/char_create_video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <!-- <button id="start-button">Create your character...</button> -->
+    <div class="background-container">
+        <div class="stars"></div>
+        <div class="twinkling"></div>
+        <div class="clouds"></div>
+    </div>
+    <!-- <video autoplay muted loop playsinline id="background-video">
+    <source src="static/img/char_create_video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+    </video> -->
     <div class="flex-container" id="main-content">
         <!-- <div class="story-image" id="story-image"></div> -->
         <div class="chat-section">
@@ -68,6 +73,7 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        z-index: 100;
     }
 
     .finalize-button {
@@ -181,25 +187,26 @@
     }
 
     .creation-message {
-        font-size: larger; /* Adjust the font size as needed */
-        font-family: 'Almendra', serif;
-        font-weight: 800;
         font-size: 21px;
+        font-family: 'Almendra', serif;
+        font-weight: 400;
         font-style: regular;
-        color: rgb(71 0 141);
+        color: #e0d5ff; /* Light purple color for better legibility */
         animation: fadeIn 3s ease-in;
-        text-shadow: 1px 1px 40px rgba(255, 255, 255, 0.8), -1px -1px 60px rgba(255, 255, 255, 0.8);
-        /* text-shadow: 2px 2px 4px #ffffff, -2px -2px 4px #ffffff, 2px -2px 4px #ffffff, -2px 2px 4px #ffffff; White shadow in all directions */
+        text-shadow: 
+            0 0 10px rgba(147, 51, 234, 0.7),  /* Purple glow */
+            0 0 20px rgba(255, 255, 255, 0.8),  /* White outer glow */
+            1px 1px 2px rgba(0, 0, 0, 0.8);     /* Dark shadow for depth */
     }
 
     .user-message {
-        font-size: larger; /* Adjust the font size as needed */
+        font-size: larger;
         font-family: 'Merriweather', serif;
-        font-size: 28px;
+        /* font-size: 28px; */
         color: #ffc973;
+        font-style: italic;
         animation: fadeIn 3s ease-in;
-        text-shadow:1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 15px rgba(0, 0, 0, 0.8);
-        /* text-shadow: 2px 2px 4px #ffffff, -2px -2px 4px #ffffff, 2px -2px 4px #ffffff, -2px 2px 4px #ffffff; White shadow in all directions */
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8), -1px -1px 15px rgba(0, 0, 0, 0.8);
     }
 
     body {
@@ -379,6 +386,93 @@
     /* Show toast */
     .toast.show {
         opacity: 1;
+    }
+
+    @keyframes move-background {
+    from {
+        -webkit-transform: translate3d(0px, 0px, 0px);
+    }
+    to {
+        -webkit-transform: translate3d(1000px, 0px, 0px);
+    }
+    }
+
+    @-webkit-keyframes move-background {
+    from {
+        -webkit-transform: translate3d(0px, 0px, 0px);
+    }
+    to {
+        -webkit-transform: translate3d(1000px, 0px, 0px);
+    }
+    }
+
+    @-webkit-keyframes move-background {
+    from {
+        -webkit-transform: translate3d(0px, 0px, 0px);
+    }
+    to {
+        -webkit-transform: translate3d(1000px, 0px, 0px);
+    }
+    }
+
+    .background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    }
+
+    .stars {
+    background: black url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/1231630/stars.png) repeat;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: block;
+    z-index: 0;
+    }
+
+    .twinkling {
+    width: 10000px;
+    height: 100%;
+    background: transparent url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/1231630/twinkling.png") repeat;
+    background-size: 1000px 1000px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 2;
+    -webkit-animation: move-background 70s linear infinite;
+    animation: move-background 70s linear infinite;
+    }
+
+    .clouds {
+    width: 10000px;
+    height: 100%;
+    background: transparent url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/1231630/clouds_repeat.png") repeat;
+    background-size: 1000px 1000px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 3;
+    -webkit-animation: move-background 150s linear infinite;
+    animation: move-background 150s linear infinite;
+    }
+
+    img {
+    height: 70vh;
+    width: 70vh;
+    position: absolute;
+    z-index: 3;
+    right: 20px;
+    }
+
+    #main-content {
+        mix-blend-mode: screen; /* This will blend the color with the background */
+        z-index: 100;
     }
 </style>
 

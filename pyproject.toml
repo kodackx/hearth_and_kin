@@ -20,10 +20,14 @@ gunicorn = "^22.0.0"
 python-dotenv = "^1.0.1"
 python-multipart = "^0.0.9"
 pyjwt = "^2.8.0"
-langchain-nvidia-ai-endpoints = "^0.1.2"
-langchain = "^0.2.5"
-langchain-openai = "^0.1.8"
-langchain-community = "^0.2.5"
+langchain-nvidia-ai-endpoints = "^0.3.3"
+langchain-openai = "^0.2.3"
+alembic = "^1.13.2"
+langchain = "^0.3.4"
+langchain-core = "^0.3.13"
+langchain-community = "^0.3.3"
+langchain-anthropic = "^0.2.3"
+langchain-groq = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -49,12 +49,44 @@ const textModelSelector = document.getElementById('llm-model-selector');
 const audioModelSelector = document.getElementById('audio-generation-model');
 const imageModelSelector = document.getElementById('image-generation-model');
 
+// Call the function when the page loads
+document.addEventListener('DOMContentLoaded', populateLLMModelSelector);
 document.getElementById('start-button').addEventListener('click', startGame);
 document.getElementById('dev-button').addEventListener('click', toggleDevPane);
 document.getElementById('developer-options-container').classList.add('slideInFromBottom');
 textModelSelector.addEventListener('change', updateStoryModels);
 audioModelSelector.addEventListener('change', updateStoryModels);
 imageModelSelector.addEventListener('change', updateStoryModels);
+
+// Function to fetch available models and populate the selector
+async function populateLLMModelSelector() {
+    try {
+        const response = await fetch('/available-llm-models');
+        if (!response.ok) {
+            throw new Error('Failed to fetch available models');
+        }
+        const models = await response.json();
+        const selector = document.getElementById('llm-model-selector');
+        
+        // Clear existing options
+        selector.innerHTML = '';
+        
+        // Add new options
+        models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            selector.appendChild(option);
+        });
+        
+        // Select the first option by default
+        if (selector.options.length > 0) {
+            selector.options[0].selected = true;
+        }
+    } catch (error) {
+        console.error('Error populating LLM model selector:', error);
+    }
+}
 
 async function checkPartyLead() {
     let current_char_id = JSON.parse(localStorage.getItem('selectedCharacter')).character_id;

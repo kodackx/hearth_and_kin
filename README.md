@@ -18,6 +18,7 @@ Discover a new realm of creativity and connection with Hearth and Kin, where you
 - Dall-E3: An API for generating images from textual descriptions using OpenAI's DALL-E model.
 - Uvicorn: A lightning-fast ASGI server implementation, using uvloop and httptools.
 - websockets: A library for building WebSocket servers and clients in Python (multiplayer)
+- alembic: For database migrations as the schemas update frequently at this stage in development
 
 ## Code Structure
 

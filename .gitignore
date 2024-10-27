@@ -10,3 +10,5 @@ __pycache__
 .env
 .env
 *.code-workspace
+src/www/static/characters
+data/visuals

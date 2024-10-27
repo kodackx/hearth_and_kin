@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel as Model, Field
+from ..models.enums import TextModel, AudioModel, ImageModel
 from typing import Optional
 import random
 import string
@@ -14,11 +15,16 @@ def generate_invite_code(length=5):
 
 class Invite(Model, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    story_id: int = Field(foreign_key="story.story_id")  # Updated line
+    story_id: int # Updated line
     invite_code: str = Field(default_factory=generate_invite_code)
+
+class Counter(Model, table=True):
+    id: int = Field(default=1, primary_key=True)
+    next_story_id: int = Field(default=1)
 
 class StoryBase(Model):
     story_id: Optional[int] = Field(default=None, primary_key=True)
+    story_uuid: Optional[uuid.UUID] = Field(default=None)
     party_lead: int = Field(foreign_key="character.character_id")
     join_code: Optional[str] = Field(default=None, foreign_key="invite.invite_code")
     thread_id: Optional[int] = None

@@ -8,7 +8,7 @@ from ..core.config import logger
 
 
 def generate(text: str, api_key: str, voice_id: str) -> bytes | Iterator[bytes]:
-    audio = elevenlabs.generate(text, api_key=api_key, voice=voice_id, model="eleven_turbo_v2")
+    audio = elevenlabs.generate(text, api_key=api_key, voice=voice_id, model="eleven_turbo_v2_5")
     return audio
 
 def store(audio_bytes: bytes | Iterator[bytes], filename: Optional[str] = None) -> tuple[str, str]:
